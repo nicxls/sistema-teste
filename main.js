@@ -16,40 +16,43 @@ document.addEventListener('DOMContentLoaded', () => {
     function initRealTime() {
         if (typeof io !== 'undefined') {
             socket = io(SOCKET_URL, {
-                reconnectionAttempts: 3,
+                reconnectionAttempts: 5,
                 timeout: 5000,
-                transports: ['websocket', 'polling']
+                transports: ['polling'], // Força polling para passar pelo túnel da Vercel
+                path: '/socket.io'
             });
 
             socket.on('connect', () => {
-                console.log('Conectado ao servidor de Tempo Real.');
+                console.log('Conectado ao servidor através da Ponte Vercel/VPS.');
+                // Se conectou via túnel, não precisamos de polling agressivo
+                if (pollingInterval) clearInterval(pollingInterval);
             });
 
             socket.on('data-updated', () => {
-                console.log('Recebido aviso de atualização. Sincronizando...');
+                console.log('Recebido aviso de atualização instantânea!');
                 fetchAllData();
             });
 
             socket.on('connect_error', (error) => {
-                console.warn('Erro na conexão em tempo real (provavelmente bloqueio de HTTPS). Ativando fallback de atualização periódica.');
-                startPolling(); // Se o socket falhar, usa o polling
+                console.warn('Conexão via ponte falhou. Usando atualização programada (5s).');
+                startPolling();
                 socket.disconnect();
             });
         } else {
-            console.warn('Biblioteca Socket.IO não encontrada. Ativando fallback.');
+            console.warn('Biblioteca Socket.IO não encontrada. Ativando fallback de 5s.');
             startPolling();
         }
     }
 
     let pollingInterval = null;
     function startPolling() {
-        if (pollingInterval) return; // Já está rodando
-        console.log('Sincronização periódica iniciada (cada 10s).');
+        if (pollingInterval) return; 
+        console.log('Sincronização periódica iniciada (cada 5s).');
         pollingInterval = setInterval(() => {
             if (localStorage.getItem('currentUser') && selectedSystem) {
                 fetchAllData();
             }
-        }, 10000); // Atualiza a cada 10 segundos se o socket falhar
+        }, 5000); // Atualiza a cada 5 segundos para parecer "na hora"
     }
 
     initAuthSystem();
