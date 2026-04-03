@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão - Contratos e Empresas</title>
     <!-- Google Fonts: Inter & Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- BoxIcons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <!-- Custom CSS -->
@@ -21,14 +23,18 @@
     <div id="login-container" style="display: none;">
         <!-- Floating Theme Toggle for Login -->
         <div style="position: absolute; top: 20px; right: 20px; z-index: 10000;">
-            <button class="theme-toggle btn-icon" style="background: var(--card-bg); border: 1px solid var(--border-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); box-shadow: var(--shadow-soft);">
+            <button class="theme-toggle btn-icon"
+                style="background: var(--card-bg); border: 1px solid var(--border-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); box-shadow: var(--shadow-soft);">
                 <i class='bx bx-moon' style="font-size: 24px;"></i>
             </button>
         </div>
 
         <div class="login-box" id="login-form-box">
-            <div class="login-logo" style="background: var(--primary-gradient); width: 64px; height: 64px; font-size: 32px;"><i class='bx bx-shield-quarter'></i></div>
-            <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; letter-spacing: -0.5px;">Gestão de Contratos DSE</h2>
+            <div class="login-logo"
+                style="background: var(--primary-gradient); width: 64px; height: 64px; font-size: 32px;"><i
+                    class='bx bx-shield-quarter'></i></div>
+            <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; letter-spacing: -0.5px;">Gestão de Contratos
+                DSE</h2>
             <p class="subtitle" style="font-size: 14px;">Bem-vindo! Por favor, identifique-se.</p>
 
             <div style="position: relative; margin-bottom: 5px;">
@@ -37,14 +43,16 @@
             <div style="position: relative; margin-bottom: 5px;">
                 <input type="password" id="login-pass" placeholder="Sua Senha">
             </div>
-            
-            <button class="login-btn" id="btn-do-login" style="margin-top: 10px;">Entrar no Sistema</button>
-            
-            <div class="login-divider"><span>OU</span></div>
-            
-            <button class="login-outline-btn" id="btn-show-request" style="border: none; background: transparent;"><i class='bx bx-user-plus'></i> Solicitar Acesso</button>
 
-            <div class="login-footer" style="position: relative; margin-top: 30px; bottom: 0;">© 2026 Sistema de Gestão DSE</div>
+            <button class="login-btn" id="btn-do-login" style="margin-top: 10px;">Entrar no Sistema</button>
+
+            <div class="login-divider"><span>OU</span></div>
+
+            <button class="login-outline-btn" id="btn-show-request" style="border: none; background: transparent;"><i
+                    class='bx bx-user-plus'></i> Solicitar Acesso</button>
+
+            <div class="login-footer" style="position: relative; margin-top: 30px; bottom: 0;">© 2026 Sistema de Gestão
+                DSE</div>
         </div>
 
         <div class="login-box form-hidden" id="request-form-box" style="display: none;">
@@ -165,11 +173,12 @@
                         <i class='bx bx-chevron-down arrow'></i>
                     </a>
                     <ul class="sub-menu" id="submenu-faturamentos" style="display: none;">
-                        <li><a href="#" data-target="faturamentos-lista" data-servico="Merendeiras">Alimentação Escolar</a></li>
+                        <li><a href="#" data-target="faturamentos-lista" data-servico="Merendeiras">Alimentação</a></li>
                         <li><a href="#" data-target="faturamentos-lista" data-servico="Vigilância">Vigilância</a></li>
-                        <li><a href="#" data-target="faturamentos-lista" data-servico="Limpeza">Limpeza das Escolas</a></li>
+                        <li><a href="#" data-target="faturamentos-lista" data-servico="Limpeza">Limpeza</a></li>
                         <li><a href="#" data-target="faturamentos-lista" data-servico="Porteiros">Porteiros</a></li>
-                        <li><a href="#" data-target="faturamentos-lista" data-servico="Transporte Escolar">Transporte Escolar</a></li>
+                        <li><a href="#" data-target="faturamentos-lista" data-servico="Transporte Escolar">Transporte
+                                Escolar</a></li>
                     </ul>
                 </li>
                 <li>
@@ -179,7 +188,8 @@
                         <i class='bx bx-chevron-down arrow'></i>
                     </a>
                     <ul class="sub-menu" id="submenu-postos" style="display: none;">
-                        <li><a href="#" data-target="postos-lista" data-servico="Merendeiras">Alimentação Escolar</a></li>
+                        <li><a href="#" data-target="postos-lista" data-servico="Merendeiras">Alimentação Escolar</a>
+                        </li>
                         <li><a href="#" data-target="postos-lista" data-servico="Vigilância">Vigilância</a></li>
                         <li><a href="#" data-target="postos-lista" data-servico="Limpeza">Limpeza das Escolas</a></li>
                         <li><a href="#" data-target="postos-lista" data-servico="Porteiros">Porteiros</a></li>
@@ -197,10 +207,15 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="topbar">
+            <header class="topbar" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Welcome Back, User</h2>
-                <div class="user-profile">
-                    <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User Profile">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button id="user-profile-trigger" class="btn-icon" title="Configurações do Sistema" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.3s ease;">
+                        <i class='bx bx-cog' style="font-size: 24px;"></i>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User Profile">
+                    </div>
                 </div>
             </header>
 
@@ -237,7 +252,8 @@
                 <!-- Empresas View -->
                 <section id="empresas" class="view">
                     <div style="margin-bottom: 24px;">
-                        <button class="btn btn-primary admin-only" id="btn-novo-empresa" style="background: #2563eb; color: #fff; font-weight: 500;">
+                        <button class="btn btn-primary admin-only" id="btn-novo-empresa"
+                            style="background: #2563eb; color: #fff; font-weight: 500;">
                             <i class='bx bx-plus'></i> Adicionar Nova Empresa
                         </button>
                     </div>
@@ -274,12 +290,18 @@
                         </form>
                     </div>
 
-                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 20px; overflow: hidden;">
-                        <div style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 20px; flex-wrap: wrap;">
-                            <h2 style="font-size: 18px; font-weight: 600; color: var(--text-color); margin: 0; font-family: 'Inter', sans-serif;">Empresas Cadastradas</h2>
+                    <div
+                        style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 20px; overflow: hidden;">
+                        <div
+                            style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 20px; flex-wrap: wrap;">
+                            <h2
+                                style="font-size: 18px; font-weight: 600; color: var(--text-color); margin: 0; font-family: 'Inter', sans-serif;">
+                                Empresas Cadastradas</h2>
                             <div style="position: relative; max-width: 320px; width: 100%;">
-                                <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 18px;"></i>
-                                <input type="text" id="filtro-empresa-lista" placeholder="Pesquisar por Nome ou CNPJ." style="width: 100%; padding: 10px 10px 10px 36px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; color: var(--text-color); background: var(--bg-color); outline: none; font-family: 'Inter', sans-serif;">
+                                <i class='bx bx-search'
+                                    style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 18px;"></i>
+                                <input type="text" id="filtro-empresa-lista" placeholder="Pesquisar por Nome ou CNPJ."
+                                    style="width: 100%; padding: 10px 10px 10px 36px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; color: var(--text-color); background: var(--bg-color); outline: none; font-family: 'Inter', sans-serif;">
                             </div>
                         </div>
                         <div id="lista-empresas-card" style="display: flex; flex-direction: column;">
@@ -461,13 +483,20 @@
                             <div id="grupo-anexos" style="display: none; margin-top: 15px;">
                                 <div class="form-row">
                                     <div class="form-group" style="width: 100%;">
-                                        <label for="con-anexos">Anexos (ex: contrato digitalizado, aditivos, etc.)</label>
-                                        <input type="file" id="con-anexos" multiple accept=".pdf,.png,.jpg,.jpeg" style="width: 100%; padding: 8px; border: 1px dashed var(--primary-color); border-radius: 4px; background: rgba(0,0,0,0.02); cursor: pointer;">
-                                        <div style="font-size: 11px; margin-top: 5px; color: var(--text-light); line-height: 1.4;">
+                                        <label for="con-anexos">Anexos (ex: contrato digitalizado, aditivos,
+                                            etc.)</label>
+                                        <input type="file" id="con-anexos" multiple accept=".pdf,.png,.jpg,.jpeg"
+                                            style="width: 100%; padding: 8px; border: 1px dashed var(--primary-color); border-radius: 4px; background: rgba(0,0,0,0.02); cursor: pointer;">
+                                        <div
+                                            style="font-size: 11px; margin-top: 5px; color: var(--text-light); line-height: 1.4;">
                                             Nenhum arquivo selecionado.<br>
-                                            Você pode anexar múltiplos arquivos. Atenção: O armazenamento local do navegador possui um limite de tamanho total. Arquivos muito grandes podem exceder este limite.
+                                            Você pode anexar múltiplos arquivos. Atenção: O armazenamento local do
+                                            navegador possui um limite de tamanho total. Arquivos muito grandes podem
+                                            exceder este limite.
                                         </div>
-                                        <div id="anexos-preview" style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;"></div>
+                                        <div id="anexos-preview"
+                                            style="margin-top: 10px; display: flex; flex-direction: column; gap: 5px;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -475,7 +504,8 @@
                             <div class="form-actions">
                                 <button type="button" class="btn btn-secondary"
                                     id="btn-cancel-contrato">Cancelar</button>
-                                <button type="submit" class="btn btn-primary" id="btn-save-contrato">Salvar Contrato</button>
+                                <button type="submit" class="btn btn-primary" id="btn-save-contrato">Salvar
+                                    Contrato</button>
                             </div>
                         </form>
                     </div>
@@ -544,8 +574,10 @@
                         <h1 id="fat-group-title" style="font-size: 20px; color: var(--text-color); margin: 0;">
                             Faturamentos - Setor</h1>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <label for="select-ano-fat" style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
-                            <select id="select-ano-fat" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-family: inherit;">
+                            <label for="select-ano-fat"
+                                style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
+                            <select id="select-ano-fat"
+                                style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-family: inherit;">
                                 <option value="2024">2024</option>
                                 <option value="2025" selected>2025</option>
                                 <option value="2026">2026</option>
@@ -675,15 +707,21 @@
 
         <!-- Modal Base for View Details -->
         <div id="generic-modal" class="modal-overlay form-hidden" style="z-index: 10001;">
-            <div class="modal-content" style="max-width: 800px; width: 95%; background: var(--card-bg); padding: 32px; border-radius: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+            <div class="modal-content"
+                style="max-width: 800px; width: 95%; background: var(--card-bg); padding: 32px; border-radius: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        <div
+                            style="width: 40px; height: 40px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 24px;">
                             <i class='bx bx-search-alt'></i>
                         </div>
-                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Detalhes do Registro</h2>
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Detalhes do
+                            Registro</h2>
                     </div>
-                    <button class="btn-icon" id="btn-close-modal" style="background: var(--secondary-color); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"><i class='bx bx-x' style="font-size: 24px;"></i></button>
+                    <button class="btn-icon" id="btn-close-modal"
+                        style="background: var(--secondary-color); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"><i
+                            class='bx bx-x' style="font-size: 24px;"></i></button>
                 </div>
                 <div id="modal-body" class="detail-container">
                     <!-- Injected via JS -->
@@ -691,53 +729,68 @@
             </div>
         </div>
 
-    <!-- Modal Detalhe Faturamento Mensal -->
-    <div id="modal-faturamentos" class="modal-overlay form-hidden" style="z-index: 9999;">
-        <div class="modal-content"
-            style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
-            <div
-                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
-                <h3 id="modal-fat-title"
-                    style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar
-                    Faturamentos 2025 - Contrato XYZ</h3>
-                <button id="btn-close-fat-modal" class="btn-icon" style="color: var(--text-light);"><i class='bx bx-x'
-                        style="font-size: 28px;"></i></button>
-            </div>
+        <!-- Modal Detalhe Faturamento Mensal -->
+        <div id="modal-faturamentos" class="modal-overlay form-hidden" style="z-index: 9999;">
+            <div class="modal-content"
+                style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                <div
+                    style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
+                    <h3 id="modal-fat-title"
+                        style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar
+                        Faturamentos 2025 - Contrato XYZ</h3>
+                    <button id="btn-close-fat-modal" class="btn-icon" style="color: var(--text-light);"><i
+                            class='bx bx-x' style="font-size: 28px;"></i></button>
+                </div>
 
-            <div style="padding: 0; overflow-y: auto; max-height: 70vh; background: var(--card-bg);">
-                <table class="fat-planilha" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
-                    <thead style="position: sticky; top: 0; background: var(--bg-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <tr>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">Nº PROCESSO</th>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
-                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fat-grid-body">
-                        <!-- Gerado via JS de Janeiro a Dezembro -->
-                    </tbody>
-                </table>
-            </div>
+                <div style="padding: 0; overflow-y: auto; max-height: 70vh; background: var(--card-bg);">
+                    <table class="fat-planilha" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                        <thead
+                            style="position: sticky; top: 0; background: var(--bg-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <tr>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">
+                                    MÊS</th>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">
+                                    Nº PROCESSO</th>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">
+                                    DATA ABERTURA</th>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">
+                                    SITUAÇÃO</th>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">
+                                    DATA PAGAMENTO</th>
+                                <th
+                                    style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">
+                                    VALOR PAGO (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fat-grid-body">
+                            <!-- Gerado via JS de Janeiro a Dezembro -->
+                        </tbody>
+                    </table>
+                </div>
 
-            <div
-                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
-                <button class="btn" id="btn-relatorio-pdf" style="background: #2b9348; color: white; display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-download'></i> Gerar Relatório PDF
-                </button>
-                <div style="display: flex; gap: 12px;">
-                    <button id="btn-cancel-fat" class="btn"
-                        style="background: transparent; border: 1px solid var(--border-color); color: var(--text-color);">Cancelar</button>
-                    <button id="btn-save-fat" class="btn btn-primary admin-only" style="background: var(--primary-color); border: none;">Salvar
-                        Faturamentos</button>
+                <div
+                    style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
+                    <button class="btn" id="btn-relatorio-pdf"
+                        style="background: #2b9348; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class='bx bx-download'></i> Gerar Relatório PDF
+                    </button>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="btn-cancel-fat" class="btn"
+                            style="background: transparent; border: 1px solid var(--border-color); color: var(--text-color);">Cancelar</button>
+                        <button id="btn-save-fat" class="btn btn-primary admin-only"
+                            style="background: var(--primary-color); border: none;">Salvar
+                            Faturamentos</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="main.js"></script>
+        <script src="main.js"></script>
     </div> <!-- /app-container -->
 
     <!-- Settings & Profile Modal (Elite Design) -->
@@ -753,7 +806,7 @@
                 </div>
                 <span class="close-modal">&times;</span>
             </div>
-            
+
             <div class="settings-body">
                 <div class="settings-sidebar">
                     <div class="settings-nav-item active" data-tab="security">
@@ -761,20 +814,21 @@
                         <span>Segurança</span>
                     </div>
                 </div>
-                
+
                 <div class="settings-main-content">
                     <div id="tab-security" class="settings-tab-content">
                         <div class="section-title">
                             <h3>Alterar Senha</h3>
                             <p>Atualize sua credencial de acesso para maior segurança.</p>
                         </div>
-                        
+
                         <form id="change-password-form-elite">
                             <div class="form-group-elite">
                                 <label><i class='bx bx-lock-open'></i> Senha Atual</label>
-                                <input type="password" id="elite-pass-current" required placeholder="Digite sua senha atual">
+                                <input type="password" id="elite-pass-current" required
+                                    placeholder="Digite sua senha atual">
                             </div>
-                            
+
                             <div class="form-row-elite">
                                 <div class="form-group-elite">
                                     <label><i class='bx bx-lock-alt'></i> Nova Senha</label>
@@ -782,10 +836,11 @@
                                 </div>
                                 <div class="form-group-elite">
                                     <label><i class='bx bx-check-shield'></i> Confirmar</label>
-                                    <input type="password" id="elite-pass-confirm" required placeholder="Repita a senha">
+                                    <input type="password" id="elite-pass-confirm" required
+                                        placeholder="Repita a senha">
                                 </div>
                             </div>
-                            
+
                             <div class="settings-actions">
                                 <button type="submit" class="btn-primary-elite">
                                     <i class='bx bx-save'></i> Atualizar Senha
@@ -835,16 +890,25 @@
 
     <!-- Modal Anexos -->
     <div id="modal-anexos" class="modal-overlay form-hidden" style="z-index: 10001;">
-        <div class="modal-content" style="max-width: 600px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="modal-anexos-title" style="font-size: 16px; margin: 0; font-weight: 600; color: var(--text-color);">Gerenciar Anexos</h3>
-                <button id="btn-close-anexos-modal" class="btn-icon"><i class='bx bx-x' style="font-size: 24px;"></i></button>
+        <div class="modal-content"
+            style="max-width: 600px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
+            <div
+                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="modal-anexos-title"
+                    style="font-size: 16px; margin: 0; font-weight: 600; color: var(--text-color);">Gerenciar Anexos
+                </h3>
+                <button id="btn-close-anexos-modal" class="btn-icon"><i class='bx bx-x'
+                        style="font-size: 24px;"></i></button>
             </div>
-            <div id="anexos-list-container" style="padding: 20px 24px; overflow-y: auto; max-height: 50vh; background: var(--bg-color); display: flex; flex-direction: column; gap: 10px;">
-                <div id="empty-anexos" style="text-align: center; color: var(--text-light); padding: 40px 0;">Nenhum anexo encontrado.</div>
+            <div id="anexos-list-container"
+                style="padding: 20px 24px; overflow-y: auto; max-height: 50vh; background: var(--bg-color); display: flex; flex-direction: column; gap: 10px;">
+                <div id="empty-anexos" style="text-align: center; color: var(--text-light); padding: 40px 0;">Nenhum
+                    anexo encontrado.</div>
             </div>
-            <div style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
-                <button id="btn-fechar-anexos" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
+            <div
+                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
+                <button id="btn-fechar-anexos" class="btn btn-secondary"
+                    style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
             </div>
         </div>
     </div>
