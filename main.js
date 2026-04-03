@@ -19,6 +19,39 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAppData();
     }
 
+    // ==========================================
+    // CURRENCY HELPERS & MASKS
+    // ==========================================
+    function formatCurrency(value) {
+        if (!value && value !== 0) return 'R$ 0,00';
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(value);
+    }
+
+    function maskCurrency(e) {
+        let value = e.target.value.replace(/\D/g, "");
+        value = (value / 100).toFixed(2) + "";
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        e.target.value = "R$ " + value;
+    }
+
+    function parseCurrency(str) {
+        if (!str) return 0;
+        return parseFloat(str.replace(/[^\d,]/g, "").replace(",", "."));
+    }
+
+    // Apply masks to inputs
+    ['con-valormensal', 'con-valordiario', 'con-valorkm'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.type = "text"; // Change to text for mask
+            input.addEventListener('input', maskCurrency);
+        }
+    });
+
     async function validateSession() {
         const user = JSON.parse(localStorage.getItem('currentUser'));
         if (!user) return;
@@ -951,11 +984,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tipo === 'Transporte Escolar') {
             contratoData.alunos = document.getElementById('con-alunos').value;
             contratoData.municipio = document.getElementById('con-municipio').value;
-            contratoData.valorDiario = parseFloat(document.getElementById('con-valordiario').value) || 0;
-            contratoData.valorKm = parseFloat(document.getElementById('con-valorkm').value) || 0;
+            contratoData.valorDiario = parseCurrency(document.getElementById('con-valordiario').value);
+            contratoData.valorKm = parseCurrency(document.getElementById('con-valorkm').value);
             contratoData.km = parseFloat(document.getElementById('con-km').value) || 0;
         } else {
-            contratoData.valorMensal = parseFloat(document.getElementById('con-valormensal').value) || 0;
+            contratoData.valorMensal = parseCurrency(document.getElementById('con-valormensal').value);
             contratoData.postos = document.getElementById('con-postos').value;
         }
 
@@ -1080,11 +1113,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (con.tipo === 'Transporte Escolar') {
             document.getElementById('con-alunos').value = con.alunos || '';
             document.getElementById('con-municipio').value = con.municipio || '';
-            document.getElementById('con-valordiario').value = con.valorDiario || '';
-            document.getElementById('con-valorkm').value = con.valorKm || '';
+            
+            const vD = document.getElementById('con-valordiario');
+            vD.value = formatCurrency(con.valorDiario);
+            const vK = document.getElementById('con-valorkm');
+            vK.value = formatCurrency(con.valorKm);
+
             document.getElementById('con-km').value = con.km || '';
         } else if (con.tipo) {
-            document.getElementById('con-valormensal').value = con.valorMensal || '';
+            const vM = document.getElementById('con-valormensal');
+            vM.value = formatCurrency(con.valorMensal);
             document.getElementById('con-postos').value = con.postos || '';
         }
 
@@ -1132,11 +1170,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (con.tipo === 'Transporte Escolar') {
             addRow('Alunos', con.alunos);
             addRow('Município', con.municipio);
-            addRow('Valor Diário', con.valorDiario ? `R$ ${con.valorDiario}` : '-');
-            addRow('Valor do KM', con.valorKm ? `R$ ${con.valorKm}` : '-');
+            addRow('Valor Diário', formatCurrency(con.valorDiario));
+            addRow('Valor do KM', formatCurrency(con.valorKm));
             addRow('Quilometragem (KM)', con.km);
         } else if (con.tipo) {
-            addRow('Valor Mensal', con.valorMensal ? `R$ ${con.valorMensal}` : '-');
+            addRow('Valor Mensal', formatCurrency(con.valorMensal));
             addRow('Postos', con.postos);
         }
 
@@ -1368,10 +1406,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
                 </td>
                 <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" id="fat-val-${idx}" value="${data.valor || ''}" placeholder="Ex: 1234.56" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
                 </td>
             `;
             tbody.appendChild(tr);
+
+            // Add mask to dynamic faturamento value input
+            const fatInput = tr.querySelector(`#fat-val-${idx}`);
+            if(fatInput) fatInput.addEventListener('input', maskCurrency);
         });
 
         modalFat.classList.remove('form-hidden');
@@ -1393,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     abertura: document.getElementById(`fat-abert-${i}`).value,
                     situacao: document.getElementById(`fat-sit-${i}`).value,
                     pagamento: document.getElementById(`fat-pag-${i}`).value,
-                    valor: document.getElementById(`fat-val-${i}`).value
+                    valor: parseCurrency(document.getElementById(`fat-val-${i}`).value)
                 });
             }
 
