@@ -1676,8 +1676,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
                         </div>
                     </div>
-                    <a href="${a.data}" download="${a.name}" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); padding: 6px 12px; font-size: 12px; text-decoration: none;">
-                        <i class='bx bx-download'></i> Baixar
+                    <a href="${a.data}" target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                        <i class='bx bx-show'></i> Visualizar
                     </a>
                 `;
                 container.appendChild(el);

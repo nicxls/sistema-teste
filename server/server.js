@@ -6,6 +6,19 @@ const { Server } = require('socket.io'); // Socket.IO
 require('dotenv').config();
 const db = require('./db');
 
+// Auto-Migration: Garante que a coluna anexos exista
+(async () => {
+    try {
+        const [columns] = await db.execute('SHOW COLUMNS FROM contratos LIKE "anexos"');
+        if (columns.length === 0) {
+            await db.execute('ALTER TABLE contratos ADD COLUMN anexos LONGTEXT');
+            console.log('Coluna "anexos" adicionada à tabela "contratos".');
+        }
+    } catch (err) {
+        console.error('Erro na migração:', err);
+    }
+})();
+
 const app = express();
 const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
 const io = new Server(server, {
@@ -293,14 +306,14 @@ app.post('/api/contratos', async (req, res) => {
         const [result] = await db.execute(
             `INSERT INTO contratos (
                 numero, proa, lote, cre, tipo, empresa_id, periodo_inicial, periodo_final, 
-                situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos, anexos
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
                 parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
                 data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
                 parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, data.postos || null
+                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
             ]
         );
         notifyUpdate();
@@ -318,14 +331,14 @@ app.put('/api/contratos/:id', async (req, res) => {
             `UPDATE contratos SET 
                 numero=?, proa=?, lote=?, cre=?, tipo=?, empresa_id=?, periodo_inicial=?, 
                 periodo_final=?, situacao=?, gestor=?, alunos=?, municipio=?, valor_diario=?, 
-                valor_km=?, km=?, valor_mensal=?, postos=? 
+                valor_km=?, km=?, valor_mensal=?, postos=?, anexos=? 
             WHERE id = ?`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
                 parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
                 data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
                 parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, data.postos || null, id
+                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
             ]
         );
         notifyUpdate();
