@@ -103,10 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // GLOBAL SYNC ON CLICK (Solicitado pelo Usuário)
     // ==========================================
     document.addEventListener('click', (e) => {
-        // Se clicar em qualquer botão ou item de menu, sincroniza dados silenciosamente
+        // Se clicar em qualquer botão ou em qualquer item dentro da sidebar (incluindo ícones e links)
         if (e.target.closest('button') || e.target.closest('.sidebar-menu li')) {
             if (localStorage.getItem('currentUser') && selectedSystem) {
-                console.log('Ação detectada. Sincronizando dados do servidor...');
+                console.log('Ação detectada em menu/botão. Sincronizando dados...');
                 fetchAllData().then(() => {
                     loadDashboardStats();
                     loadEmpresasTable();
@@ -195,8 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function initAuthSystem() {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (currentUser) {
+            // Se já temos o usuário, garantimos que o login suma e aplicamos o login
+            document.getElementById('login-container').style.display = 'none';
             applyLogin(currentUser);
         } else {
+            // Só mostramos o login se NÃO houver usuário
             showLoginScreen();
         }
         setupAuthEvents();
@@ -205,6 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function showLoginScreen() {
         document.getElementById('login-container').style.display = 'flex';
         document.getElementById('app-container').style.display = 'none';
+        const selectionContainer = document.getElementById('system-selection-container');
+        if (selectionContainer) selectionContainer.style.display = 'none';
         document.body.className = '';
     }
 
