@@ -252,7 +252,13 @@ app.post('/api/empresas', async (req, res) => {
 
 app.put('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { razao, cnpj, email, telefone } = req.body;
+    const { razao, cnpj, email, telefone, userRole } = req.body;
+    
+    // Proteção básica no backend
+    if (userRole === 'usuario') {
+        return res.status(403).json({ error: 'Acesso negado. Usuários não podem editar empresas.' });
+    }
+    
     try {
         await db.execute(
             'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
@@ -270,6 +276,13 @@ app.put('/api/empresas/:id', async (req, res) => {
 
 app.delete('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
+    const { userRole } = req.query; // Pega o role por query no delete
+    
+    // Proteção básica no backend
+    if (userRole === 'usuario') {
+        return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
+    }
+    
     try {
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
         notifyUpdate();

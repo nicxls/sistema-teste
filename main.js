@@ -184,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 periodoFinal: c.periodo_final ? c.periodo_final.substring(0, 10) : '',
                 valorDiario: c.valor_diario,
                 valorKm: c.valor_km,
-                valorMensal: c.valor_mensal
+                valorMensal: c.valor_mensal,
+                anexos: typeof c.anexos === 'string' ? JSON.parse(c.anexos || '[]') : (c.anexos || [])
             }));
 
             cachedPostos = await posRes.json();
@@ -1138,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(empresaData)
+                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role })
             });
 
             const data = await response.json();
@@ -1202,8 +1203,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <i class='bx bx-edit' style="font-size: 18px; color: #f59e0b; cursor: pointer;" onclick="editEmpresa('${emp.id}')" title="Editar"></i>
-                    <i class='bx bx-trash' style="font-size: 18px; color: #ef4444; cursor: pointer;" onclick="deleteEmpresa('${emp.id}')" title="Excluir"></i>
+                    <i class='bx bx-edit admin-only' style="font-size: 18px; color: #f59e0b; cursor: pointer;" onclick="editEmpresa('${emp.id}')" title="Editar"></i>
+                    <i class='bx bx-trash admin-only' style="font-size: 18px; color: #ef4444; cursor: pointer;" onclick="deleteEmpresa('${emp.id}')" title="Excluir"></i>
                 </div>
             `;
             container.appendChild(item);
@@ -1261,7 +1262,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteEmpresa = async function (id) {
         if (confirm('Tem certeza que deseja excluir esta empresa?')) {
             try {
-                await fetch(`${API_URL}/empresas/${id}`, { method: 'DELETE' });
+                const userRole = JSON.parse(localStorage.getItem('currentUser'))?.role;
+                await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadEmpresasTable();
                 populateEmpresasSelect();
