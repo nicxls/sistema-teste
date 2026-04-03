@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // INITIALIZATION & STATE
     // ==========================================
-    const API_URL = 'http://76.13.165.221:3000/api';
+    const API_URL = '/api';
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
