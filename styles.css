@@ -766,38 +766,65 @@ body.role-admin .master-only {
     display: none !important;
 }
 
-/* Login Container */
+/* Login & Auth - Modern Glassmorphism Redesign */
 #login-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: var(--bg-color);
-    background-image: 
-        radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.05) 0%, transparent 50%);
+    background-image: url('modern_corporate_login_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    flex-direction: column;
+    padding: 20px;
+}
+
+#login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.7) 0%, rgba(15, 23, 42, 0.4) 100%);
+    z-index: 1;
 }
 
 .login-box {
-    background: #ffffff;
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     width: 100%;
-    max-width: 400px;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    max-width: 420px;
+    padding: 48px;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     text-align: center;
-    border: 1px solid #eaeaea;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: loginFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 [data-theme="dark"] .login-box {
-    background: var(--card-bg);
-    border-color: var(--border-color);
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes loginFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .login-logo {
@@ -828,54 +855,81 @@ body.role-admin .master-only {
 
 .login-box input {
     width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 13px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    font-size: 14px;
     outline: none;
-    background: var(--bg-color);
+    background: rgba(255, 255, 255, 0.8);
     color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .login-box input {
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
 .login-box input:focus {
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    background: #ffffff;
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .login-box input:focus {
+    background: rgba(15, 23, 42, 0.8);
 }
 
 .login-btn,
 .login-outline-btn {
     width: 100%;
-    padding: 12px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 600;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
     border: none;
+    font-family: 'Outfit', sans-serif;
 }
 
 .login-btn {
-    background: var(--primary-color);
+    background: var(--primary-gradient);
     color: #fff;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.5);
 }
 
 .login-btn:hover {
-    background: var(--primary-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px -6px rgba(37, 99, 235, 0.6);
 }
 
 .login-outline-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .login-outline-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 
 .login-outline-btn:hover {
-    background: rgba(67, 97, 238, 0.05);
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .login-outline-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .login-divider {

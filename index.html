@@ -18,18 +18,24 @@
     <!-- Login Screen -->
     <div id="login-container">
         <div class="login-box" id="login-form-box">
-            <div class="login-logo"><i class='bx bx-building-house'></i></div>
-            <h2>Gestão de Contratos DSE</h2>
-            <p class="subtitle">Faça login para acessar o sistema</p>
+            <div class="login-logo" style="background: var(--primary-gradient); width: 64px; height: 64px; font-size: 32px;"><i class='bx bx-shield-quarter'></i></div>
+            <h2 style="font-family: 'Outfit', sans-serif; font-size: 24px; letter-spacing: -0.5px;">Gestão de Contratos DSE</h2>
+            <p class="subtitle" style="font-size: 14px;">Bem-vindo! Por favor, identifique-se.</p>
 
-            <input type="text" id="login-user" placeholder="Usuário" autocomplete="off">
-            <input type="password" id="login-pass" placeholder="Senha">
-            <button class="login-btn" id="btn-do-login">Entrar no Sistema</button>
-            <button class="login-outline-btn" id="btn-show-request"><i class='bx bx-user-plus'></i> Solicitar
-                Acesso</button>
+            <div style="position: relative; margin-bottom: 5px;">
+                <input type="text" id="login-user" placeholder="Seu Usuário" autocomplete="off">
+            </div>
+            <div style="position: relative; margin-bottom: 5px;">
+                <input type="password" id="login-pass" placeholder="Sua Senha">
+            </div>
+            
+            <button class="login-btn" id="btn-do-login" style="margin-top: 10px;">Entrar no Sistema</button>
+            
+            <div class="login-divider"><span>OU</span></div>
+            
+            <button class="login-outline-btn" id="btn-show-request" style="border: none; background: transparent;"><i class='bx bx-user-plus'></i> Solicitar Acesso</button>
 
-
-            <div class="login-footer">© 2026 Gestão de Contratos DSE. Todos os direitos reservados.</div>
+            <div class="login-footer" style="position: relative; margin-top: 30px; bottom: 0;">© 2026 Sistema de Gestão DSE</div>
         </div>
 
         <div class="login-box form-hidden" id="request-form-box" style="display: none;">
