@@ -238,15 +238,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Change Password Flow (Logged User - ELITE VERSION)
-    const profileTrigger = document.getElementById('user-profile-trigger');
     const settingsModal = document.getElementById('settings-modal');
     const changePassFormElite = document.getElementById('change-password-form-elite');
 
-    if (profileTrigger) {
-        profileTrigger.addEventListener('click', () => {
-            settingsModal.classList.remove('form-hidden');
-        });
-    }
+    // Usando delegação de evento para garantir que funcione sempre
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#user-profile-trigger')) {
+            if (settingsModal) {
+                settingsModal.classList.remove('form-hidden');
+                settingsModal.style.display = 'flex'; // Garante visibilidade
+            }
+        }
+    });
 
     if (changePassFormElite) {
         changePassFormElite.addEventListener('submit', async (e) => {
