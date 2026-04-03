@@ -830,6 +830,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 links.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
+                // ABRE A TELA ALVO
+                if (typeof showView === 'function') showView(targetId);
+
 
                 // Carregamento de dados específicos
                 if (targetId === 'dashboard') loadDashboardStats();
@@ -859,11 +862,46 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         if (menuPostos) {
-            menuPostos.addEventListener('click', (e) => {
+            menuPostos.onclick = (e) => {
                 e.preventDefault();
                 const sub = document.getElementById('submenu-postos');
-                sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
-            });
+                if (sub) sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+            };
+        }
+    }
+
+    function showView(targetId) {
+        console.log(`Tentando mostrar view: ${targetId}`);
+        const views = document.querySelectorAll('.view');
+        
+        const targetView = document.getElementById(targetId);
+        if (!targetView) {
+            console.error(`ERRO: A view com ID '${targetId}' não existe no HTML.`);
+            return;
+        }
+
+        // Esconde todas as telas
+        views.forEach(v => {
+            v.style.display = 'none';
+            v.classList.remove('active-view');
+        });
+
+        // Mostra a tela alvo
+        targetView.style.display = 'block';
+        targetView.classList.add('active-view');
+        
+        // Carregamento de dados específicos por tela
+        if (targetId === 'dashboard') loadDashboardStats();
+        if (targetId === 'contratos') {
+            loadContratosTable();
+            populateEmpresasSelect();
+        }
+        if (targetId === 'empresas') loadEmpresasTable();
+        if (targetId === 'faturamentos-lista' && typeof loadFaturamentosTable === 'function') {
+            loadFaturamentosTable();
+        }
+        if (targetId === 'postos-lista' && typeof loadPostosTable === 'function') {
+            loadPostosTable();
         }
     }
 
