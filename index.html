@@ -202,6 +202,14 @@
             <div class="logout-zone">
                 <button class="logout-btn" id="btn-logout"><i class='bx bx-log-out'></i> Sair do Sistema</button>
             </div>
+            <div class="topbar-actions">
+                <button class="btn-icon" id="btn-change-password-trigger" title="Alterar Senha" style="margin-right: 10px;">
+                    <i class='bx bx-key'></i>
+                </button>
+                <button class="btn-icon" id="btn-sync-data" title="Sincronizar Dados" style="margin-right: 10px;">
+                    <i class='bx bx-sync'></i>
+                </button>
+            </div>
             <div class="theme-toggle">
                 <i class='bx bx-moon'></i>
                 <span>Modo Escuro</span>
@@ -762,6 +770,34 @@
                         Faturamentos</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal (Logged User) -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Alterar Senha</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label>Senha Atual</label>
+                    <input type="password" id="change-pass-current" required>
+                </div>
+                <div class="form-group">
+                    <label>Nova Senha</label>
+                    <input type="password" id="change-pass-new" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Nova Senha</label>
+                    <input type="password" id="change-pass-confirm" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Nova Senha</button>
+                </div>
+            </form>
         </div>
     </div>
 

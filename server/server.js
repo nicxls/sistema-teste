@@ -29,6 +29,62 @@ const notifyUpdate = () => {
 // AUTHENTICATION & USERS
 // ==========================================
 
+// --- AUTHENTICATION ROUTES ---
+
+// Change Password (Logged User)
+app.post('/api/auth/change-password', async (req, res) => {
+    const { usuario, senhaAtual, novaSenha } = req.body;
+    try {
+        const [users] = await db.execute('SELECT * FROM usuarios WHERE usuario = ? AND senha = ?', [usuario, senhaAtual]);
+        if (users.length === 0) return res.status(401).json({ error: 'Senha atual incorreta' });
+        
+        await db.execute('UPDATE usuarios SET senha = ? WHERE usuario = ?', [novaSenha, usuario]);
+        res.json({ message: 'Senha alterada com sucesso!' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Forgot Password Request (Creates a "Reset Request")
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const { usuario, email } = req.body;
+    try {
+        // Find user first
+        const [users] = await db.execute('SELECT * FROM usuarios WHERE usuario = ? AND email = ?', [usuario, email]);
+        if (users.length === 0) return res.status(404).json({ error: 'Usuário ou e-box não encontrados' });
+        
+        // Create request in 'acessos' with status 'reset_pendente'
+        await db.execute('INSERT INTO acessos (usuario, email, senha, perfil, status) VALUES (?, ?, ?, ?, ?)', 
+            [usuario, email, 'SOLICITACA_RESET', users[0].perfil, 'reset_pendente']);
+        
+        notifyUpdate();
+        res.json({ message: 'Solicitação enviada! O Administrador irá resetar sua senha em breve.' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin Reset Password
+app.put('/api/admin/reset-password', async (req, res) => {
+    const { id, novaSenha, solicitacaoId } = req.body;
+    try {
+        const [users] = await db.execute('SELECT * FROM usuarios WHERE id = ?', [id]);
+        if (users.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+        
+        await db.execute('UPDATE usuarios SET senha = ? WHERE id = ?', [novaSenha, id]);
+        
+        // Remove or update the request if exists
+        if (solicitacaoId) {
+            await db.execute('DELETE FROM acessos WHERE id = ?', [solicitacaoId]);
+        }
+        
+        notifyUpdate();
+        res.json({ message: 'Senha resetada pelo Administrador com sucesso!' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Login
 app.post('/api/login', async (req, res) => {
     const { usuario, senha } = req.body;

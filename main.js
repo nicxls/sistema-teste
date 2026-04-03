@@ -196,6 +196,108 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // AUTHENTICATION SYSTEM
     // ==========================================
+    
+    // ==========================================
+    // PASSWORD MANAGEMENT LOGIC
+    // ==========================================
+    
+    // Forgot Password Flow
+    const forgotLink = document.getElementById('link-forgot-password');
+    const forgotModal = document.getElementById('forgot-password-modal');
+    const forgotForm = document.getElementById('forgot-password-form');
+
+    if (forgotLink) {
+        forgotLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            forgotModal.style.display = 'block';
+        });
+    }
+
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usuario = document.getElementById('forgot-user').value;
+            const email = document.getElementById('forgot-email').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, email })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                
+                showToast(data.message, 'success');
+                forgotModal.style.display = 'none';
+                forgotForm.reset();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+    }
+
+    // Change Password Flow (Logged User)
+    const changePassTrigger = document.getElementById('btn-change-password-trigger');
+    const changePassModal = document.getElementById('change-password-modal');
+    const changePassForm = document.getElementById('change-password-form');
+
+    if (changePassTrigger) {
+        changePassTrigger.addEventListener('click', () => {
+            changePassModal.style.display = 'block';
+        });
+    }
+
+    if (changePassForm) {
+        changePassForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senhaAtual = document.getElementById('change-pass-current').value;
+            const novaSenha = document.getElementById('change-pass-new').value;
+            const confirmarSenha = document.getElementById('change-pass-confirm').value;
+            
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) return;
+
+            if (novaSenha !== confirmarSenha) {
+                return showToast('As senhas não coincidem!', 'error');
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        usuario: currentUser.usuario, 
+                        senhaAtual, 
+                        novaSenha 
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                
+                showToast(data.message, 'success');
+                changePassModal.style.display = 'none';
+                changePassForm.reset();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+    }
+
+    // Modal Close Logic
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.style.display = 'none';
+        }
+    });
+
+    document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = btn.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        });
+    });
+
     function initAuthSystem() {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (currentUser) {
@@ -492,6 +594,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum dado encontrado.</td></tr>`;
                 return;
             }
+
+            function renderAcessosTable(acessos) {
+        const tbody = document.querySelector('#table-acessos tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = acessos.map(a => {
+            const isReset = a.status === 'reset_pendente';
+            const statusLabel = isReset ? '<span class="status-badge status-warning">Reset de Senha</span>' : `<span class="status-badge status-info">${a.status}</span>`;
+            
+            return `
+                <tr>
+                    <td>${a.usuario}</td>
+                    <td>${a.email}</td>
+                    <td>${a.perfil}</td>
+                    <td>${statusLabel}</td>
+                    <td>
+                        <div class="table-actions">
+                            ${isReset ? `
+                                <button class="btn-icon btn-edit" onclick="handleResetPassword(${a.id}, '${a.usuario}')" title="Definir Nova Senha">
+                                    <i class='bx bx-refresh'></i>
+                                </button>
+                            ` : `
+                                <button class="btn-icon btn-edit" onclick="approveAcesso(${a.id})" title="Aprovar">
+                                    <i class='bx bx-check'></i>
+                                </button>
+                            `}
+                            <button class="btn-icon btn-delete" onclick="deleteAcesso(${a.id})" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Admin Reset Function
+    window.handleResetPassword = async function(solicitationId, username) {
+        const novaSenha = prompt(`Digite a NOVA SENHA para o usuário "${username}":`);
+        if (!novaSenha) return;
+
+        try {
+            // First, find the user ID by username (we'll do this in a single route)
+            const usersRes = await fetch(`${API_URL}/usuarios?t=${Date.now()}`);
+            const allUsers = await usersRes.json();
+            const targetUser = allUsers.find(u => u.usuario === username);
+            
+            if (!targetUser) throw new Error('Usuário original não encontrado no banco.');
+
+            const res = await fetch(`${API_URL}/admin/reset-password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: targetUser.id, 
+                    novaSenha, 
+                    solicitacaoId: solicitationId 
+                })
+            });
+            
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            
+            showToast('Senha redefinida com sucesso!', 'success');
+            fetchAcessos(); // Refresh table
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    };
 
             // Solicitações Pendentes
             reqs.forEach(req => {
