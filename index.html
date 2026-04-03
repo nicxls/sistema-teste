@@ -687,65 +687,46 @@
                 </div>
                 <div id="modal-body" class="detail-container">
                     <!-- Injected via JS -->
-                </div>
-            </div>
-        </div>
-
-
-    </div>
-
-    <!-- Modal de Faturamento de 12 Meses -->
-    <div id="modal-faturamentos" class="modal-overlay form-hidden">
+             <!-- Modal Detalhe Faturamento Mensal -->
+    <div id="modal-faturamentos" class="modal-overlay form-hidden" style="z-index: 9999;">
         <div class="modal-content"
-            style="max-width: 900px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
+            style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
             <div
-                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
                 <h3 id="modal-fat-title"
-                    style="font-size: 16px; margin: 0; font-weight: 600; color: var(--text-color);">Gerenciar
+                    style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar
                     Faturamentos 2025 - Contrato XYZ</h3>
-                <button id="btn-close-fat-modal" class="btn-icon"><i class='bx bx-x'
-                        style="font-size: 24px;"></i></button>
+                <button id="btn-close-fat-modal" class="btn-icon" style="color: var(--text-light);"><i class='bx bx-x'
+                        style="font-size: 28px;"></i></button>
             </div>
 
-            <div style="padding: 0; overflow-y: auto; max-height: 60vh;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead style="position: sticky; top: 0; background: var(--bg-color); z-index: 10;">
+            <div style="padding: 0; overflow-y: auto; max-height: 70vh; background: var(--card-bg);">
+                <table class="fat-planilha" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                    <thead style="position: sticky; top: 0; background: var(--bg-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <tr>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                MÊS</th>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                Nº PROCESSO</th>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                DATA ABERTURA</th>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                SITUAÇÃO</th>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                DATA PAGAMENTO</th>
-                            <th
-                                style="padding: 12px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
-                                VALOR PAGO (R$)</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">Nº PROCESSO</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
+                            <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
                         </tr>
                     </thead>
                     <tbody id="fat-grid-body">
-                        <!-- Gerado via JS -->
+                        <!-- Gerado via JS de Janeiro a Dezembro -->
                     </tbody>
                 </table>
             </div>
 
             <div
-                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
-                <button class="btn btn-secondary" onclick="window.print()" style="background: #2b9348; color: white;">
+                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
+                <button class="btn" id="btn-relatorio-pdf" style="background: #2b9348; color: white; display: flex; align-items: center; gap: 8px;">
                     <i class='bx bx-download'></i> Gerar Relatório PDF
                 </button>
                 <div style="display: flex; gap: 12px;">
-                    <button id="btn-cancel-fat" class="btn btn-secondary"
-                        style="background: transparent; border: 1px solid var(--border-color);">Cancelar</button>
-                    <button id="btn-save-fat" class="btn btn-primary admin-only" style="background: var(--primary-color);">Salvar
+                    <button id="btn-cancel-fat" class="btn"
+                        style="background: transparent; border: 1px solid var(--border-color); color: var(--text-color);">Cancelar</button>
+                    <button id="btn-save-fat" class="btn btn-primary admin-only" style="background: var(--primary-color); border: none;">Salvar
                         Faturamentos</button>
                 </div>
             </div>

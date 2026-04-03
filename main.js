@@ -2141,7 +2141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${empName}</td>
                 <td>${formatDate(con.inicio_vigencia)} até ${formatDate(con.termino_vigencia)}</td>
                 <td style="text-align: center;">
-                    <button class="btn-icon" style="color: #4361ee;" onclick="alert('Funcionalidade em desenvolvimento')">
+                    <button class="btn-icon" style="color: #4361ee;" onclick="window.openFatModal('${con.id}')">
                         <i class='bx bx-show'></i> Abrir Planilha
                     </button>
                 </td>
@@ -2176,6 +2176,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (target) target.textContent = totalPostos;
         if (targetImp) targetImp.textContent = totalImp;
-    };
+        };
+
+
+    const clsFat = () => document.getElementById('modal-faturamentos').classList.add('form-hidden');
+    document.getElementById('btn-close-fat-modal')?.addEventListener('click', clsFat);
+    document.getElementById('btn-cancel-fat')?.addEventListener('click', clsFat);
+
+    document.getElementById('btn-save-fat')?.addEventListener('click', async () => {
+        const rows = document.querySelectorAll('#fat-grid-body tr');
+        const faturamentos = [];
+
+        rows.forEach(row => {
+            const mes = row.querySelector('.process-input').dataset.mes;
+            faturamentos.push({
+                contrato_id: currentFatContratoId,
+                ano: currentFatAno,
+                mes: parseInt(mes),
+                numero_processo: row.querySelector('.process-input').value,
+                data_abertura: row.querySelector('.date-abertura').value || null,
+                situacao: row.querySelector('.status-select').value,
+                data_pagamento: row.querySelector('.date-pagamento').value || null,
+                valor_pago: parseCurrency(row.querySelector('.valor-pago-input').value)
+            });
+        });
+
+        try {
+            const resp = await fetch(`${API_URL}/faturamentos/batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ faturamentos })
+            });
+
+            if (resp.ok) {
+                showToast('Faturamentos salvos com sucesso!');
+                clsFat();
+            } else {
+                throw new Error('Erro ao salvar no servidor');
+            }
+        } catch (error) {
+            showToast('Erro ao salvar faturamentos.', 'error');
+        }
+    });
+
+    document.getElementById('btn-relatorio-pdf')?.addEventListener('click', () => {
+        window.print();
+    });
 
 });
