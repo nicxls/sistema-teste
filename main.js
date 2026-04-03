@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION & STATE
     // ==========================================
     const API_URL = '/api';
-    const SOCKET_URL = 'http://76.13.165.221:3000'; // IP da VPS para Tempo Real
+    // O SOCKET_URL agora usa o próprio domínio da Vercel como ponte (através do vercel.json)
+    const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
