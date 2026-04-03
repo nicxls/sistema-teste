@@ -1887,6 +1887,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         postosEmpresaFilter.value = uniqueEmpIds.includes(prevEmpVal) ? prevEmpVal : "";
 
+        // Atualizar options do Filtro de CRE com as CREs deste serviço
+        const uniqueCres = [...new Set(listContratos.map(c => c.cre).filter(c => c))];
+        const prevCreVal = postosCreFilter.value;
+        postosCreFilter.innerHTML = '<option value="">Todas</option>';
+        uniqueCres.sort((a, b) => {
+            const numA = parseInt((a || "").replace(/\D/g, ''), 10) || 0;
+            const numB = parseInt((b || "").replace(/\D/g, ''), 10) || 0;
+            return numA - numB;
+        }).forEach(cre => {
+            postosCreFilter.innerHTML += `<option value="${cre}">${cre.toUpperCase().includes('CRE') ? cre : 'CRE ' + cre}</option>`;
+        });
+        postosCreFilter.value = uniqueCres.includes(prevCreVal) ? prevCreVal : "";
+
         // Global dashboard metrics
         let gTotalPostos = 0;
         let gImplantados = 0;
