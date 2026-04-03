@@ -47,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let pollingInterval = null;
     function startPolling() {
         if (pollingInterval) return; 
-        console.log('Sincronização periódica iniciada (cada 5s).');
+        console.log('Sincronização periódica iniciada (cada 3s).');
         pollingInterval = setInterval(() => {
             if (localStorage.getItem('currentUser') && selectedSystem) {
                 fetchAllData();
             }
-        }, 5000); // Atualiza a cada 5 segundos para parecer "na hora"
+        }, 3000); // Atualiza a cada 3 segundos para ser quase instantâneo
     }
 
     initAuthSystem();
