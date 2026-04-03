@@ -816,37 +816,22 @@ document.addEventListener('DOMContentLoaded', () => {
        function initNavigation() {
         // Seletores robustos para capturar cliques tanto em .nav-links quanto em .sidebar-menu
         const links = document.querySelectorAll('.nav-links a[data-target], .sidebar-menu a[data-target]');
-        const views = document.querySelectorAll('.view');
-
         links.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const targetId = link.getAttribute('data-target');
+                const servico = link.getAttribute('data-servico'); // Captura o filtro (Ex: Merendeiras)
+                
                 if (!targetId) return;
 
-                console.log(`Link clicado: ${targetId}`);
+                console.log(`Link clicado: ${targetId} | Serviço: ${servico}`);
 
                 // Update active link
                 links.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
                 // ABRE A TELA ALVO
-                if (typeof showView === 'function') showView(targetId);
-
-
-                // Carregamento de dados específicos
-                if (targetId === 'dashboard') loadDashboardStats();
-                if (targetId === 'contratos') {
-                    loadContratosTable();
-                    populateEmpresasSelect();
-                }
-                if (targetId === 'empresas') loadEmpresasTable();
-                if (targetId === 'faturamentos-lista' && typeof loadFaturamentosTable === 'function') {
-                    loadFaturamentosTable();
-                }
-                if (targetId === 'postos-lista' && typeof loadPostosTable === 'function') {
-                    loadPostosTable();
-                }
+                if (typeof showView === 'function') showView(targetId, servico);
             });
         });
 
@@ -855,23 +840,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const menuPostos = document.getElementById('menu-postos');
 
         if (menuFaturamentos) {
-            menuFaturamentos.addEventListener('click', (e) => {
+            menuFaturamentos.onclick = (e) => {
                 e.preventDefault();
                 const sub = document.getElementById('submenu-faturamentos');
-                sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
-            });
+                if (sub) {
+                    const isOpen = sub.style.display === 'block';
+                    sub.style.display = isOpen ? 'none' : 'block';
+                    menuFaturamentos.querySelector('.arrow')?.classList.toggle('rotate', !isOpen);
+                }
+            };
         }
         if (menuPostos) {
             menuPostos.onclick = (e) => {
                 e.preventDefault();
                 const sub = document.getElementById('submenu-postos');
-                if (sub) sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+                if (sub) {
+                    const isOpen = sub.style.display === 'block';
+                    sub.style.display = isOpen ? 'none' : 'block';
+                    menuPostos.querySelector('.arrow')?.classList.toggle('rotate', !isOpen);
+                }
             };
         }
     }
 
-    function showView(targetId) {
-        console.log(`Tentando mostrar view: ${targetId}`);
+    function showView(targetId, servico = null) {
+        console.log(`Tentando mostrar view: ${targetId} | Filtro: ${servico}`);
         const views = document.querySelectorAll('.view');
         
         const targetView = document.getElementById(targetId);
@@ -897,11 +890,13 @@ document.addEventListener('DOMContentLoaded', () => {
             populateEmpresasSelect();
         }
         if (targetId === 'empresas') loadEmpresasTable();
+        
+        // Passa o serviço selecionado para as funções de faturamento e postos
         if (targetId === 'faturamentos-lista' && typeof loadFaturamentosTable === 'function') {
-            loadFaturamentosTable();
+            loadFaturamentosTable(servico);
         }
         if (targetId === 'postos-lista' && typeof loadPostosTable === 'function') {
-            loadPostosTable();
+            loadPostosTable(servico);
         }
     }
 
@@ -2137,5 +2132,73 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ==========================================
+    // CARREGAMENTO DE FATURAMENTOS E POSTOS
+    // ==========================================
+    window.loadFaturamentosTable = function(servico = null) {
+        const target = document.getElementById('lista-contratos-faturamentos');
+        const title = document.getElementById('fat-group-title');
+        if (!target) return;
+
+        if (title) title.textContent = servico ? `Faturamentos - ${servico}` : 'Faturamentos - Geral';
+
+        let lista = getContratos();
+        if (servico) {
+            lista = lista.filter(c => c.tipo === servico);
+        }
+
+        target.innerHTML = '';
+        if (lista.length === 0) {
+            target.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum contrato encontrado para este setor.</td></tr>';
+            return;
+        }
+
+        lista.forEach(con => {
+            const tr = document.createElement('tr');
+            const emp = getEmpresas().find(e => String(e.id) === String(con.empresa_id));
+            const empName = emp ? emp.razao_social : 'Desconhecida';
+            
+            tr.innerHTML = `
+                <td style="font-weight: 600;">${con.numero || '-'}</td>
+                <td>${empName}</td>
+                <td>${formatDate(con.inicio_vigencia)} até ${formatDate(con.termino_vigencia)}</td>
+                <td style="text-align: center;">
+                    <button class="btn-icon" style="color: #4361ee;" onclick="alert('Funcionalidade em desenvolvimento')">
+                        <i class='bx bx-show'></i> Abrir Planilha
+                    </button>
+                </td>
+            `;
+            target.appendChild(tr);
+        });
+    };
+
+    window.loadPostosTable = function(servico = null) {
+        const target = document.getElementById('card-total-postos');
+        const targetImp = document.getElementById('card-postos-implantados');
+        const title = document.getElementById('postos-group-title');
+        
+        if (title) title.textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
+
+        let lista = getContratos();
+        if (servico) {
+            lista = lista.filter(c => c.tipo === servico);
+        }
+
+        let totalPostos = 0;
+        let totalImp = 0;
+
+        lista.forEach(con => {
+            totalPostos += parseInt(con.postos) || 0;
+            // Busca postos reais implantados
+            const postosContrato = cachedPostos.filter(p => String(p.contrato_id) === String(con.id));
+            postosContrato.forEach(p => {
+                totalImp += parseInt(p.implantados) || 0;
+            });
+        });
+
+        if (target) target.textContent = totalPostos;
+        if (targetImp) targetImp.textContent = totalImp;
+    };
 
 });
