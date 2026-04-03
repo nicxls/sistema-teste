@@ -99,6 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // GLOBAL SYNC ON CLICK (Solicitado pelo Usuário)
+    // ==========================================
+    document.addEventListener('click', (e) => {
+        // Se clicar em qualquer botão ou item de menu, sincroniza dados silenciosamente
+        if (e.target.closest('button') || e.target.closest('.sidebar-menu li')) {
+            if (localStorage.getItem('currentUser') && selectedSystem) {
+                console.log('Ação detectada. Sincronizando dados do servidor...');
+                fetchAllData().then(() => {
+                    loadDashboardStats();
+                    loadEmpresasTable();
+                    loadContratosTable();
+                });
+            }
+        }
+    });
+
     async function validateSession() {
         const user = JSON.parse(localStorage.getItem('currentUser'));
         if (!user) return;
@@ -130,10 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAllData() {
         try {
+            // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
+            const time = Date.now();
             const [empRes, conRes, posRes] = await Promise.all([
-                fetch(`${API_URL}/empresas`),
-                fetch(`${API_URL}/contratos?system=${selectedSystem}`),
-                fetch(`${API_URL}/postos`)
+                fetch(`${API_URL}/empresas?t=${time}`),
+                fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
+                fetch(`${API_URL}/postos?t=${time}`)
             ]);
             cachedEmpresas = await empRes.json();
             
