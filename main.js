@@ -870,15 +870,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const emp = empresas.find(e => String(e.id) === String(id));
         if (!emp) return;
 
-        let html = '';
-        const addRow = (label, val) => {
-            html += `<div class="details-row"><strong>${label}</strong><span>${val || '-'}</span></div>`;
-        }
-
-        addRow('Razão Social', emp.razao);
-        addRow('CNPJ', emp.cnpj);
-        addRow('E-mail', emp.email);
-        addRow('Telefone', emp.telefone);
+        let html = `
+            <div class="detail-section">
+                <div class="detail-section-title"><i class='bx bx-building'></i> Dados da Empresa</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Razão Social</span>
+                        <span class="detail-value">${emp.razao || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">CNPJ</span>
+                        <span class="detail-value">${emp.cnpj || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">E-mail</span>
+                        <span class="detail-value">${emp.email || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Telefone</span>
+                        <span class="detail-value">${emp.telefone || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
 
         modalBody.innerHTML = html;
         modalView.classList.remove('form-hidden');
@@ -1173,33 +1187,81 @@ document.addEventListener('DOMContentLoaded', () => {
         const empresas = getEmpresas();
         const emp = empresas.find(e => String(e.id) === String(con.empresaId));
 
-        let html = '';
-        const addRow = (label, val) => {
-            html += `<div class="details-row"><strong>${label}</strong><span>${val || '-'}</span></div>`;
-        }
+        const pIni = con.periodoInicial ? con.periodoInicial.split('-').reverse().join('/') : '-';
+        const pFin = con.periodoFinal ? con.periodoFinal.split('-').reverse().join('/') : '-';
 
-        addRow('Número do Contrato', con.numero);
-        addRow('Empresa', emp ? emp.razao : 'Desconhecida');
-        addRow('Tipo de Serviço', con.tipo);
-        addRow('PROA', con.proa);
-        addRow('Lote', con.lote);
-        addRow('CRE', con.cre);
+        let html = `
+            <!-- Seção 1: Identificação -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class='bx bx-info-circle'></i> Informações Gerais</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Número do Contrato</span>
+                        <span class="detail-value">${con.numero || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Empresa</span>
+                        <span class="detail-value">${emp ? emp.razao : 'Desconhecida'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tipo de Serviço</span>
+                        <span class="detail-value">${con.tipo || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">PROA</span>
+                        <span class="detail-value">${con.proa || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Lote</span>
+                        <span class="detail-value">${con.lote || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">CRE</span>
+                        <span class="detail-value">${con.cre || '-'}</span>
+                    </div>
+                </div>
+            </div>
 
-        if (con.tipo === 'Transporte Escolar') {
-            addRow('Alunos', con.alunos);
-            addRow('Município', con.municipio);
-            addRow('Valor Diário', formatCurrency(con.valorDiario));
-            addRow('Valor do KM', formatCurrency(con.valorKm));
-            addRow('Quilometragem (KM)', con.km);
-        } else if (con.tipo) {
-            addRow('Valor Mensal', formatCurrency(con.valorMensal));
-            addRow('Postos', con.postos);
-        }
+            <!-- Seção 2: Financeiro e Operacional -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class='bx bx-dollar-circle'></i> Valores e Postos</div>
+                <div class="detail-grid">
+                    ${con.tipo === 'Transporte Escolar' ? `
+                        <div class="detail-item"><span class="detail-label">Alunos</span><span class="detail-value">${con.alunos || '-'}</span></div>
+                        <div class="detail-item"><span class="detail-label">Município</span><span class="detail-value">${con.municipio || '-'}</span></div>
+                        <div class="detail-item"><span class="detail-label">Valor Diário</span><span class="detail-value">${formatCurrency(con.valorDiario)}</span></div>
+                        <div class="detail-item"><span class="detail-label">Valor do KM</span><span class="detail-value">${formatCurrency(con.valorKm)}</span></div>
+                        <div class="detail-item"><span class="detail-label">Quilometragem (KM)</span><span class="detail-value">${con.km || '-'}</span></div>
+                    ` : `
+                        <div class="detail-item"><span class="detail-label">Valor Mensal</span><span class="detail-value">${formatCurrency(con.valorMensal)}</span></div>
+                        <div class="detail-item"><span class="detail-label">Postos</span><span class="detail-value">${con.postos || '-'}</span></div>
+                    `}
+                </div>
+            </div>
 
-        addRow('Período Inicial', con.periodoInicial ? con.periodoInicial.split('-').reverse().join('/') : '-');
-        addRow('Período Final', con.periodoFinal ? con.periodoFinal.split('-').reverse().join('/') : '-');
-        addRow('Situação', con.situacao);
-        addRow('Gestor', con.gestor);
+            <!-- Seção 3: Vigência e Gestão -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class='bx bx-calendar-check'></i> Vigência e Gestão</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Início de Vigência</span>
+                        <span class="detail-value">${pIni}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Término de Vigência</span>
+                        <span class="detail-value">${pFin}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Situação</span>
+                        <span class="detail-value" style="color: ${con.situacao === 'Ativo' ? 'var(--success-color)' : 'var(--danger-color)'}">${con.situacao || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Gestor</span>
+                        <span class="detail-value">${con.gestor || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
 
         modalBody.innerHTML = html;
         modalView.classList.remove('form-hidden');

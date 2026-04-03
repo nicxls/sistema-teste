@@ -684,16 +684,19 @@
         <!-- Toast Notification Container -->
         <div id="toast-container" class="toast-container"></div>
 
-        <!-- Modal Base for View -->
-        <div id="generic-modal" class="modal-overlay form-hidden">
-            <div class="modal-content card-form">
-                <div class="modal-header header-section"
-                    style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                    <h3 style="margin: 0; border: none; padding: 0;">Detalhes do Registro</h3>
-                    <button class="btn-icon" id="btn-close-modal"><i class='bx bx-x'
-                            style="font-size: 24px;"></i></button>
+        <!-- Modal Base for View Details -->
+        <div id="generic-modal" class="modal-overlay form-hidden" style="z-index: 10001;">
+            <div class="modal-content" style="max-width: 800px; width: 95%; background: var(--card-bg); padding: 32px; border-radius: 24px; position: relative; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                            <i class='bx bx-search-alt'></i>
+                        </div>
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Detalhes do Registro</h2>
+                    </div>
+                    <button class="btn-icon" id="btn-close-modal" style="background: var(--secondary-color); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;"><i class='bx bx-x' style="font-size: 24px;"></i></button>
                 </div>
-                <div id="modal-body" class="modal-body">
+                <div id="modal-body" class="detail-container">
                     <!-- Injected via JS -->
                 </div>
             </div>
