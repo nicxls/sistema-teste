@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             socket.on('connect_error', (error) => {
-                console.warn('Conexão via ponte falhou. Usando atualização programada (5s).');
+                console.warn('Conexão via ponte falhou. Usando atualização programada (3s).');
                 startPolling();
                 socket.disconnect();
             });
@@ -236,9 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update topbar with system name
         const topbarH2 = document.querySelector('.topbar h2');
-        const systemLabel = selectedSystem === 'transporte' ? 'Transporte Escolar' : 'Mão de Obra';
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        topbarH2.innerHTML = `Bem-vindo, ${user.usuario} <span style="margin-left: 10px; font-size: 14px; color: var(--primary-color); font-weight: 400;">(${systemLabel})</span>`;
+        if (topbarH2) {
+            const systemLabel = selectedSystem === 'transporte' ? 'Transporte Escolar' : 'Mão de Obra';
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const username = user ? (user.usuario || user.user || 'Usuário') : 'Usuário';
+            topbarH2.innerHTML = `Bem-vindo, ${username} <span style="margin-left: 10px; font-size: 14px; color: var(--primary-color); font-weight: 400;">(${systemLabel})</span>`;
+        }
     }
 
     function initSystemSelection() {
