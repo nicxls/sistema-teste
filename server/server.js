@@ -32,6 +32,21 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Verificar se usuário ainda existe (sessão ativa)
+app.get('/api/auth/verify', async (req, res) => {
+    const { usuario } = req.query;
+    try {
+        const [rows] = await db.execute('SELECT usuario, role FROM usuarios WHERE usuario = ?', [usuario]);
+        if (rows.length > 0) {
+            res.json({ success: true, user: rows[0] });
+        } else {
+            res.status(401).json({ success: false, message: 'Usuário não encontrado ou removido.' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Solicitar Acesso
 app.post('/api/acessos', async (req, res) => {
     let { usuario, email, senha } = req.body;

@@ -15,7 +15,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initSystemSelection();
     
     if (selectedSystem) {
+        validateSession();
         loadAppData();
+    }
+
+    async function validateSession() {
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        if (!user) return;
+        try {
+            const res = await fetch(`${API_URL}/auth/verify?usuario=${user.usuario || user.user}`);
+            if (!res.ok) {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('selectedSystem');
+                window.location.reload();
+            }
+        } catch (e) {}
     }
 
     async function loadAppData() {
@@ -761,19 +775,19 @@ document.addEventListener('DOMContentLoaded', () => {
         empresas.forEach((emp, index) => {
             const item = document.createElement('div');
             // Remove full border bottoms or make it very subtle if any. The image shows none or very light.
-            const borderBottom = index === empresas.length - 1 ? 'none' : '1px solid rgba(0,0,0,0.04)';
+            const borderBottom = index === empresas.length - 1 ? 'none' : '1px solid var(--border-color)';
             item.style = `display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: ${borderBottom}; background: transparent; font-family: 'Inter', sans-serif;`;
 
             item.innerHTML = `
                 <div style="display: flex; gap: 16px; align-items: flex-start;">
-                    <div style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: #e0e7ff; color: #4361ee; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-top: 2px;">
+                    <div style="width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: rgba(37, 99, 235, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-top: 2px;">
                         <i class='bx bx-building'></i>
                     </div>
                     <div style="display: flex; flex-direction: column;">
-                        <span style="font-weight: 600; font-size: 14px; color: #1e293b; margin-bottom: 2px;">${emp.razao || 'Empresa Desconhecida'}</span>
-                        <span style="color: #64748b; font-size: 12.5px; line-height: 1.5;">CNPJ: ${emp.cnpj || '-'}</span>
-                        <span style="color: #64748b; font-size: 12.5px; line-height: 1.5;">Email: ${emp.email || '-'}</span>
-                        <span style="color: #64748b; font-size: 12.5px; line-height: 1.5;">Endereço: 122, Telefone: ${emp.telefone || '-'}</span>
+                        <span style="font-weight: 600; font-size: 14px; color: var(--text-color); margin-bottom: 2px;">${emp.razao || 'Empresa Desconhecida'}</span>
+                        <span style="color: var(--text-light); font-size: 12.5px; line-height: 1.5;">CNPJ: ${emp.cnpj || '-'}</span>
+                        <span style="color: var(--text-light); font-size: 12.5px; line-height: 1.5;">Email: ${emp.email || '-'}</span>
+                        <span style="color: var(--text-light); font-size: 12.5px; line-height: 1.5;">Telefone: ${emp.telefone || '-'}</span>
                     </div>
                 </div>
                 <div style="display: flex; gap: 12px; align-items: center;">
