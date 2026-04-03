@@ -1036,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Filtros
     const inputsFiltro = [
-        'filtro-processo', 'filtro-municipio', 'filtro-cre',
+        'filtro-processo', 'filtro-tipo', 'filtro-cre',
         'filtro-contrato', 'filtro-empresa', 'filtro-situacao'
     ].map(id => document.getElementById(id));
 
@@ -1063,8 +1063,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchProcesso = con.proa ? con.proa.toLowerCase().includes(vPro) : (vPro === '' || true); // always evaluate
             if (vPro && (!con.proa || !con.proa.toLowerCase().includes(vPro))) return false;
 
-            const vMun = (document.getElementById('filtro-municipio').value || '').toLowerCase();
-            if (vMun && (!con.municipio || !con.municipio.toLowerCase().includes(vMun))) return false;
+            const vTip = (document.getElementById('filtro-tipo').value || '').toLowerCase();
+            if (vTip && (!con.tipo || !con.tipo.toLowerCase().includes(vTip))) return false;
 
             const vCre = (document.getElementById('filtro-cre').value || '').toLowerCase();
             if (vCre && (!con.cre || !con.cre.toLowerCase().includes(vCre))) return false;
