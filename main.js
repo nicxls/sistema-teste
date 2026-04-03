@@ -813,8 +813,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // NAVIGATION (SPA)
     // ==========================================
-    function initNavigation() {
-        const links = document.querySelectorAll('.sidebar-menu a[data-target]');
+       function initNavigation() {
+        // Seletores robustos para capturar cliques tanto em .nav-links quanto em .sidebar-menu
+        const links = document.querySelectorAll('.nav-links a[data-target], .sidebar-menu a[data-target]');
         const views = document.querySelectorAll('.view');
 
         links.forEach(link => {
@@ -823,15 +824,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const targetId = link.getAttribute('data-target');
                 if (!targetId) return;
 
+                console.log(`Link clicado: ${targetId}`);
+
                 // Update active link
                 links.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
-                // Update view (SPA)
-                views.forEach(v => {
-                    v.style.display = (v.id === targetId) ? 'block' : 'none';
-                    v.classList.toggle('active-view', v.id === targetId);
-                });
 
                 // Carregamento de dados específicos
                 if (targetId === 'dashboard') loadDashboardStats();
