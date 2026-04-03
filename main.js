@@ -4,10 +4,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION & STATE
     // ==========================================
     const API_URL = '/api';
+    const SOCKET_URL = 'http://76.13.165.221:3000'; // IP da VPS para Tempo Real
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
     let cachedPostos = [];
+
+    // Conectar ao servidor em tempo real (Socket.IO)
+    let socket;
+    if (typeof io !== 'undefined') {
+        socket = io(SOCKET_URL);
+        socket.on('data-updated', () => {
+            console.log('Dados atualizados no servidor. Sincronizando...');
+            fetchAllData();
+            showToast('Dados atualizados em tempo real.', 'success');
+        });
+    }
 
     initAuthSystem();
     initTheme();
@@ -55,14 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
     async function validateSession() {
         const user = JSON.parse(localStorage.getItem('currentUser'));
         if (!user) return;
+        
+        const username = user.usuario || user.user;
+        if (!username) return;
+
         try {
-            const res = await fetch(`${API_URL}/auth/verify?usuario=${user.usuario || user.user}`);
+            const res = await fetch(`${API_URL}/auth/verify?usuario=${username}`);
             if (!res.ok) {
+                // Sessão inválida ou usuário removido
                 localStorage.removeItem('currentUser');
                 localStorage.removeItem('selectedSystem');
                 window.location.reload();
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Erro ao validar sessão, mas mantendo login local:', e);
+        }
     }
 
     async function loadAppData() {
@@ -526,6 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateThemeIcons('dark');
         } else {
             updateThemeIcons('light');
+        }
+        
+        // Garante que o container de login esteja oculto se o currentUser existir
+        // Isso evita o flash de login no F5
+        if (localStorage.getItem('currentUser')) {
+            document.getElementById('login-container').style.display = 'none';
         }
     }
 

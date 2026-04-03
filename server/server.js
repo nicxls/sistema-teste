@@ -1,14 +1,29 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const http = require('http'); // Necessário para o Socket.IO
+const { Server } = require('socket.io'); // Socket.IO
 require('dotenv').config();
 const db = require('./db');
 
 const app = express();
+const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Permite conexões de qualquer origem (Vercel, etc)
+        methods: ["GET", "POST", "PUT", "DELETE"]
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// Função helper para notificar todos os clientes via WebSocket
+const notifyUpdate = () => {
+    io.emit('data-updated');
+};
 
 // ==========================================
 // AUTHENTICATION & USERS
@@ -53,13 +68,11 @@ app.post('/api/acessos', async (req, res) => {
     usuario = usuario.trim();
     
     try {
-        // 1. Verifica se usuário já está na tabela definitiva
         const [existingUser] = await db.execute('SELECT id FROM usuarios WHERE TRIM(usuario) = ?', [usuario]);
         if (existingUser.length > 0) {
             return res.status(409).json({ message: 'Usuário já cadastrado.' });
         }
 
-        // 2. Verifica se já existe uma solicitação (independente do status, para evitar spam ou duplicação)
         const [existingReq] = await db.execute('SELECT id, status FROM solicitacoes_acesso WHERE TRIM(usuario) = ?', [usuario]);
         if (existingReq.length > 0) {
             return res.status(409).json({ message: 'Usuário já cadastrado.' });
@@ -69,11 +82,9 @@ app.post('/api/acessos', async (req, res) => {
             'INSERT INTO solicitacoes_acesso (usuario, email, senha) VALUES (?, ?, ?)',
             [usuario, email, senha]
         );
+        notifyUpdate(); // Notifica admins que há nova solicitação
         res.json({ success: true, message: 'Solicitação enviada.' });
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ message: 'Usuário já cadastrado.' });
-        }
         res.status(500).json({ error: error.message });
     }
 });
@@ -92,7 +103,7 @@ app.get('/api/admin/acessos', async (req, res) => {
 // Decidir Solicitação
 app.post('/api/admin/acessos/:id/decide', async (req, res) => {
     const { id } = req.params;
-    const { acao, role } = req.body; // 'aceitar' ou 'recusar', perfil: 'usuario' ou 'admin'
+    const { acao, role } = req.body;
     try {
         if (acao === 'aceitar') {
             const [rows] = await db.execute('SELECT * FROM solicitacoes_acesso WHERE id = ?', [id]);
@@ -108,6 +119,7 @@ app.post('/api/admin/acessos/:id/decide', async (req, res) => {
         } else {
             await db.execute('UPDATE solicitacoes_acesso SET status = "recusado" WHERE id = ?', [id]);
         }
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -120,6 +132,7 @@ app.put('/api/admin/usuarios/:usuario/role', async (req, res) => {
     const { role } = req.body;
     try {
         await db.execute('UPDATE usuarios SET role = ? WHERE usuario = ? AND role != "master"', [role, usuario]);
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -131,6 +144,7 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
     const { usuario } = req.params;
     try {
         await db.execute('DELETE FROM usuarios WHERE usuario = ? AND role != "master"', [usuario]);
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -157,6 +171,7 @@ app.post('/api/empresas', async (req, res) => {
             'INSERT INTO empresas (razao, cnpj, email, telefone) VALUES (?, ?, ?, ?)',
             [razao, cnpj, email, telefone]
         );
+        notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -174,6 +189,7 @@ app.put('/api/empresas/:id', async (req, res) => {
             'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
             [razao, cnpj, email, telefone, id]
         );
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
@@ -187,6 +203,7 @@ app.delete('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -198,17 +215,15 @@ app.delete('/api/empresas/:id', async (req, res) => {
 // ==========================================
 
 app.get('/api/contratos', async (req, res) => {
-    const { system } = req.query; // 'transporte' ou 'mao-de-obra'
+    const { system } = req.query;
     try {
         let query = 'SELECT * FROM contratos';
         let params = [];
-        
         if (system === 'transporte') {
             query += ' WHERE tipo = "Transporte Escolar"';
         } else if (system === 'mao-de-obra') {
             query += ' WHERE tipo IN ("Merendeiras", "Limpeza", "Vigilância", "Porteiros")';
         }
-        
         const [rows] = await db.execute(query, params);
         res.json(rows);
     } catch (error) {
@@ -225,28 +240,16 @@ app.post('/api/contratos', async (req, res) => {
                 situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                data.numero || null, 
-                data.proa || null, 
-                data.lote || null, 
-                data.cre || null, 
-                data.tipo || null, 
-                parseInt(data.empresa_id) || null, 
-                data.periodo_inicial || null, 
-                data.periodo_final || null, 
-                data.situacao || null, 
-                data.gestor || null,
-                parseInt(data.alunos) || 0, 
-                data.municipio || null, 
-                parseFloat(data.valor_diario) || 0, 
-                parseFloat(data.valor_km) || 0, 
-                parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, 
-                data.postos || null
+                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
+                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
+                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
+                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
+                parseFloat(data.valor_mensal) || 0, data.postos || null
             ]
         );
+        notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
-        console.error('Error saving contract:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -262,29 +265,16 @@ app.put('/api/contratos/:id', async (req, res) => {
                 valor_km=?, km=?, valor_mensal=?, postos=? 
             WHERE id = ?`,
             [
-                data.numero || null, 
-                data.proa || null, 
-                data.lote || null, 
-                data.cre || null, 
-                data.tipo || null, 
-                parseInt(data.empresa_id) || null, 
-                data.periodo_inicial || null, 
-                data.periodo_final || null, 
-                data.situacao || null, 
-                data.gestor || null,
-                parseInt(data.alunos) || 0, 
-                data.municipio || null, 
-                parseFloat(data.valor_diario) || 0, 
-                parseFloat(data.valor_km) || 0, 
-                parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, 
-                data.postos || null,
-                id
+                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
+                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
+                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
+                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
+                parseFloat(data.valor_mensal) || 0, data.postos || null, id
             ]
         );
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
-        console.error('Error updating contract:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -293,6 +283,7 @@ app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -315,9 +306,7 @@ app.get('/api/postos', async (req, res) => {
 app.post('/api/postos/save', async (req, res) => {
     const { contratoId, escolas } = req.body;
     try {
-        // Deleta os antigos desta escola/contrato e insere os novos
         await db.execute('DELETE FROM escolas_alocadas WHERE contrato_id = ?', [contratoId]);
-        
         for (const esc of escolas) {
             await db.execute(
                 `INSERT INTO escolas_alocadas (contrato_id, municipio, nome, valor, carga_horaria, implantados, vagos) 
@@ -325,12 +314,14 @@ app.post('/api/postos/save', async (req, res) => {
                 [contratoId, esc.municipio, esc.nome, esc.valor, esc.carga_horaria, esc.implantados, esc.vagos]
             );
         }
+        notifyUpdate();
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Iniciar servidor usando o objeto 'server' que inclui o Socket.IO
+server.listen(PORT, () => {
+    console.log(`Servidor rodando em tempo real na porta ${PORT}`);
 });
