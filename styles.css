@@ -154,11 +154,23 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: calc(var(--sidebar-width) + 40px);
-    display: flex;
-    flex-direction: column;
-    padding-top: 20px;
-    padding-right: 20px;
+    margin-left: var(--sidebar-width);
+    padding: 24px;
+    transition: all 0.5s ease;
+    background: var(--bg-color);
+}
+
+/* Animação das setas do menu lateral */
+.sidebar .nav-links li a .arrow {
+    transition: transform 0.3s ease;
+}
+
+.sidebar .nav-links li a .arrow.rotate {
+    transform: rotate(180deg);
+}
+
+.active-view {
+    display: block !important;
 }
 
 .topbar {
