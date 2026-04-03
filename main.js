@@ -237,23 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Change Password Flow (Logged User)
-    const changePassTrigger = document.getElementById('btn-change-password-trigger');
-    const changePassModal = document.getElementById('change-password-modal');
-    const changePassForm = document.getElementById('change-password-form');
+    // Change Password Flow (Logged User - ELITE VERSION)
+    const profileTrigger = document.getElementById('user-profile-trigger');
+    const settingsModal = document.getElementById('settings-modal');
+    const changePassFormElite = document.getElementById('change-password-form-elite');
 
-    if (changePassTrigger) {
-        changePassTrigger.addEventListener('click', () => {
-            changePassModal.style.display = 'block';
+    if (profileTrigger) {
+        profileTrigger.addEventListener('click', () => {
+            settingsModal.style.display = 'block';
         });
     }
 
-    if (changePassForm) {
-        changePassForm.addEventListener('submit', async (e) => {
+    if (changePassFormElite) {
+        changePassFormElite.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const senhaAtual = document.getElementById('change-pass-current').value;
-            const novaSenha = document.getElementById('change-pass-new').value;
-            const confirmarSenha = document.getElementById('change-pass-confirm').value;
+            const senhaAtual = document.getElementById('elite-pass-current').value;
+            const novaSenha = document.getElementById('elite-pass-new').value;
+            const confirmarSenha = document.getElementById('elite-pass-confirm').value;
             
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (!currentUser) return;
@@ -276,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.error) throw new Error(data.error);
                 
                 showToast(data.message, 'success');
-                changePassModal.style.display = 'none';
-                changePassForm.reset();
+                settingsModal.style.display = 'none';
+                changePassFormElite.reset();
             } catch (err) {
                 showToast(err.message, 'error');
             }

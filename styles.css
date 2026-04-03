@@ -1043,3 +1043,223 @@ body.role-admin .master-only {
 .modal-content {
     animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ==========================================
+   ELITE SETTINGS PANEL DESIGN
+   ========================================== */
+
+.settings-panel {
+    max-width: 850px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    height: 600px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header-settings {
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(37, 99, 235, 0.02);
+}
+
+.modal-header-settings .header-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modal-header-settings .header-info i {
+    font-size: 32px;
+    color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.1);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.modal-header-settings h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-header-settings p {
+    font-size: 13px;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.settings-body {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    flex: 1;
+    overflow: hidden;
+}
+
+.settings-sidebar {
+    background: rgba(0, 0, 0, 0.02);
+    border-right: 1px solid var(--border-color);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+[data-theme="dark"] .settings-sidebar {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.settings-nav-item i {
+    font-size: 20px;
+}
+
+.settings-nav-item:hover {
+    background: rgba(37, 99, 235, 0.05);
+    color: var(--primary-color);
+}
+
+.settings-nav-item.active {
+    background: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.settings-main-content {
+    padding: 32px;
+    overflow-y: auto;
+    background: var(--card-bg);
+}
+
+.settings-tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+.section-title {
+    margin-bottom: 32px;
+}
+
+.section-title h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.section-title p {
+    color: var(--text-light);
+    font-size: 14px;
+}
+
+/* Elite Form Elements */
+.form-group-elite {
+    margin-bottom: 24px;
+}
+
+.form-group-elite label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.form-group-elite label i {
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.form-group-elite input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 14px;
+    transition: all var(--transition);
+}
+
+.form-group-elite input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    background: var(--card-bg);
+    outline: none;
+}
+
+.form-row-elite {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.settings-actions {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-primary-elite {
+    background: var(--primary-gradient);
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary-elite:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary-elite i {
+    font-size: 18px;
+}
+
+/* User Avatar Visual Tweak */
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid var(--card-bg);
+    box-shadow: 0 0 0 2px var(--primary-color);
+    transition: all var(--transition);
+}
+
+.topbar-profile:hover .user-avatar {
+    transform: rotate(10deg) scale(1.1);
+    box-shadow: 0 0 0 4px var(--primary-color);
+}
