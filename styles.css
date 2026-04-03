@@ -722,6 +722,7 @@ body {
 .modal-overlay.form-hidden {
     opacity: 0;
     pointer-events: none;
+    display: none !important;
 }
 
 .modal-content {
