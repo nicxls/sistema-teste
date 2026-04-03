@@ -256,13 +256,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsModal = document.getElementById('settings-modal');
     const changePassFormElite = document.getElementById('change-password-form-elite');
 
-    // Usando delegação de evento para garantir que funcione sempre
+    // Settings Modal & Profile Delegation
     document.addEventListener('click', (e) => {
+        // Open Modal
         if (e.target.closest('#user-profile-trigger')) {
             if (settingsModal) {
                 settingsModal.classList.remove('form-hidden');
-                settingsModal.style.display = 'flex'; // Garante visibilidade
+                settingsModal.style.display = 'flex';
             }
+        }
+
+        // Switch Tabs in Modal
+        const navItem = e.target.closest('.settings-nav-item');
+        if (navItem) {
+            const targetTab = navItem.getAttribute('data-tab');
+            
+            // UI Update
+            document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+            navItem.classList.add('active');
+            
+            // Switch Content
+            document.querySelectorAll('.settings-tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+                tab.style.display = 'none'; // Force hide
+            });
+            const content = document.getElementById(`tab-${targetTab}`);
+            if (content) {
+                content.classList.remove('hidden');
+                content.style.display = 'block'; // Force show
+            }
+        }
+
+        // Select Theme Card
+        const themeCard = e.target.closest('.theme-card');
+        if (themeCard) {
+            const themeName = themeCard.getAttribute('data-theme');
+            setTheme(themeName);
         }
     });
 
@@ -799,32 +828,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Settings Modal Tabs & Themes
-    document.addEventListener('DOMContentLoaded', () => {
-        // Tab switching
-        document.querySelectorAll('.settings-nav-item').forEach(nav => {
-            nav.addEventListener('click', () => {
-                const targetTab = nav.getAttribute('data-tab');
-                
-                // Nav Items
-                document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
-                nav.classList.add('active');
-                
-                // Content Tabs
-                document.querySelectorAll('.settings-tab-content').forEach(tab => tab.classList.add('hidden'));
-                const content = document.getElementById(`tab-${targetTab}`);
-                if (content) content.classList.remove('hidden');
-            });
-        });
+    // Settings Modal logic consolidated above (line 259)
+    // setTheme and initTheme are defined above/below 
 
-        // Theme selection
-        document.querySelectorAll('.theme-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const themeName = card.getAttribute('data-theme');
-                setTheme(themeName);
-            });
-        });
-    });
 
     // ==========================================
     // NAVIGATION (SPA)
