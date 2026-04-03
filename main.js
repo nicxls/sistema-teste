@@ -4,42 +4,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION & STATE
     // ==========================================
     const API_URL = '/api';
-    // O SOCKET_URL agora usa o próprio domínio da Vercel como ponte (através do vercel.json)
     const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
     let cachedPostos = [];
 
-    // Conectar ao servidor em tempo real (Socket.IO)
-    let socket;
-    function initRealTime() {
+    // 1. Inicializa Componentes Básicos
+    initTheme();
+    initNavigation();
+    initSystemSelection();
+    setupAuthEvents();
+
+    // 2. Decide o Estado do App Baseado no LocalStorage (ORDEM CRÍTICA)
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        // Usuário logado: Oculta login e decide se mostra seletor ou app
+        document.getElementById('login-container').style.display = 'none';
+        
+        if (!selectedSystem) {
+            showSystemSelection();
+        } else {
+            showMainApp();
+            loadAppData(); // Carrega dados do sistema selecionado
+        }
+        
+        // Valida sessão em "background"
+        validateSession();
+    } else {
+        // Usuário deslogado: Mostra tela de login
+        showLoginScreen();
+    }
+
+    // 3. Conectar ao servidor em tempo real (Socket.IO)
+    initRealtimeSocket();
+
+    function initRealtimeSocket() {
         if (typeof io !== 'undefined') {
-            socket = io(SOCKET_URL, {
+            const socket = io(SOCKET_URL, {
                 reconnectionAttempts: 5,
                 timeout: 5000,
-                transports: ['polling'], // Força polling para passar pelo túnel da Vercel
+                transports: ['polling'],
                 path: '/socket.io'
             });
-
-            socket.on('connect', () => {
-                console.log('Conectado ao servidor através da Ponte Vercel/VPS.');
-                // Se conectou via túnel, não precisamos de polling agressivo
-                if (pollingInterval) clearInterval(pollingInterval);
-            });
-
             socket.on('data-updated', () => {
-                console.log('Recebido aviso de atualização instantânea!');
+                console.log('Dados atualizados via Socket.');
                 fetchAllData();
             });
-
-            socket.on('connect_error', (error) => {
-                console.warn('Conexão via ponte falhou. Usando atualização programada (3s).');
-                startPolling();
-                socket.disconnect();
+            socket.on('connect_error', () => {
+                startPolling(); // Fallback se o socket falhar
             });
         } else {
-            console.warn('Biblioteca Socket.IO não encontrada. Ativando fallback de 5s.');
             startPolling();
         }
     }
@@ -53,17 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchAllData();
             }
         }, 3000); // Atualiza a cada 3 segundos para ser quase instantâneo
-    }
-
-    initAuthSystem();
-    initTheme();
-    initNavigation();
-    initSystemSelection();
-    initRealTime(); // Inicia o sistema de tempo real com fallback
-    
-    if (selectedSystem) {
-        validateSession();
-        loadAppData();
     }
 
     // ==========================================
