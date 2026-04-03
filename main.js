@@ -141,12 +141,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadAppData() {
-        await fetchAllData();
-        loadDashboardStats();
-        loadEmpresasTable();
-        loadContratosTable();
-        populateEmpresasSelect();
-        updateSidebarVisibility();
+        try {
+            await fetchAllData();
+            loadDashboardStats();
+            loadEmpresasTable();
+            loadContratosTable();
+            populateEmpresasSelect();
+            updateSidebarVisibility();
+
+            // Ativa o carregamento das tabelas de faturamento e postos
+            if (typeof loadFaturamentosTable === 'function') loadFaturamentosTable();
+            if (typeof loadPostosTable === 'function') loadPostosTable();
+        } catch (e) {
+            console.error('Erro ao carregar app data:', e);
+        }
     }
 
     async function fetchAllData() {
@@ -426,19 +434,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSidebarVisibility() {
+        const menuContratos = document.getElementById('menu-contratos');
+        const menuFaturamentos = document.getElementById('menu-faturamentos');
         const menuPostos = document.getElementById('menu-postos');
-        const submenuPostos = document.getElementById('submenu-postos');
-        
-        // Filter submenus
+
+        // Submenus
         const fatSubmenu = document.getElementById('submenu-faturamentos');
         const postSubmenu = document.getElementById('submenu-postos');
         
         if (selectedSystem === 'transporte') {
-            if (menuPostos) menuPostos.parentElement.style.display = 'none';
-            // Hide non-transport items in submenus if they exist
+            if (menuContratos) menuContratos.closest('li').style.display = 'block';
+            if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
+            if (menuPostos) menuPostos.closest('li').style.display = 'none';
             filterSubmenuItems(fatSubmenu, ['Transporte Escolar']);
         } else {
-            if (menuPostos) menuPostos.parentElement.style.display = 'block';
+            // No Mão de Obra, mostramos TUDO
+            if (menuContratos) menuContratos.closest('li').style.display = 'block';
+            if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
+            if (menuPostos) menuPostos.closest('li').style.display = 'block';
+
             filterSubmenuItems(fatSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
             filterSubmenuItems(postSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
         }
@@ -800,34 +814,59 @@ document.addEventListener('DOMContentLoaded', () => {
     // NAVIGATION (SPA)
     // ==========================================
     function initNavigation() {
-        const navLinks = document.querySelectorAll('.nav-links a');
+        const links = document.querySelectorAll('.sidebar-menu a[data-target]');
         const views = document.querySelectorAll('.view');
 
-        navLinks.forEach(link => {
+        links.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const targetId = link.getAttribute('data-target');
+                if (!targetId) return;
 
                 // Update active link
-                navLinks.forEach(l => l.classList.remove('active'));
+                links.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
-                // Update view
+                // Update view (SPA)
                 views.forEach(v => {
-                    v.classList.remove('active-view');
-                    if (v.id === targetId) {
-                        v.classList.add('active-view');
-                    }
+                    v.style.display = (v.id === targetId) ? 'block' : 'none';
+                    v.classList.toggle('active-view', v.id === targetId);
                 });
 
-                // Refresh data if needed
+                // Carregamento de dados específicos
                 if (targetId === 'dashboard') loadDashboardStats();
                 if (targetId === 'contratos') {
+                    loadContratosTable();
                     populateEmpresasSelect();
-                    updateContractTypeOptions();
+                }
+                if (targetId === 'empresas') loadEmpresasTable();
+                if (targetId === 'faturamentos-lista' && typeof loadFaturamentosTable === 'function') {
+                    loadFaturamentosTable();
+                }
+                if (targetId === 'postos-lista' && typeof loadPostosTable === 'function') {
+                    loadPostosTable();
                 }
             });
         });
+
+        // Toggle dos submenus (Faturamento e Postos)
+        const menuFaturamentos = document.getElementById('menu-faturamentos');
+        const menuPostos = document.getElementById('menu-postos');
+
+        if (menuFaturamentos) {
+            menuFaturamentos.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sub = document.getElementById('submenu-faturamentos');
+                sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+            });
+        }
+        if (menuPostos) {
+            menuPostos.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sub = document.getElementById('submenu-postos');
+                sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+            });
+        }
     }
 
     function updateContractTypeOptions() {
