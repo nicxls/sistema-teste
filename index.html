@@ -22,11 +22,8 @@
     <!-- Login Screen -->
     <div id="login-container" style="display: none;">
         <!-- Floating Theme Toggle for Login -->
-        <div style="position: absolute; top: 20px; right: 20px; z-index: 10000;">
-            <button class="theme-toggle btn-icon"
-                style="background: var(--card-bg); border: 1px solid var(--border-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-color); box-shadow: var(--shadow-soft);">
-                <i class='bx bx-moon' style="font-size: 24px;"></i>
-            </button>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <!-- Botões de acesso rápido se necessário -->
         </div>
 
         <div class="login-box" id="login-form-box">
@@ -198,10 +195,6 @@
             </ul>
             <div class="logout-zone">
                 <button class="logout-btn" id="btn-logout"><i class='bx bx-log-out'></i> Sair do Sistema</button>
-            </div>
-            <div class="theme-toggle">
-                <i class='bx bx-moon'></i>
-                <span>Modo Escuro</span>
             </div>
         </nav>
 
@@ -813,6 +806,10 @@
                         <i class='bx bx-shield-quarter'></i>
                         <span>Segurança</span>
                     </div>
+                    <div class="settings-nav-item" data-tab="themes">
+                        <i class='bx bx-palette'></i>
+                        <span>Temas e Cores</span>
+                    </div>
                 </div>
 
                 <div class="settings-main-content">
@@ -847,6 +844,37 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+
+                    <!-- Tab Temas -->
+                    <div id="tab-themes" class="settings-tab-content form-hidden">
+                        <div class="section-title">
+                            <h3>Aparência do Sistema</h3>
+                            <p>Escolha o tema que melhor combina com seu ambiente de trabalho.</p>
+                        </div>
+                        
+                        <div class="themes-grid">
+                            <div class="theme-card active" data-theme="blue">
+                                <div class="theme-preview" style="background: #2563eb; border-color: #1d4ed8;"></div>
+                                <span>Azul (Padrão)</span>
+                            </div>
+                            <div class="theme-card" data-theme="dark">
+                                <div class="theme-preview" style="background: #0f172a; border-color: #334155;"></div>
+                                <span>Noturno (Dark)</span>
+                            </div>
+                            <div class="theme-card" data-theme="white">
+                                <div class="theme-preview" style="background: #ffffff; border-color: #e2e8f0;"></div>
+                                <span>Branco Puro</span>
+                            </div>
+                            <div class="theme-card" data-theme="pink">
+                                <div class="theme-preview" style="background: #ec4899; border-color: #db2777;"></div>
+                                <span>Rosa</span>
+                            </div>
+                            <div class="theme-card" data-theme="green">
+                                <div class="theme-preview" style="background: #10b981; border-color: #059669;"></div>
+                                <span>Verde</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

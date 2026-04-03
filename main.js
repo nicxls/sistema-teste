@@ -772,50 +772,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // THEME TOGGLE
+    // THEME SYSTEM (MULTI-THEME)
     // ==========================================
-    function updateThemeIcons(theme) {
-        const icons = document.querySelectorAll('.theme-toggle i');
-        icons.forEach(icon => {
-            if (theme === 'dark') {
-                icon.className = 'bx bx-sun';
+    function setTheme(theme) {
+        // Remove old theme and set new one
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        // Update selection UI if modal is open
+        document.querySelectorAll('.theme-card').forEach(card => {
+            if (card.getAttribute('data-theme') === theme) {
+                card.classList.add('active');
             } else {
-                icon.className = 'bx bx-moon';
+                card.classList.remove('active');
             }
         });
     }
-
-    const themeToggleBtns = document.querySelectorAll('.theme-toggle');
-    themeToggleBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-                updateThemeIcons('light');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                updateThemeIcons('dark');
-            }
-        });
-    });
 
     function initTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            updateThemeIcons('dark');
-        } else {
-            updateThemeIcons('light');
-        }
+        const savedTheme = localStorage.getItem('theme') || 'blue';
+        setTheme(savedTheme);
         
-        // Garante que o container de login esteja oculto se o currentUser existir
-        // Isso evita o flash de login no F5
         if (localStorage.getItem('currentUser')) {
-            document.getElementById('login-container').style.display = 'none';
+            const loginBox = document.getElementById('login-container');
+            if (loginBox) loginBox.style.display = 'none';
         }
     }
+
+    // Settings Modal Tabs & Themes
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tab switching
+        document.querySelectorAll('.settings-nav-item').forEach(nav => {
+            nav.addEventListener('click', () => {
+                const targetTab = nav.getAttribute('data-tab');
+                
+                // Nav Items
+                document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+                nav.classList.add('active');
+                
+                // Content Tabs
+                document.querySelectorAll('.settings-tab-content').forEach(tab => tab.classList.add('form-hidden'));
+                const content = document.getElementById(`tab-${targetTab}`);
+                if (content) content.classList.remove('form-hidden');
+            });
+        });
+
+        // Theme selection
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const themeName = card.getAttribute('data-theme');
+                setTheme(themeName);
+            });
+        });
+    });
 
     // ==========================================
     // NAVIGATION (SPA)
