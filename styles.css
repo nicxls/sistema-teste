@@ -825,6 +825,10 @@ body {
     display: none !important;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .modal-content {
     width: 90%;
     max-width: 600px;

@@ -811,9 +811,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 nav.classList.add('active');
                 
                 // Content Tabs
-                document.querySelectorAll('.settings-tab-content').forEach(tab => tab.classList.add('form-hidden'));
+                document.querySelectorAll('.settings-tab-content').forEach(tab => tab.classList.add('hidden'));
                 const content = document.getElementById(`tab-${targetTab}`);
-                if (content) content.classList.remove('form-hidden');
+                if (content) content.classList.remove('hidden');
             });
         });
 
