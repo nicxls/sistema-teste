@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (profileTrigger) {
         profileTrigger.addEventListener('click', () => {
-            settingsModal.style.display = 'block';
+            settingsModal.classList.remove('form-hidden');
         });
     }
 
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.error) throw new Error(data.error);
                 
                 showToast(data.message, 'success');
-                settingsModal.style.display = 'none';
+                settingsModal.classList.add('form-hidden');
                 changePassFormElite.reset();
             } catch (err) {
                 showToast(err.message, 'error');
@@ -293,8 +293,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const modal = btn.closest('.modal');
-            if (modal) modal.style.display = 'none';
+            const modal = btn.closest('.modal') || btn.closest('.modal-overlay');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.classList.add('form-hidden');
+            }
         });
     });
 
