@@ -94,6 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat(str.replace(/[^\d,]/g, "").replace(",", "."));
     }
 
+    function formatDate(dateString) {
+        if (!dateString) return '-';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return dateString;
+        return d.toLocaleDateString('pt-BR');
+    }
+
     // Apply masks to inputs
     ['con-valormensal', 'con-valordiario', 'con-valorkm'].forEach(id => {
         const input = document.getElementById(id);
@@ -1667,37 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-anexos-modal')?.addEventListener('click', clsAnexos);
     document.getElementById('btn-fechar-anexos')?.addEventListener('click', clsAnexos);
 
-    // ==========================================
-    // FATURAMENTOS LOGIC
-    // ==========================================
-    const menuFaturamentos = document.getElementById('menu-faturamentos');
-    const submenuFaturamentos = document.getElementById('submenu-faturamentos');
-    const faturamentosChevron = document.getElementById('faturamentos-chevron');
-    
-    if (menuFaturamentos) {
-        menuFaturamentos.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isHidden = submenuFaturamentos.style.display === 'none';
-            submenuFaturamentos.style.display = isHidden ? 'block' : 'none';
-            faturamentosChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-        });
-    }
 
-    // ==========================================
-    // POSTOS SIDEBAR TOGGLE
-    // ==========================================
-    const menuPostos = document.getElementById('menu-postos');
-    const submenuPostos = document.getElementById('submenu-postos');
-    const postosChevron = document.getElementById('postos-chevron');
-    
-    if (menuPostos) {
-        menuPostos.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isHidden = submenuPostos.style.display === 'none';
-            submenuPostos.style.display = isHidden ? 'block' : 'none';
-            postosChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-        });
-    }
 
     const subLinks = document.querySelectorAll('#submenu-faturamentos a, #submenu-postos a');
     subLinks.forEach(link => {
