@@ -12,19 +12,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Conectar ao servidor em tempo real (Socket.IO)
     let socket;
-    if (typeof io !== 'undefined') {
-        socket = io(SOCKET_URL);
-        socket.on('data-updated', () => {
-            console.log('Dados atualizados no servidor. Sincronizando...');
-            fetchAllData();
-            showToast('Dados atualizados em tempo real.', 'success');
-        });
+    function initRealTime() {
+        if (typeof io !== 'undefined') {
+            socket = io(SOCKET_URL, {
+                reconnectionAttempts: 3,
+                timeout: 5000,
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                console.log('Conectado ao servidor de Tempo Real.');
+            });
+
+            socket.on('data-updated', () => {
+                console.log('Recebido aviso de atualização. Sincronizando...');
+                fetchAllData();
+            });
+
+            socket.on('connect_error', (error) => {
+                console.warn('Erro na conexão em tempo real (provavelmente bloqueio de HTTPS). Ativando fallback de atualização periódica.');
+                startPolling(); // Se o socket falhar, usa o polling
+                socket.disconnect();
+            });
+        } else {
+            console.warn('Biblioteca Socket.IO não encontrada. Ativando fallback.');
+            startPolling();
+        }
+    }
+
+    let pollingInterval = null;
+    function startPolling() {
+        if (pollingInterval) return; // Já está rodando
+        console.log('Sincronização periódica iniciada (cada 10s).');
+        pollingInterval = setInterval(() => {
+            if (localStorage.getItem('currentUser') && selectedSystem) {
+                fetchAllData();
+            }
+        }, 10000); // Atualiza a cada 10 segundos se o socket falhar
     }
 
     initAuthSystem();
     initTheme();
     initNavigation();
     initSystemSelection();
+    initRealTime(); // Inicia o sistema de tempo real com fallback
     
     if (selectedSystem) {
         validateSession();
