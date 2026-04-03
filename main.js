@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup username in topbar
         const topbarName = document.querySelector('.topbar h2');
         if (topbarName) {
-            topbarName.textContent = `Bem-vindo, ${user.user}`;
+            topbarName.textContent = `Bem-vindo, ${user.usuario}`;
         }
 
         // Notify pending requests if master
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const topbarH2 = document.querySelector('.topbar h2');
         const systemLabel = selectedSystem === 'transporte' ? 'Transporte Escolar' : 'Mão de Obra';
         const user = JSON.parse(localStorage.getItem('currentUser'));
-        topbarH2.innerHTML = `Bem-vindo, ${user.user} <span style="margin-left: 10px; font-size: 14px; color: var(--primary-color); font-weight: 400;">(${systemLabel})</span>`;
+        topbarH2.innerHTML = `Bem-vindo, ${user.usuario} <span style="margin-left: 10px; font-size: 14px; color: var(--primary-color); font-weight: 400;">(${systemLabel})</span>`;
     }
 
     function initSystemSelection() {
