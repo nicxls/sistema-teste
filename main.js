@@ -157,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSidebarVisibility();
 
             // Ativa o carregamento das tabelas de faturamento e postos
-            if (typeof loadFaturamentosTable === 'function') loadFaturamentosTable();
-            if (typeof loadPostosTable === 'function') loadPostosTable();
+            if (typeof loadContratosFaturamentosTable === 'function') loadContratosFaturamentosTable();
+            if (typeof loadPostosDashboard === 'function') loadPostosDashboard(currentPostoServico || 'Merendeiras');
         } catch (e) {
             console.error('Erro ao carregar app data:', e);
         }
@@ -899,11 +899,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetId === 'empresas') loadEmpresasTable();
         
         // Passa o serviço selecionado para as funções de faturamento e postos
-        if (targetId === 'faturamentos-lista' && typeof loadFaturamentosTable === 'function') {
-            loadFaturamentosTable(servico);
+        if (targetId === 'faturamentos-lista' && typeof loadContratosFaturamentosTable === 'function') {
+            loadContratosFaturamentosTable(servico);
         }
-        if (targetId === 'postos-lista' && typeof loadPostosTable === 'function') {
-            loadPostosTable(servico);
+        if (targetId === 'postos-lista' && typeof loadPostosDashboard === 'function') {
+            document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
+            loadPostosDashboard(servico);
         }
     }
 
@@ -2109,115 +2110,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // ==========================================
-    // CARREGAMENTO DE FATURAMENTOS E POSTOS
-    // ==========================================
-    window.loadFaturamentosTable = function(servico = null) {
-        const target = document.getElementById('lista-contratos-faturamentos');
-        const title = document.getElementById('fat-group-title');
-        if (!target) return;
-
-        if (title) title.textContent = servico ? `Faturamentos - ${servico}` : 'Faturamentos - Geral';
-
-        let lista = getContratos();
-        if (servico) {
-            lista = lista.filter(c => c.tipo === servico);
-        }
-
-        target.innerHTML = '';
-        if (lista.length === 0) {
-            target.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Nenhum contrato encontrado para este setor.</td></tr>';
-            return;
-        }
-
-        lista.forEach(con => {
-            const tr = document.createElement('tr');
-            const emp = getEmpresas().find(e => String(e.id) === String(con.empresa_id));
-            const empName = emp ? emp.razao_social : 'Desconhecida';
-            
-            tr.innerHTML = `
-                <td style="font-weight: 600;">${con.numero || '-'}</td>
-                <td>${empName}</td>
-                <td>${formatDate(con.inicio_vigencia)} até ${formatDate(con.termino_vigencia)}</td>
-                <td style="text-align: center;">
-                    <button class="btn-icon" style="color: #4361ee;" onclick="window.openFatModal('${con.id}')">
-                        <i class='bx bx-show'></i> Abrir Planilha
-                    </button>
-                </td>
-            `;
-            target.appendChild(tr);
-        });
-    };
-
-    window.loadPostosTable = function(servico = null) {
-        const target = document.getElementById('card-total-postos');
-        const targetImp = document.getElementById('card-postos-implantados');
-        const title = document.getElementById('postos-group-title');
-        
-        if (title) title.textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
-
-        let lista = getContratos();
-        if (servico) {
-            lista = lista.filter(c => c.tipo === servico);
-        }
-
-        let totalPostos = 0;
-        let totalImp = 0;
-
-        lista.forEach(con => {
-            totalPostos += parseInt(con.postos) || 0;
-            // Busca postos reais implantados
-            const postosContrato = cachedPostos.filter(p => String(p.contrato_id) === String(con.id));
-            postosContrato.forEach(p => {
-                totalImp += parseInt(p.implantados) || 0;
-            });
-        });
-
-        if (target) target.textContent = totalPostos;
-        if (targetImp) targetImp.textContent = totalImp;
-        };
-
-
-    const clsFat = () => document.getElementById('modal-faturamentos').classList.add('form-hidden');
-    document.getElementById('btn-close-fat-modal')?.addEventListener('click', clsFat);
-    document.getElementById('btn-cancel-fat')?.addEventListener('click', clsFat);
-
-    document.getElementById('btn-save-fat')?.addEventListener('click', async () => {
-        const rows = document.querySelectorAll('#fat-grid-body tr');
-        const faturamentos = [];
-
-        rows.forEach(row => {
-            const mes = row.querySelector('.process-input').dataset.mes;
-            faturamentos.push({
-                contrato_id: currentFatContratoId,
-                ano: currentFatAno,
-                mes: parseInt(mes),
-                numero_processo: row.querySelector('.process-input').value,
-                data_abertura: row.querySelector('.date-abertura').value || null,
-                situacao: row.querySelector('.status-select').value,
-                data_pagamento: row.querySelector('.date-pagamento').value || null,
-                valor_pago: parseCurrency(row.querySelector('.valor-pago-input').value)
-            });
-        });
-
-        try {
-            const resp = await fetch(`${API_URL}/faturamentos/batch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ faturamentos })
-            });
-
-            if (resp.ok) {
-                showToast('Faturamentos salvos com sucesso!');
-                clsFat();
-            } else {
-                throw new Error('Erro ao salvar no servidor');
-            }
-        } catch (error) {
-            showToast('Erro ao salvar faturamentos.', 'error');
-        }
-    });
 
     document.getElementById('btn-relatorio-pdf')?.addEventListener('click', () => {
         window.print();
