@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // INITIALIZATION & STATE
     // ==========================================
+    // Verificação de Deploy: 2026-04-05
     const API_URL = '/api';
     const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
