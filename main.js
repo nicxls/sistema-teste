@@ -1406,7 +1406,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ].map(id => document.getElementById(id));
 
     inputsFiltro.forEach(input => {
-        if (input) input.addEventListener('input', loadContratosTable);
+        if (input) input.addEventListener('input', () => {
+            loadContratosTable();
+        });
     });
 
     document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
@@ -1415,7 +1417,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function loadContratosTable() {
-        const tbody = document.getElementById('lista-contratos');
+        const container = document.getElementById('contratos-lista-container');
+        if (!container) return;
+
         let contratos = getContratos();
         const empresas = getEmpresas();
 
@@ -1425,7 +1429,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const empName = emp ? emp.razao.toLowerCase() : '';
 
             const vPro = (document.getElementById('filtro-processo').value || '').toLowerCase();
-            const matchProcesso = con.proa ? con.proa.toLowerCase().includes(vPro) : (vPro === '' || true); // always evaluate
             if (vPro && (!con.proa || !con.proa.toLowerCase().includes(vPro))) return false;
 
             const vTip = (document.getElementById('filtro-tipo').value || '').toLowerCase();
@@ -1446,33 +1449,130 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         });
 
-        tbody.innerHTML = '';
+        container.innerHTML = '';
 
         if (contratos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-light)">Nenhum contrato encontrado.</td></tr>`;
+            container.innerHTML = `<div class="card" style="padding: 40px; text-align: center; color: var(--text-light)">Nenhum contrato encontrado.</div>`;
             return;
         }
 
-        contratos.forEach(con => {
-            const emp = empresas.find(e => String(e.id) === String(con.empresaId));
-            const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
+        const isTransporte = selectedSystem === 'transporte';
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${con.numero || '-'}</td>
-                <td>${empName}</td>
-                <td>${con.tipo || '-'}</td>
-                <td>${con.cre || '-'}</td>
-                <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
-                <td>
-                    <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
-                    <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
-                    <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
-                    <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
-                </td>
+        if (isTransporte) {
+            // Group by Municipality
+            const grouped = contratos.reduce((acc, con) => {
+                const mun = con.municipio || 'Sem Município';
+                if (!acc[mun]) acc[mun] = [];
+                acc[mun].push(con);
+                return acc;
+            }, {});
+
+            const sortedMuns = Object.keys(grouped).sort();
+
+            sortedMuns.forEach(mun => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'municipio-group';
+
+                let tableHtml = `
+                    <div class="municipio-header">
+                        <h2>${mun}</h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="municipio-table">
+                            <thead>
+                                <tr>
+                                    <th>Nº PROCESSO</th>
+                                    <th>CRE</th>
+                                    <th>EMPRESA</th>
+                                    <th>VIGÊNCIA</th>
+                                    <th>VALOR DIÁRIO</th>
+                                    <th>SITUAÇÃO</th>
+                                    <th>AÇÕES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                grouped[mun].forEach(con => {
+                    const emp = empresas.find(e => String(e.id) === String(con.empresaId));
+                    const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
+                    const vigencia = `${con.periodoInicial ? con.periodoInicial.split('-').reverse().join('/') : '-'} - ${con.periodoFinal ? con.periodoFinal.split('-').reverse().join('/') : '-'}`;
+                    
+                    tableHtml += `
+                        <tr>
+                            <td><strong>${con.proa || '-'}</strong></td>
+                            <td>${con.cre || '-'}</td>
+                            <td>${empName}</td>
+                            <td>${vigencia}</td>
+                            <td>${formatCurrency(con.valorDiario)}</td>
+                            <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
+                            <td>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar" style="background: rgba(37, 99, 235, 0.1); color: var(--primary-color);">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar" style="background: rgba(0, 0, 0, 0.05);">
+                                        <i class='bx bx-pencil'></i>
+                                    </button>
+                                    <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos">
+                                        <i class='bx bx-paperclip'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `</tbody></table></div>`;
+                groupDiv.innerHTML = tableHtml;
+                container.appendChild(groupDiv);
+            });
+        } else {
+            // General Table View
+            const card = document.createElement('div');
+            card.className = 'data-table';
+            card.style.overflowX = 'auto';
+
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Empresa</th>
+                            <th>Serviço</th>
+                            <th>CRE</th>
+                            <th>Situação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-contratos">
             `;
-            tbody.appendChild(tr);
-        });
+
+            contratos.forEach(con => {
+                const emp = empresas.find(e => String(e.id) === String(con.empresaId));
+                const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
+
+                tableHtml += `
+                    <tr>
+                        <td>${con.numero || '-'}</td>
+                        <td>${empName}</td>
+                        <td>${con.tipo || '-'}</td>
+                        <td>${con.cre || '-'}</td>
+                        <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
+                        <td>
+                            <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
+                            <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
+                            <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
+                            <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `</tbody></table>`;
+            card.innerHTML = tableHtml;
+            container.appendChild(card);
+        }
     }
 
     window.deleteContrato = async function (id) {
