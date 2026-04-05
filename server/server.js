@@ -1,8 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const http = require('http'); // Necessário para o Socket.IO
-const { Server } = require('socket.io'); // Socket.IO
 require('dotenv').config();
 const db = require('./db');
 
@@ -42,22 +40,14 @@ const db = require('./db');
 })();
 
 const app = express();
-const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
-const io = new Server(server, {
-    cors: {
-        origin: "*", // Permite conexões de qualquer origem (Vercel, etc)
-        methods: ["GET", "POST", "PUT", "DELETE"]
-    }
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// Função helper para notificar todos os clientes via WebSocket
+// Função helper para notificar (Socket.IO removido para compatibilidade)
 const notifyUpdate = () => {
-    io.emit('data-updated');
+    // io.emit('data-updated');
 };
 
 // ==========================================
@@ -492,7 +482,7 @@ app.delete('/api/indenizatorios/:id', async (req, res) => {
     }
 });
 
-// Iniciar servidor usando o objeto 'server' que inclui o Socket.IO
-server.listen(PORT, () => {
-    console.log(`Servidor rodando em tempo real na porta ${PORT}`);
+// Iniciar servidor
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
 });
