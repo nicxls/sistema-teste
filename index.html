@@ -170,7 +170,7 @@
                         <i class='bx bx-chevron-down arrow'></i>
                     </a>
                     <ul class="sub-menu" id="submenu-faturamentos" style="display: none;">
-                        <li><a href="#" data-target="faturamentos-lista" data-servico="Merendeiras">Alimentação</a></li>
+                        <li><a href="#" data-target="faturamentos-lista" data-servico="Merendeiras">Merendeiras</a></li>
                         <li><a href="#" data-target="faturamentos-lista" data-servico="Vigilância">Vigilância</a></li>
                         <li><a href="#" data-target="faturamentos-lista" data-servico="Limpeza">Limpeza</a></li>
                         <li><a href="#" data-target="faturamentos-lista" data-servico="Porteiros">Porteiros</a></li>
@@ -185,10 +185,10 @@
                         <i class='bx bx-chevron-down arrow'></i>
                     </a>
                     <ul class="sub-menu" id="submenu-postos" style="display: none;">
-                        <li><a href="#" data-target="postos-lista" data-servico="Merendeiras">Alimentação Escolar</a>
+                        <li><a href="#" data-target="postos-lista" data-servico="Merendeiras">Merendeiras</a>
                         </li>
                         <li><a href="#" data-target="postos-lista" data-servico="Vigilância">Vigilância</a></li>
-                        <li><a href="#" data-target="postos-lista" data-servico="Limpeza">Limpeza das Escolas</a></li>
+                        <li><a href="#" data-target="postos-lista" data-servico="Limpeza">Limpeza</a></li>
                         <li><a href="#" data-target="postos-lista" data-servico="Porteiros">Porteiros</a></li>
                     </ul>
                 </li>
@@ -376,7 +376,7 @@
                                     <input type="text" id="con-cre" required placeholder="CRE">
                                 </div>
                             </div>
-                            <div class="form-row">
+                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="con-tipo">Tipo de Serviço</label>
                                     <select id="con-tipo" required>
@@ -389,12 +389,24 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label for="con-tipo-contratacao">Tipo de Contrato</label>
+                                    <select id="con-tipo-contratacao" required>
+                                        <option value="" disabled selected>Selecione</option>
+                                        <option value="Emergencial">Emergencial</option>
+                                        <option value="Licitatório">Licitatório</option>
+                                        <option value="Remanescente">Remanescente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="con-empresa">Empresa</label>
                                     <select id="con-empresa" required>
                                         <option value="" disabled selected>Selecione uma Empresa</option>
                                         <!-- Populated via JS -->
                                     </select>
                                 </div>
+                                <div class="form-group"></div> <!-- Spacer -->
                             </div>
 
                             <!-- Grupo Específico -->

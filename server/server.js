@@ -14,6 +14,12 @@ const db = require('./db');
             await db.execute('ALTER TABLE contratos ADD COLUMN anexos LONGTEXT');
             console.log('Coluna "anexos" adicionada à tabela "contratos".');
         }
+
+        const [columnsTipo] = await db.execute('SHOW COLUMNS FROM contratos LIKE "tipo_contratacao"');
+        if (columnsTipo.length === 0) {
+            await db.execute('ALTER TABLE contratos ADD COLUMN tipo_contratacao VARCHAR(50)');
+            console.log('Coluna "tipo_contratacao" adicionada à tabela "contratos".');
+        }
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -318,15 +324,16 @@ app.post('/api/contratos', async (req, res) => {
     try {
         const [result] = await db.execute(
             `INSERT INTO contratos (
-                numero, proa, lote, cre, tipo, empresa_id, periodo_inicial, periodo_final, 
+                numero, proa, lote, cre, tipo, tipo_contratacao, empresa_id, periodo_inicial, periodo_final, 
                 situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos, anexos
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
-                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
-                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
-                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
+                data.tipo_contratacao || null, parseInt(data.empresa_id) || null, data.periodo_inicial || null, 
+                data.periodo_final || null, data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, 
+                data.municipio || null, parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, 
+                parseFloat(data.km) || 0, parseFloat(data.valor_mensal) || 0, data.postos || null, 
+                JSON.stringify(data.anexos || [])
             ]
         );
         notifyUpdate();
@@ -342,16 +349,17 @@ app.put('/api/contratos/:id', async (req, res) => {
     try {
         await db.execute(
             `UPDATE contratos SET 
-                numero=?, proa=?, lote=?, cre=?, tipo=?, empresa_id=?, periodo_inicial=?, 
+                numero=?, proa=?, lote=?, cre=?, tipo=?, tipo_contratacao=?, empresa_id=?, periodo_inicial=?, 
                 periodo_final=?, situacao=?, gestor=?, alunos=?, municipio=?, valor_diario=?, 
                 valor_km=?, km=?, valor_mensal=?, postos=?, anexos=? 
             WHERE id = ?`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
-                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
-                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
-                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
-                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
+                data.tipo_contratacao || null, parseInt(data.empresa_id) || null, data.periodo_inicial || null, 
+                data.periodo_final || null, data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, 
+                data.municipio || null, parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, 
+                parseFloat(data.km) || 0, parseFloat(data.valor_mensal) || 0, data.postos || null, 
+                JSON.stringify(data.anexos || []), id
             ]
         );
         notifyUpdate();

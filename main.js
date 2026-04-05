@@ -185,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorDiario: c.valor_diario,
                 valorKm: c.valor_km,
                 valorMensal: c.valor_mensal,
+                tipoContratacao: c.tipo_contratacao,
                 anexos: typeof c.anexos === 'string' ? JSON.parse(c.anexos || '[]') : (c.anexos || [])
             }));
 
@@ -1007,6 +1008,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: contrato.lote,
             cre: contrato.cre,
             tipo: contrato.tipo,
+            tipo_contratacao: contrato.tipoContratacao,
             empresa_id: contrato.empresaId,
             periodo_inicial: contrato.periodoInicial,
             periodo_final: contrato.periodoFinal,
@@ -1367,6 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: document.getElementById('con-lote').value,
             cre: document.getElementById('con-cre').value,
             tipo: tipo,
+            tipoContratacao: document.getElementById('con-tipo-contratacao').value,
             empresaId: document.getElementById('con-empresa').value,
             periodoInicial: document.getElementById('con-periodoinicial').value,
             periodoFinal: document.getElementById('con-periodofinal').value,
@@ -1497,6 +1500,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('con-lote').value = con.lote || '';
         document.getElementById('con-cre').value = con.cre || '';
         document.getElementById('con-tipo').value = con.tipo || '';
+        document.getElementById('con-tipo-contratacao').value = con.tipoContratacao || '';
         document.getElementById('con-empresa').value = con.empresaId || '';
 
         document.getElementById('con-periodoinicial').value = con.periodoInicial || '';
@@ -1568,6 +1572,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="detail-item">
                         <span class="detail-label">Tipo de Serviço</span>
                         <span class="detail-value">${con.tipo || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tipo de Contrato</span>
+                        <span class="detail-value">${con.tipoContratacao || '-'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">PROA</span>

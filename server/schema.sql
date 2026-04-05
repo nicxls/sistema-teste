@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS contratos (
     lote VARCHAR(50),
     cre VARCHAR(50),
     tipo VARCHAR(50),
+    tipo_contratacao VARCHAR(50),
     empresa_id INT,
     periodo_inicial DATE,
     periodo_final DATE,
