@@ -484,14 +484,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (menuContratos) menuContratos.closest('li').style.display = 'block';
             if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
             if (menuPostos) menuPostos.closest('li').style.display = 'none';
-            if (menuIndenizatorios) menuIndenizatorios.closest('li').style.display = 'block';
+            if (menuIndenizatorios) {
+                const li = document.getElementById('menu-indenizatorios-li');
+                if (li) li.style.display = 'block';
+            }
             filterSubmenuItems(fatSubmenu, ['Transporte Escolar']);
         } else {
             // No Mão de Obra, mostramos TUDO
             if (menuContratos) menuContratos.closest('li').style.display = 'block';
             if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
             if (menuPostos) menuPostos.closest('li').style.display = 'block';
-            if (menuIndenizatorios) menuIndenizatorios.closest('li').style.display = 'none';
+            if (menuIndenizatorios) {
+                const li = document.getElementById('menu-indenizatorios-li');
+                if (li) li.style.display = 'none';
+            }
 
             filterSubmenuItems(fatSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
             filterSubmenuItems(postSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
