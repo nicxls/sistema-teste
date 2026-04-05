@@ -1502,10 +1502,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const emp = empresas.find(e => String(e.id) === String(con.empresaId));
                     const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
                     const vigencia = `${con.periodoInicial ? con.periodoInicial.split('-').reverse().join('/') : '-'} - ${con.periodoFinal ? con.periodoFinal.split('-').reverse().join('/') : '-'}`;
-                    
                     tableHtml += `
                         <tr>
-                            <td><strong>${con.numero || '-'}</strong></td>
+                            <td>
+                                <div style="font-weight: 700; color: var(--primary-color);">${con.numero || '-'}</div>
+                                ${con.tipoContratacao ? `<div style="font-size: 10px; font-weight: 700; color: #fff; background: var(--primary-color); display: inline-block; padding: 2px 6px; border-radius: 4px; margin-top: 4px; text-transform: uppercase;">${con.tipoContratacao}</div>` : ''}
+                            </td>
                             <td>${con.proa || '-'}</td>
                             <td>${con.lote || '-'}</td>
                             <td>${con.cre || '-'}</td>
@@ -1561,7 +1563,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 tableHtml += `
                     <tr>
-                        <td>${con.numero || '-'}</td>
+                        <td>
+                            <div>${con.numero || '-'}</div>
+                            ${con.tipoContratacao ? `<div style="font-size: 9px; font-weight: 700; background: #f1f5f9; color: #475569; display: inline-block; padding: 1px 5px; border-radius: 3px; border: 1px solid #e2e8f0; margin-top: 2px;">${con.tipoContratacao}</div>` : ''}
+                        </td>
                         <td>${empName}</td>
                         <td>${con.tipo || '-'}</td>
                         <td>${con.cre || '-'}</td>
