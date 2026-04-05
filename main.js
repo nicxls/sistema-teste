@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION & STATE
     // ==========================================
     const API_URL = '/api';
+    const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
@@ -35,9 +36,28 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoginScreen();
     }
 
+    // 3. Conectar ao servidor em tempo real (Socket.IO)
+    initRealtimeSocket();
 
-    // 3. Sistema de Atualização (Polling básico)
-    startPolling();
+    function initRealtimeSocket() {
+        if (typeof io !== 'undefined') {
+            const socket = io(SOCKET_URL, {
+                reconnectionAttempts: 5,
+                timeout: 5000,
+                transports: ['polling'],
+                path: '/socket.io'
+            });
+            socket.on('data-updated', () => {
+                console.log('Dados atualizados via Socket.');
+                fetchAllData();
+            });
+            socket.on('connect_error', () => {
+                startPolling(); // Fallback se o socket falhar
+            });
+        } else {
+            startPolling();
+        }
+    }
 
     let pollingInterval = null;
     function startPolling() {
@@ -165,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 valorDiario: c.valor_diario,
                 valorKm: c.valor_km,
                 valorMensal: c.valor_mensal,
-                tipoContratacao: c.tipo_contratacao,
                 anexos: typeof c.anexos === 'string' ? JSON.parse(c.anexos || '[]') : (c.anexos || [])
             }));
 
@@ -354,12 +373,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyLogin(user) {
         document.getElementById('login-container').style.display = 'none';
         
-        if (id === 'select-transporte') {
-            selectedSystem = 'transporte';
-            document.getElementById('li-indenizatorios').style.display = 'block';
+        if (!selectedSystem) {
+            showSystemSelection();
         } else {
-            selectedSystem = 'mao-de-obra';
-            document.getElementById('li-indenizatorios').style.display = 'none';
+            showMainApp();
         }
 
         // Aplica a classe de permissão no body (role-usuario, role-admin, role-master)
@@ -406,28 +423,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = user ? (user.usuario || user.user || 'Usuário') : 'Usuário';
             topbarH2.innerHTML = `Bem-vindo, ${username} <span style="margin-left: 10px; font-size: 14px; color: var(--primary-color); font-weight: 400;">(${systemLabel})</span>`;
         }
-    }
-
-    function selectSystem(system) {
-        selectedSystem = system;
-        localStorage.setItem('selectedSystem', system);
-        
-        // Show/Hide Indenizatórios menu
-        const liIndenizatorios = document.getElementById('li-indenizatorios');
-        if (liIndenizatorios) {
-            liIndenizatorios.style.display = (system === 'transporte') ? 'block' : 'none';
-        }
-        
-        // Filter submenus based on system
-        const subPostos = document.getElementById('submenu-postos');
-        const subFaturamentos = document.getElementById('submenu-faturamentos');
-        
-        if (system === 'transporte') {
-            if (subPostos) subPostos.style.display = 'none'; // No schools for transport generally in current logic
-            // Add other transport specific filters if needed
-        }
-        
-        showMainApp();
     }
 
     function initSystemSelection() {
@@ -651,40 +646,92 @@ document.addEventListener('DOMContentLoaded', () => {
             const reqs = data.solicitacoes;
             const users = data.usuarios;
 
-
             tbody.innerHTML = '';
             if (reqs.length === 0 && users.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum dado encontrado.</td></tr>`;
                 return;
             }
 
-            // Solicitações (Pendentes, Aprovadas, Recusadas)
+            function renderAcessosTable(acessos) {
+        const tbody = document.querySelector('#table-acessos tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = acessos.map(a => {
+            const isReset = a.status === 'reset_pendente';
+            const statusLabel = isReset ? '<span class="status-badge status-warning">Reset de Senha</span>' : `<span class="status-badge status-info">${a.status}</span>`;
+            
+            return `
+                <tr>
+                    <td>${a.usuario}</td>
+                    <td>${a.email}</td>
+                    <td>${a.perfil}</td>
+                    <td>${statusLabel}</td>
+                    <td>
+                        <div class="table-actions">
+                            ${isReset ? `
+                                <button class="btn-icon btn-edit" onclick="handleResetPassword(${a.id}, '${a.usuario}')" title="Definir Nova Senha">
+                                    <i class='bx bx-refresh'></i>
+                                </button>
+                            ` : `
+                                <button class="btn-icon btn-edit" onclick="approveAcesso(${a.id})" title="Aprovar">
+                                    <i class='bx bx-check'></i>
+                                </button>
+                            `}
+                            <button class="btn-icon btn-delete" onclick="deleteAcesso(${a.id})" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Admin Reset Function
+    window.handleResetPassword = async function(solicitationId, username) {
+        const novaSenha = prompt(`Digite a NOVA SENHA para o usuário "${username}":`);
+        if (!novaSenha) return;
+
+        try {
+            // First, find the user ID by username (we'll do this in a single route)
+            const usersRes = await fetch(`${API_URL}/usuarios?t=${Date.now()}`);
+            const allUsers = await usersRes.json();
+            const targetUser = allUsers.find(u => u.usuario === username);
+            
+            if (!targetUser) throw new Error('Usuário original não encontrado no banco.');
+
+            const res = await fetch(`${API_URL}/admin/reset-password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: targetUser.id, 
+                    novaSenha, 
+                    solicitacaoId: solicitationId 
+                })
+            });
+            
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+            
+            showToast('Senha redefinida com sucesso!', 'success');
+            fetchAcessos(); // Refresh table
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    };
+
+            // Solicitações Pendentes
             reqs.forEach(req => {
                 const tr = document.createElement('tr');
-                const status = (req.status || 'pendente').toLowerCase();
-                let statusBadge = '';
-                let actions = '';
-
-                if (status === 'pendente') {
-                    statusBadge = '<span class="badge Pendente" style="background: #e9ecef; color: #495057;">PENDENTE</span>';
-                    actions = `
-                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
-                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
-                        <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
-                    `;
-                } else if (status === 'aprovado') {
-                    statusBadge = '<span class="badge Ativo" style="background: #c7f9cc; color: #2d6a4f;">APROVADO</span>';
-                    actions = '<span style="color: var(--text-light); font-size: 11px;">Processado</span>';
-                } else {
-                    statusBadge = '<span class="badge" style="background: #ffcccc; color: #a90000; border-radius: 4px; padding: 2px 6px;">RECUSADO</span>';
-                    actions = '<span style="color: var(--text-light); font-size: 11px;">Processado</span>';
-                }
-
                 tr.innerHTML = `
                     <td>${req.usuario}</td>
                     <td>${req.email}</td>
-                    <td>${statusBadge}</td>
-                    <td style="display: flex; gap: 8px; align-items: center;">${actions}</td>
+                    <td><span class="badge Pendente">PENDENTE</span></td>
+                    <td style="display: flex; gap: 8px;">
+                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
+                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
+                        <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -692,28 +739,21 @@ document.addEventListener('DOMContentLoaded', () => {
             // Usuários Ativos (Gerenciamento)
             users.forEach(usr => {
                 const tr = document.createElement('tr');
-                const isMaster = usr.role === 'master';
-                
-                let roleDisplay = '';
-                if (isMaster) {
-                    roleDisplay = '<span class="badge" style="background: #4361ee; color: white; border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 700;">MASTER</span>';
-                } else {
-                    roleDisplay = `
-                        <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
-                            <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
-                            <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
-                        </select>
-                    `;
-                }
+                // Badge color logic
+                const badgeClass = usr.role === 'admin' ? 'Ativo' : 'Pendente';
+                const badgeText = usr.role === 'admin' ? 'ADMINISTRADOR' : 'USUÁRIO';
 
                 tr.innerHTML = `
                     <td>${usr.user}</td>
                     <td>-</td>
-                    <td>${roleDisplay}</td>
                     <td>
-                        ${isMaster ? '<i class="bx bxs-lock-alt" style="color: var(--text-light);" title="Conta Master Protegida"></i>' : `
-                            <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
-                        `}
+                        <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
+                            <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
+                            <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -967,7 +1007,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: contrato.lote,
             cre: contrato.cre,
             tipo: contrato.tipo,
-            tipo_contratacao: contrato.tipoContratacao,
             empresa_id: contrato.empresaId,
             periodo_inicial: contrato.periodoInicial,
             periodo_final: contrato.periodoFinal,
@@ -1328,7 +1367,6 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: document.getElementById('con-lote').value,
             cre: document.getElementById('con-cre').value,
             tipo: tipo,
-            tipoContratacao: document.getElementById('con-tipo-contratacao').value,
             empresaId: document.getElementById('con-empresa').value,
             periodoInicial: document.getElementById('con-periodoinicial').value,
             periodoFinal: document.getElementById('con-periodofinal').value,
@@ -1361,13 +1399,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filtros
     const inputsFiltro = [
         'filtro-processo', 'filtro-tipo', 'filtro-cre',
-        'filtro-contrato', 'filtro-empresa', 'filtro-situacao', 'filtro-lote'
+        'filtro-contrato', 'filtro-empresa', 'filtro-situacao'
     ].map(id => document.getElementById(id));
 
     inputsFiltro.forEach(input => {
-        if (input) input.addEventListener('input', () => {
-            loadContratosTable();
-        });
+        if (input) input.addEventListener('input', loadContratosTable);
     });
 
     document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
@@ -1376,9 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function loadContratosTable() {
-        const container = document.getElementById('contratos-lista-container');
-        if (!container) return;
-
+        const tbody = document.getElementById('lista-contratos');
         let contratos = getContratos();
         const empresas = getEmpresas();
 
@@ -1388,6 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const empName = emp ? emp.razao.toLowerCase() : '';
 
             const vPro = (document.getElementById('filtro-processo').value || '').toLowerCase();
+            const matchProcesso = con.proa ? con.proa.toLowerCase().includes(vPro) : (vPro === '' || true); // always evaluate
             if (vPro && (!con.proa || !con.proa.toLowerCase().includes(vPro))) return false;
 
             const vTip = (document.getElementById('filtro-tipo').value || '').toLowerCase();
@@ -1405,148 +1440,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const vSit = document.getElementById('filtro-situacao').value;
             if (vSit && con.situacao !== vSit) return false;
 
-            const vLot = (document.getElementById('filtro-lote').value || '').toLowerCase();
-            if (vLot && (!con.lote || !con.lote.toLowerCase().includes(vLot))) return false;
-
             return true;
         });
 
-        container.innerHTML = '';
+        tbody.innerHTML = '';
 
         if (contratos.length === 0) {
-            container.innerHTML = `<div class="card" style="padding: 40px; text-align: center; color: var(--text-light)">Nenhum contrato encontrado.</div>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-light)">Nenhum contrato encontrado.</td></tr>`;
             return;
         }
 
-        const isTransporte = selectedSystem === 'transporte';
+        contratos.forEach(con => {
+            const emp = empresas.find(e => String(e.id) === String(con.empresaId));
+            const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
 
-        if (isTransporte) {
-            // Group by Municipality
-            const grouped = contratos.reduce((acc, con) => {
-                const mun = con.municipio || 'Sem Município';
-                if (!acc[mun]) acc[mun] = [];
-                acc[mun].push(con);
-                return acc;
-            }, {});
-
-            const sortedMuns = Object.keys(grouped).sort();
-
-            sortedMuns.forEach(mun => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'municipio-group';
-
-                let tableHtml = `
-                    <div class="municipio-header">
-                        <h2>${mun}</h2>
-                    </div>
-                    <div style="overflow-x: auto;">
-                        <table class="municipio-table">
-                            <thead>
-                                <tr>
-                                    <th>Nº CONTRATO</th>
-                                    <th>PROCESSO</th>
-                                    <th>LOTE</th>
-                                    <th>CRE</th>
-                                    <th>EMPRESA</th>
-                                    <th>VIGÊNCIA</th>
-                                    <th>VALOR DIÁRIO</th>
-                                    <th>SITUAÇÃO</th>
-                                    <th>AÇÕES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-
-                grouped[mun].forEach(con => {
-                    const emp = empresas.find(e => String(e.id) === String(con.empresaId));
-                    const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
-                    const vigencia = `${con.periodoInicial ? con.periodoInicial.split('-').reverse().join('/') : '-'} - ${con.periodoFinal ? con.periodoFinal.split('-').reverse().join('/') : '-'}`;
-                    tableHtml += `
-                        <tr>
-                            <td>
-                                <div style="font-weight: 700; color: var(--primary-color);">${con.numero || '-'}</div>
-                                ${con.tipoContratacao ? `<div style="font-size: 10px; font-weight: 700; color: #fff; background: var(--primary-color); display: inline-block; padding: 2px 6px; border-radius: 4px; margin-top: 4px; text-transform: uppercase;">${con.tipoContratacao}</div>` : ''}
-                            </td>
-                            <td>${con.proa || '-'}</td>
-                            <td>${con.lote || '-'}</td>
-                            <td>${con.cre || '-'}</td>
-                            <td>${empName}</td>
-                            <td>${vigencia}</td>
-                            <td>${formatCurrency(con.valorDiario)}</td>
-                            <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
-                            <td>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar" style="background: rgba(37, 99, 235, 0.1); color: var(--primary-color);">
-                                        <i class='bx bx-show'></i>
-                                    </button>
-                                    <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar" style="background: rgba(0, 0, 0, 0.05);">
-                                        <i class='bx bx-pencil'></i>
-                                    </button>
-                                    <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos">
-                                        <i class='bx bx-paperclip'></i>
-                                    </button>
-                                    <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir" style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
-                                        <i class='bx bx-trash'></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                tableHtml += `</tbody></table></div>`;
-                groupDiv.innerHTML = tableHtml;
-                container.appendChild(groupDiv);
-            });
-        } else {
-            // General Table View
-            const card = document.createElement('div');
-            card.className = 'data-table';
-            card.style.overflowX = 'auto';
-
-            let tableHtml = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Número</th>
-                            <th>Empresa</th>
-                            <th>Serviço</th>
-                            <th>CRE</th>
-                            <th>Situação</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-contratos">
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${con.numero || '-'}</td>
+                <td>${empName}</td>
+                <td>${con.tipo || '-'}</td>
+                <td>${con.cre || '-'}</td>
+                <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
+                <td>
+                    <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
+                    <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
+                    <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
+                    <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
+                </td>
             `;
-
-            contratos.forEach(con => {
-                const emp = empresas.find(e => String(e.id) === String(con.empresaId));
-                const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
-
-                tableHtml += `
-                    <tr>
-                        <td>
-                            <div>${con.numero || '-'}</div>
-                            ${con.tipoContratacao ? `<div style="font-size: 9px; font-weight: 700; background: #f1f5f9; color: #475569; display: inline-block; padding: 1px 5px; border-radius: 3px; border: 1px solid #e2e8f0; margin-top: 2px;">${con.tipoContratacao}</div>` : ''}
-                        </td>
-                        <td>${empName}</td>
-                        <td>${con.tipo || '-'}</td>
-                        <td>${con.cre || '-'}</td>
-                        <td><span class="badge ${con.situacao || ''}">${con.situacao || '-'}</span></td>
-                        <td>
-                            <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
-                            <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
-                            <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
-                            <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tableHtml += `</tbody></table>`;
-            card.innerHTML = tableHtml;
-            container.appendChild(card);
-        }
+            tbody.appendChild(tr);
+        });
     }
 
     window.deleteContrato = async function (id) {
@@ -1574,7 +1497,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('con-lote').value = con.lote || '';
         document.getElementById('con-cre').value = con.cre || '';
         document.getElementById('con-tipo').value = con.tipo || '';
-        document.getElementById('con-tipo-contratacao').value = con.tipoContratacao || '';
         document.getElementById('con-empresa').value = con.empresaId || '';
 
         document.getElementById('con-periodoinicial').value = con.periodoInicial || '';
@@ -1646,10 +1568,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="detail-item">
                         <span class="detail-label">Tipo de Serviço</span>
                         <span class="detail-value">${con.tipo || '-'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Tipo de Contrato</span>
-                        <span class="detail-value">${con.tipoContratacao || '-'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">PROA</span>
@@ -2223,155 +2141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // INDENIZATÓRIOS (Lotes Independentes)
-    // ==========================================
-    
-    const modalLote = document.getElementById('modal-lote-indenizatorio');
-    const formLote = document.getElementById('form-lote-indenizatorio');
-    let editingLoteId = null;
-
-    document.getElementById('btn-novo-lote-indenizatorio')?.addEventListener('click', () => {
-        editingLoteId = null;
-        document.getElementById('modal-lote-title').innerText = 'Cadastrar Lote Indenizatório';
-        if (formLote) formLote.reset();
-        populateEmpresasSelect('lote-empresa');
-        if (modalLote) modalLote.classList.remove('form-hidden');
-    });
-
-    document.getElementById('btn-close-lote-modal')?.addEventListener('click', () => {
-        if (modalLote) modalLote.classList.add('form-hidden');
-    });
-
-    document.getElementById('btn-cancel-lote')?.addEventListener('click', () => {
-        if (modalLote) modalLote.classList.add('form-hidden');
-    });
-
-    formLote?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const data = {
-            lote: document.getElementById('lote-numero').value,
-            cre: document.getElementById('lote-cre').value,
-            empresa_id: document.getElementById('lote-empresa').value,
-            alunos: document.getElementById('lote-alunos').value,
-            geo: document.getElementById('lote-geo').value,
-            km: document.getElementById('lote-km').value,
-            valor_km: parseCurrency(document.getElementById('lote-valorkm').value),
-            valor_diario: parseCurrency(document.getElementById('lote-valordiario').value)
-        };
-
-        try {
-            const url = editingLoteId ? `${API_URL}/indenizatorios/${editingLoteId}` : `${API_URL}/indenizatorios`;
-            const method = editingLoteId ? 'PUT' : 'POST';
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (!res.ok) throw new Error('Erro ao salvar lote');
-            
-            showToast(editingLoteId ? 'Lote atualizado!' : 'Lote cadastrado!', 'success');
-            if (modalLote) modalLote.classList.add('form-hidden');
-            loadIndenizatoriosTable();
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
-    });
-
-    window.loadIndenizatoriosTable = async function() {
-        if (selectedSystem !== 'transporte') return;
-        
-        try {
-            const res = await fetch(`${API_URL}/indenizatorios`);
-            const lotes = await res.json();
-            const container = document.getElementById('lista-lotes-indenizatorios');
-            if (!container) return;
-
-            container.innerHTML = '';
-            lotes.forEach(lote => {
-                const emp = empresas.find(e => String(e.id) === String(lote.empresa_id));
-                const empName = emp ? emp.razao : '<span style="color:red">Empresa Excluída</span>';
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="padding: 15px 20px; font-weight: 600; color: var(--primary-color);">${lote.lote || '-'}</td>
-                    <td style="padding: 15px 20px;">${lote.cre || '-'}</td>
-                    <td style="padding: 15px 20px;">${empName}</td>
-                    <td style="padding: 15px 20px;">${lote.alunos || 0}</td>
-                    <td style="padding: 15px 20px;">${lote.geo || '-'}</td>
-                    <td style="padding: 15px 20px;">${formatCurrency(lote.valor_km)}</td>
-                    <td style="padding: 15px 20px;">${lote.km || 0} KM</td>
-                    <td style="padding: 15px 20px; font-weight: 600;">${formatCurrency(lote.valor_diario)}</td>
-                    <td style="padding: 15px 20px; text-align: right;">
-                        <button class="btn-icon admin-only" onclick="editLoteIndenizatorio('${lote.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
-                        <button class="btn-icon delete admin-only" onclick="deleteLoteIndenizatorio('${lote.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
-                    </td>
-                `;
-                container.appendChild(tr);
-            });
-            checkPermissions();
-        } catch (err) {
-            console.error('Erro ao carregar indenizatórios:', err);
-        }
-    };
-
-    window.editLoteIndenizatorio = async function(id) {
-        try {
-            const res = await fetch(`${API_URL}/indenizatorios`);
-            const lotes = await res.json();
-            const lote = lotes.find(l => String(l.id) === String(id));
-            if (!lote) return;
-
-            editingLoteId = id;
-            document.getElementById('modal-lote-title').innerText = 'Editar Lote Indenizatório';
-            
-            document.getElementById('lote-numero').value = lote.lote || '';
-            document.getElementById('lote-cre').value = lote.cre || '';
-            populateEmpresasSelect('lote-empresa');
-            document.getElementById('lote-empresa').value = lote.empresa_id || '';
-            document.getElementById('lote-alunos').value = lote.alunos || 0;
-            document.getElementById('lote-geo').value = lote.geo || '';
-            document.getElementById('lote-km').value = lote.km || 0;
-            document.getElementById('lote-valorkm').value = formatCurrency(lote.valor_km);
-            document.getElementById('lote-valordiario').value = formatCurrency(lote.valor_diario);
-
-            if (modalLote) modalLote.classList.remove('form-hidden');
-        } catch (err) {
-            showToast('Erro ao carregar dados do lote', 'error');
-        }
-    };
-
-    window.deleteLoteIndenizatorio = async function(id) {
-        if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
-        try {
-            const res = await fetch(`${API_URL}/indenizatorios/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Erro ao excluir lote');
-            showToast('Lote excluído com sucesso');
-            loadIndenizatoriosTable();
-        } catch (err) {
-            showToast(err.message, 'error');
-        }
-    };
-
-    // Currency masks apply for new inputs
-    ['lote-valorkm', 'lote-valordiario'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('input', maskCurrency);
-        }
-    });
-
-    // Handle initial navigation if target is indenizatorios
-    document.querySelectorAll('.nav-links a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const target = link.getAttribute('data-target');
-            if (target === 'indenizatorios') {
-                loadIndenizatoriosTable();
-            }
-        });
+    document.getElementById('btn-relatorio-pdf')?.addEventListener('click', () => {
+        window.print();
     });
 
 });

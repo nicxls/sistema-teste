@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const http = require('http'); // Necessário para o Socket.IO
+const { Server } = require('socket.io'); // Socket.IO
 require('dotenv').config();
 const db = require('./db');
 
@@ -12,42 +14,28 @@ const db = require('./db');
             await db.execute('ALTER TABLE contratos ADD COLUMN anexos LONGTEXT');
             console.log('Coluna "anexos" adicionada à tabela "contratos".');
         }
-
-        const [columnsTipo] = await db.execute('SHOW COLUMNS FROM contratos LIKE "tipo_contratacao"');
-        if (columnsTipo.length === 0) {
-            await db.execute('ALTER TABLE contratos ADD COLUMN tipo_contratacao VARCHAR(50)');
-            console.log('Coluna "tipo_contratacao" adicionada à tabela "contratos".');
-        }
-
-        // Tabela Indenizatórios
-        await db.execute(`
-            CREATE TABLE IF NOT EXISTS lotes_indenizatorios (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                lote VARCHAR(50),
-                cre VARCHAR(50),
-                empresa_id INT,
-                alunos INT DEFAULT 0,
-                geo VARCHAR(150),
-                valor_km DECIMAL(12, 2) DEFAULT 0,
-                km DECIMAL(12, 2) DEFAULT 0,
-                valor_diario DECIMAL(12, 2) DEFAULT 0,
-                FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
 })();
 
 const app = express();
+const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Permite conexões de qualquer origem (Vercel, etc)
+        methods: ["GET", "POST", "PUT", "DELETE"]
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
-// Função helper para notificar (Socket.IO removido para compatibilidade)
+// Função helper para notificar todos os clientes via WebSocket
 const notifyUpdate = () => {
-    // io.emit('data-updated');
+    io.emit('data-updated');
 };
 
 // ==========================================
@@ -170,11 +158,11 @@ app.post('/api/acessos', async (req, res) => {
     }
 });
 
-// Listar Todas as Solicitações e Usuários
+// Listar Solicitações Pendentes e Admins
 app.get('/api/admin/acessos', async (req, res) => {
     try {
-        const [reqs] = await db.execute('SELECT * FROM solicitacoes_acesso ORDER BY id DESC');
-        const [users] = await db.execute('SELECT id, usuario as user, role FROM usuarios ORDER BY role = "master" DESC, user ASC');
+        const [reqs] = await db.execute('SELECT * FROM solicitacoes_acesso WHERE status = "pendente"');
+        const [users] = await db.execute('SELECT usuario as user, role FROM usuarios WHERE role != "master"');
         res.json({ solicitacoes: reqs, usuarios: users });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -330,16 +318,15 @@ app.post('/api/contratos', async (req, res) => {
     try {
         const [result] = await db.execute(
             `INSERT INTO contratos (
-                numero, proa, lote, cre, tipo, tipo_contratacao, empresa_id, periodo_inicial, periodo_final, 
+                numero, proa, lote, cre, tipo, empresa_id, periodo_inicial, periodo_final, 
                 situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos, anexos
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
-                data.tipo_contratacao || null, parseInt(data.empresa_id) || null, data.periodo_inicial || null, 
-                data.periodo_final || null, data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, 
-                data.municipio || null, parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, 
-                parseFloat(data.km) || 0, parseFloat(data.valor_mensal) || 0, data.postos || null, 
-                JSON.stringify(data.anexos || [])
+                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
+                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
+                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
+                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
             ]
         );
         notifyUpdate();
@@ -355,17 +342,16 @@ app.put('/api/contratos/:id', async (req, res) => {
     try {
         await db.execute(
             `UPDATE contratos SET 
-                numero=?, proa=?, lote=?, cre=?, tipo=?, tipo_contratacao=?, empresa_id=?, periodo_inicial=?, 
+                numero=?, proa=?, lote=?, cre=?, tipo=?, empresa_id=?, periodo_inicial=?, 
                 periodo_final=?, situacao=?, gestor=?, alunos=?, municipio=?, valor_diario=?, 
                 valor_km=?, km=?, valor_mensal=?, postos=?, anexos=? 
             WHERE id = ?`,
             [
                 data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
-                data.tipo_contratacao || null, parseInt(data.empresa_id) || null, data.periodo_inicial || null, 
-                data.periodo_final || null, data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, 
-                data.municipio || null, parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, 
-                parseFloat(data.km) || 0, parseFloat(data.valor_mensal) || 0, data.postos || null, 
-                JSON.stringify(data.anexos || []), id
+                parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
+                data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
+                parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
+                parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
             ]
         );
         notifyUpdate();
@@ -417,72 +403,7 @@ app.post('/api/postos/save', async (req, res) => {
     }
 });
 
-// ==========================================
-// INDENIZATÓRIOS
-// ==========================================
-
-app.get('/api/indenizatorios', async (req, res) => {
-    try {
-        const [rows] = await db.execute('SELECT * FROM lotes_indenizatorios ORDER BY id DESC');
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/indenizatorios', async (req, res) => {
-    const data = req.body;
-    try {
-        const [result] = await db.execute(
-            `INSERT INTO lotes_indenizatorios (lote, cre, empresa_id, alunos, geo, valor_km, km, valor_diario) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                data.lote || null, data.cre || null, parseInt(data.empresa_id) || null,
-                parseInt(data.alunos) || 0, data.geo || null,
-                parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0
-            ]
-        );
-        notifyUpdate();
-        res.json({ id: result.insertId });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.put('/api/indenizatorios/:id', async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
-    try {
-        await db.execute(
-            `UPDATE lotes_indenizatorios SET 
-                lote=?, cre=?, empresa_id=?, alunos=?, geo=?, valor_km=?, km=?, valor_diario=?
-             WHERE id=?`,
-            [
-                data.lote || null, data.cre || null, parseInt(data.empresa_id) || null,
-                parseInt(data.alunos) || 0, data.geo || null,
-                parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0,
-                id
-            ]
-        );
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/indenizatorios/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+// Iniciar servidor usando o objeto 'server' que inclui o Socket.IO
+server.listen(PORT, () => {
+    console.log(`Servidor rodando em tempo real na porta ${PORT}`);
 });
