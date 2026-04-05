@@ -3,9 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // INITIALIZATION & STATE
     // ==========================================
-    // Verificação de Deploy: 2026-04-05
     const API_URL = '/api';
-    const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
@@ -37,28 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoginScreen();
     }
 
-    // 3. Conectar ao servidor em tempo real (Socket.IO)
-    initRealtimeSocket();
 
-    function initRealtimeSocket() {
-        if (typeof io !== 'undefined') {
-            const socket = io(SOCKET_URL, {
-                reconnectionAttempts: 5,
-                timeout: 5000,
-                transports: ['polling'],
-                path: '/socket.io'
-            });
-            socket.on('data-updated', () => {
-                console.log('Dados atualizados via Socket.');
-                fetchAllData();
-            });
-            socket.on('connect_error', () => {
-                startPolling(); // Fallback se o socket falhar
-            });
-        } else {
-            startPolling();
-        }
-    }
+    // 3. Sistema de Atualização (Polling básico)
+    startPolling();
 
     let pollingInterval = null;
     function startPolling() {
