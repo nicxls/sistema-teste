@@ -1402,7 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filtros
     const inputsFiltro = [
         'filtro-processo', 'filtro-tipo', 'filtro-cre',
-        'filtro-contrato', 'filtro-empresa', 'filtro-situacao'
+        'filtro-contrato', 'filtro-empresa', 'filtro-situacao', 'filtro-lote'
     ].map(id => document.getElementById(id));
 
     inputsFiltro.forEach(input => {
@@ -1446,6 +1446,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const vSit = document.getElementById('filtro-situacao').value;
             if (vSit && con.situacao !== vSit) return false;
 
+            const vLot = (document.getElementById('filtro-lote').value || '').toLowerCase();
+            if (vLot && (!con.lote || !con.lote.toLowerCase().includes(vLot))) return false;
+
             return true;
         });
 
@@ -1481,7 +1484,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <table class="municipio-table">
                             <thead>
                                 <tr>
-                                    <th>Nº CONTRATO / PROCESSO</th>
+                                    <th>Nº CONTRATO</th>
+                                    <th>PROCESSO</th>
+                                    <th>LOTE</th>
                                     <th>CRE</th>
                                     <th>EMPRESA</th>
                                     <th>VIGÊNCIA</th>
@@ -1500,10 +1505,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     tableHtml += `
                         <tr>
-                            <td>
-                                <div style="font-weight: 700; color: var(--primary-color);">${con.numero || '-'}</div>
-                                <div style="font-size: 12px; color: var(--text-light);">${con.proa || '-'}</div>
-                            </td>
+                            <td><strong>${con.numero || '-'}</strong></td>
+                            <td>${con.proa || '-'}</td>
+                            <td>${con.lote || '-'}</td>
                             <td>${con.cre || '-'}</td>
                             <td>${empName}</td>
                             <td>${vigencia}</td>
