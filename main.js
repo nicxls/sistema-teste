@@ -745,18 +745,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-            // Solicitações Pendentes
+            // Solicitações (Pendentes, Aprovadas, Recusadas)
             reqs.forEach(req => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${req.usuario}</td>
-                    <td>${req.email}</td>
-                    <td><span class="badge Pendente">PENDENTE</span></td>
-                    <td style="display: flex; gap: 8px;">
+                const status = (req.status || 'pendente').toLowerCase();
+                let statusBadge = '';
+                let actions = '';
+
+                if (status === 'pendente') {
+                    statusBadge = '<span class="badge Pendente" style="background: #e9ecef; color: #495057;">PENDENTE</span>';
+                    actions = `
                         <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
                         <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
                         <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
-                    </td>
+                    `;
+                } else if (status === 'aprovado') {
+                    statusBadge = '<span class="badge Ativo" style="background: #c7f9cc; color: #2d6a4f;">APROVADO</span>';
+                    actions = '<span style="color: var(--text-light); font-size: 11px;">Processado</span>';
+                } else {
+                    statusBadge = '<span class="badge" style="background: #ffcccc; color: #a90000; border-radius: 4px; padding: 2px 6px;">RECUSADO</span>';
+                    actions = '<span style="color: var(--text-light); font-size: 11px;">Processado</span>';
+                }
+
+                tr.innerHTML = `
+                    <td>${req.usuario}</td>
+                    <td>${req.email}</td>
+                    <td>${statusBadge}</td>
+                    <td style="display: flex; gap: 8px; align-items: center;">${actions}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -764,21 +779,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Usuários Ativos (Gerenciamento)
             users.forEach(usr => {
                 const tr = document.createElement('tr');
-                // Badge color logic
-                const badgeClass = usr.role === 'admin' ? 'Ativo' : 'Pendente';
-                const badgeText = usr.role === 'admin' ? 'ADMINISTRADOR' : 'USUÁRIO';
-
-                tr.innerHTML = `
-                    <td>${usr.user}</td>
-                    <td>-</td>
-                    <td>
+                const isMaster = usr.role === 'master';
+                
+                let roleDisplay = '';
+                if (isMaster) {
+                    roleDisplay = '<span class="badge" style="background: #4361ee; color: white; border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 700;">MASTER</span>';
+                } else {
+                    roleDisplay = `
                         <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
                             <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
                             <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
                         </select>
-                    </td>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td>${usr.user}</td>
+                    <td>-</td>
+                    <td>${roleDisplay}</td>
                     <td>
-                        <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
+                        ${isMaster ? '<i class="bx bxs-lock-alt" style="color: var(--text-light);" title="Conta Master Protegida"></i>' : `
+                            <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
+                        `}
                     </td>
                 `;
                 tbody.appendChild(tr);

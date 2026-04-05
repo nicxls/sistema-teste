@@ -170,11 +170,11 @@ app.post('/api/acessos', async (req, res) => {
     }
 });
 
-// Listar Solicitações Pendentes e Admins
+// Listar Todas as Solicitações e Usuários
 app.get('/api/admin/acessos', async (req, res) => {
     try {
-        const [reqs] = await db.execute('SELECT * FROM solicitacoes_acesso WHERE status = "pendente"');
-        const [users] = await db.execute('SELECT usuario as user, role FROM usuarios WHERE role != "master"');
+        const [reqs] = await db.execute('SELECT * FROM solicitacoes_acesso ORDER BY id DESC');
+        const [users] = await db.execute('SELECT id, usuario as user, role FROM usuarios ORDER BY role = "master" DESC, user ASC');
         res.json({ solicitacoes: reqs, usuarios: users });
     } catch (error) {
         res.status(500).json({ error: error.message });
