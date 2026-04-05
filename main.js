@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Usuário logado: Oculta login e decide se mostra seletor ou app
         document.getElementById('login-container').style.display = 'none';
         
+        // GLOBAL PERMISSION CHECK: Hide master-only features if not master
+        if (currentUser.role !== 'master') {
+            document.querySelectorAll('.master-only').forEach(el => el.style.display = 'none');
+        }
+
         if (!selectedSystem) {
             showSystemSelection();
         } else {
@@ -583,6 +588,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.success) {
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    
+                    // Permission Check on login
+                    if (data.user.role !== 'master') {
+                        document.querySelectorAll('.master-only').forEach(el => el.style.display = 'none');
+                    } else {
+                        document.querySelectorAll('.master-only').forEach(el => el.style.display = 'block');
+                    }
+
                     applyLogin(data.user);
                     showToast('Login efetuado com sucesso!', 'success');
                 } else {
@@ -2223,18 +2236,18 @@ document.addEventListener('DOMContentLoaded', () => {
             lotes.forEach(l => {
                 const emp = empresas.find(e => e.id == l.empresa_id);
                 const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border-color)';
+                
                 tr.innerHTML = `
-                    <td>${l.lote}</td>
-                    <td>${l.cre}</td>
-                    <td>${emp ? emp.razao : 'N/A'}</td>
-                    <td>${l.alunos}</td>
-                    <td>${l.km}</td>
-                    <td>${formatCurrency(l.valor_diario)}</td>
-                    <td>
-                        <div class="table-actions">
-                            <button class="btn-icon btn-edit" onclick="editLoteIndenizatorio(${l.id})"><i class='bx bx-edit-alt'></i></button>
-                            <button class="btn-icon btn-delete" onclick="deleteLoteIndenizatorio(${l.id})"><i class='bx bx-trash'></i></button>
-                        </div>
+                    <td style="padding: 15px 20px; font-size: 14px; font-weight: 500; color: var(--text-color);">${l.lote}</td>
+                    <td style="padding: 15px 20px; font-size: 13px; color: var(--text-light);">${l.cre}</td>
+                    <td style="padding: 15px 20px; font-size: 13px; color: var(--text-color);">${emp ? emp.razao : 'N/A'}</td>
+                    <td style="padding: 15px 20px; font-size: 13px; color: var(--text-color);">${l.alunos}</td>
+                    <td style="padding: 15px 20px; font-size: 13px; color: var(--text-color);">${l.km}</td>
+                    <td style="padding: 15px 20px; font-size: 13px; font-weight: 600; color: #4361ee;">${formatCurrency(l.valor_diario)}</td>
+                    <td style="padding: 15px 20px; text-align: center;">
+                        <button class="btn-icon" onclick="editLoteIndenizatorio(${l.id})" style="color: #4361ee; margin-right: 8px;"><i class='bx bx-edit-alt'></i></button>
+                        <button class="btn-icon" onclick="deleteLoteIndenizatorio(${l.id})" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>
                     </td>
                 `;
                 container.appendChild(tr);
