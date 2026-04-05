@@ -1481,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <table class="municipio-table">
                             <thead>
                                 <tr>
-                                    <th>Nº PROCESSO</th>
+                                    <th>Nº CONTRATO / PROCESSO</th>
                                     <th>CRE</th>
                                     <th>EMPRESA</th>
                                     <th>VIGÊNCIA</th>
@@ -1500,7 +1500,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     tableHtml += `
                         <tr>
-                            <td><strong>${con.proa || '-'}</strong></td>
+                            <td>
+                                <div style="font-weight: 700; color: var(--primary-color);">${con.numero || '-'}</div>
+                                <div style="font-size: 12px; color: var(--text-light);">${con.proa || '-'}</div>
+                            </td>
                             <td>${con.cre || '-'}</td>
                             <td>${empName}</td>
                             <td>${vigencia}</td>
