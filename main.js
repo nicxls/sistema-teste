@@ -1294,8 +1294,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function populateEmpresasSelect() {
-        const select = document.getElementById('con-empresa');
+    function populateEmpresasSelect(selectId) {
+        const id = selectId || 'con-empresa';
+        const select = document.getElementById(id);
+        if (!select) return;
         const empresas = getEmpresas();
 
         select.innerHTML = '<option value="" disabled selected>Selecione uma Empresa</option>';
