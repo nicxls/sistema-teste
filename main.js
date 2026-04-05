@@ -1526,6 +1526,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos">
                                         <i class='bx bx-paperclip'></i>
                                     </button>
+                                    <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir" style="background: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
