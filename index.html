@@ -164,6 +164,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#" data-target="indenizatorios" id="menu-indenizatorios" style="display: none;">
+                        <i class='bx bx-spreadsheet'></i>
+                        <span>Indenizatórios</span>
+                    </a>
+                </li>
+                <li>
                     <a href="#" id="menu-faturamentos">
                         <i class='bx bx-dollar'></i>
                         <span>Faturamentos</span>
@@ -238,6 +244,38 @@
                             <div class="stat-icon">
                                 <i class='bx bx-file'></i>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Indenizatórios -->
+                <section id="indenizatorios" class="view" style="display: none;">
+                    <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h1 style="color: var(--primary-color);">Lotes Indenizatórios</h1>
+                            <p style="color: var(--text-light);">Gestão de lotes de transporte escolar</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModalLote()"><i class='bx bx-plus'></i> Novo Lote</button>
+                    </div>
+
+                    <div class="card shadow">
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Lote</th>
+                                        <th>CRE</th>
+                                        <th>Empresa</th>
+                                        <th>Alunos</th>
+                                        <th>KM</th>
+                                        <th>Valor Diário</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-indenizatorios">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
@@ -938,6 +976,58 @@
                 <button id="btn-fechar-anexos" class="btn btn-secondary"
                     style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Lote Indenizatório -->
+    <div id="modal-lote" class="modal-overlay form-hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="modal-lote-title">Novo Lote Indenizatório</h3>
+                <button class="close-modal-btn" onclick="closeModalLote()">&times;</button>
+            </div>
+            <form id="form-lote">
+                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label>Lote</label>
+                        <input type="text" id="lote-numero" required placeholder="Ex: Lote 01">
+                    </div>
+                    <div class="form-group">
+                        <label>CRE</label>
+                        <input type="text" id="lote-cre" required placeholder="Ex: CRE-05">
+                    </div>
+                    <div class="form-group">
+                        <label>Empresa</label>
+                        <select id="lote-empresa" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Alunos</label>
+                        <input type="number" id="lote-alunos" required value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Geolocalização</label>
+                        <input type="text" id="lote-geo" placeholder="Coordenadas ou link">
+                    </div>
+                    <div class="form-group">
+                        <label>Quilometragem (KM)</label>
+                        <input type="number" step="0.01" id="lote-km" required value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor KM (R$)</label>
+                        <input type="text" id="lote-valorkm" required placeholder="R$ 0,00">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor Diário (R$)</label>
+                        <input type="text" id="lote-valordiario" required placeholder="R$ 0,00">
+                    </div>
+                </div>
+                <div class="modal-footer" style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModalLote()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Lote</button>
+                </div>
+            </form>
         </div>
     </div>
 

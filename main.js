@@ -474,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const menuContratos = document.getElementById('menu-contratos');
         const menuFaturamentos = document.getElementById('menu-faturamentos');
         const menuPostos = document.getElementById('menu-postos');
+        const menuIndenizatorios = document.getElementById('menu-indenizatorios');
 
         // Submenus
         const fatSubmenu = document.getElementById('submenu-faturamentos');
@@ -483,12 +484,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (menuContratos) menuContratos.closest('li').style.display = 'block';
             if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
             if (menuPostos) menuPostos.closest('li').style.display = 'none';
+            if (menuIndenizatorios) menuIndenizatorios.closest('li').style.display = 'block';
             filterSubmenuItems(fatSubmenu, ['Transporte Escolar']);
         } else {
             // No Mão de Obra, mostramos TUDO
             if (menuContratos) menuContratos.closest('li').style.display = 'block';
             if (menuFaturamentos) menuFaturamentos.closest('li').style.display = 'block';
             if (menuPostos) menuPostos.closest('li').style.display = 'block';
+            if (menuIndenizatorios) menuIndenizatorios.closest('li').style.display = 'none';
 
             filterSubmenuItems(fatSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
             filterSubmenuItems(postSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
@@ -2141,8 +2144,152 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     document.getElementById('btn-relatorio-pdf')?.addEventListener('click', () => {
         window.print();
+    });
+
+    // ==========================================
+    // INDENIZATÓRIOS (LOTES)
+    // ==========================================
+    let editingLoteId = null;
+    const modalLote = document.getElementById('modal-lote');
+    const formLote = document.getElementById('form-lote');
+
+    window.openModalLote = function() {
+        editingLoteId = null;
+        document.getElementById('modal-lote-title').innerText = 'Novo Lote Indenizatório';
+        formLote.reset();
+        populateEmpresasSelect('lote-empresa');
+        modalLote.classList.remove('form-hidden');
+    };
+
+    window.closeModalLote = function() {
+        modalLote.classList.add('form-hidden');
+    };
+
+    if (formLote) {
+        formLote.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                lote: document.getElementById('lote-numero').value,
+                cre: document.getElementById('lote-cre').value,
+                empresa_id: document.getElementById('lote-empresa').value,
+                alunos: document.getElementById('lote-alunos').value,
+                geo: document.getElementById('lote-geo').value,
+                km: document.getElementById('lote-km').value,
+                valor_km: parseFloat(document.getElementById('lote-valorkm').value.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
+                valor_diario: parseFloat(document.getElementById('lote-valordiario').value.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0
+            };
+
+            try {
+                const method = editingLoteId ? 'PUT' : 'POST';
+                const url = editingLoteId ? `${API_URL}/indenizatorios/${editingLoteId}` : `${API_URL}/indenizatorios`;
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!res.ok) throw new Error('Erro ao salvar lote');
+                
+                showToast('Lote salvo com sucesso!');
+                closeModalLote();
+                loadIndenizatoriosTable();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+    }
+
+    async function loadIndenizatoriosTable() {
+        const container = document.getElementById('lista-indenizatorios');
+        if (!container) return;
+
+        try {
+            const res = await fetch(`${API_URL}/indenizatorios`);
+            const lotes = await res.json();
+            const resEmp = await fetch(`${API_URL}/empresas`);
+            const empresas = await resEmp.json();
+
+            container.innerHTML = '';
+            lotes.forEach(l => {
+                const emp = empresas.find(e => e.id == l.empresa_id);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${l.lote}</td>
+                    <td>${l.cre}</td>
+                    <td>${emp ? emp.razao : 'N/A'}</td>
+                    <td>${l.alunos}</td>
+                    <td>${l.km}</td>
+                    <td>${formatCurrency(l.valor_diario)}</td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn-icon btn-edit" onclick="editLoteIndenizatorio(${l.id})"><i class='bx bx-edit-alt'></i></button>
+                            <button class="btn-icon btn-delete" onclick="deleteLoteIndenizatorio(${l.id})"><i class='bx bx-trash'></i></button>
+                        </div>
+                    </td>
+                `;
+                container.appendChild(tr);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar indenizatórios:', err);
+        }
+    }
+
+    window.editLoteIndenizatorio = async function(id) {
+        try {
+            const res = await fetch(`${API_URL}/indenizatorios`);
+            const lotes = await res.json();
+            const lote = lotes.find(l => String(l.id) === String(id));
+            if (!lote) return;
+
+            editingLoteId = id;
+            document.getElementById('modal-lote-title').innerText = 'Editar Lote Indenizatório';
+            
+            document.getElementById('lote-numero').value = lote.lote || '';
+            document.getElementById('lote-cre').value = lote.cre || '';
+            populateEmpresasSelect('lote-empresa');
+            document.getElementById('lote-empresa').value = lote.empresa_id || '';
+            document.getElementById('lote-alunos').value = lote.alunos || 0;
+            document.getElementById('lote-geo').value = lote.geo || '';
+            document.getElementById('lote-km').value = lote.km || 0;
+            document.getElementById('lote-valorkm').value = formatCurrency(lote.valor_km);
+            document.getElementById('lote-valordiario').value = formatCurrency(lote.valor_diario);
+
+            if (modalLote) modalLote.classList.remove('form-hidden');
+        } catch (err) {
+            showToast('Erro ao carregar dados do lote', 'error');
+        }
+    };
+
+    window.deleteLoteIndenizatorio = async function(id) {
+        if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
+        try {
+            const res = await fetch(`${API_URL}/indenizatorios/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Erro ao excluir lote');
+            showToast('Lote excluído com sucesso');
+            loadIndenizatoriosTable();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    };
+
+    // Currency masks for the new modal
+    setTimeout(() => {
+        ['lote-valorkm', 'lote-valordiario'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', maskCurrency);
+        });
+    }, 1000);
+
+    // Patch navigation system to handle the new section
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[data-target="indenizatorios"]');
+        if (link) {
+            loadIndenizatoriosTable();
+        }
     });
 
 });
