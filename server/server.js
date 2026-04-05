@@ -20,6 +20,22 @@ const db = require('./db');
             await db.execute('ALTER TABLE contratos ADD COLUMN tipo_contratacao VARCHAR(50)');
             console.log('Coluna "tipo_contratacao" adicionada à tabela "contratos".');
         }
+
+        // Tabela Indenizatórios
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS lotes_indenizatorios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                lote VARCHAR(50),
+                cre VARCHAR(50),
+                empresa_id INT,
+                alunos INT DEFAULT 0,
+                geo VARCHAR(150),
+                valor_km DECIMAL(12, 2) DEFAULT 0,
+                km DECIMAL(12, 2) DEFAULT 0,
+                valor_diario DECIMAL(12, 2) DEFAULT 0,
+                FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -404,6 +420,71 @@ app.post('/api/postos/save', async (req, res) => {
                 [contratoId, esc.municipio, esc.nome, esc.valor, esc.carga_horaria, esc.implantados, esc.vagos]
             );
         }
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// INDENIZATÓRIOS
+// ==========================================
+
+app.get('/api/indenizatorios', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM lotes_indenizatorios ORDER BY id DESC');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/indenizatorios', async (req, res) => {
+    const data = req.body;
+    try {
+        const [result] = await db.execute(
+            `INSERT INTO lotes_indenizatorios (lote, cre, empresa_id, alunos, geo, valor_km, km, valor_diario) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                data.lote || null, data.cre || null, parseInt(data.empresa_id) || null,
+                parseInt(data.alunos) || 0, data.geo || null,
+                parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0
+            ]
+        );
+        notifyUpdate();
+        res.json({ id: result.insertId });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/indenizatorios/:id', async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
+    try {
+        await db.execute(
+            `UPDATE lotes_indenizatorios SET 
+                lote=?, cre=?, empresa_id=?, alunos=?, geo=?, valor_km=?, km=?, valor_diario=?
+             WHERE id=?`,
+            [
+                data.lote || null, data.cre || null, parseInt(data.empresa_id) || null,
+                parseInt(data.alunos) || 0, data.geo || null,
+                parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0,
+                id
+            ]
+        );
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/indenizatorios/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {

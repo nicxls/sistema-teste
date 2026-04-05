@@ -155,6 +155,12 @@
                         <span>Contratos</span>
                     </a>
                 </li>
+                <li id="li-indenizatorios" style="display: none;">
+                    <a href="#" data-target="indenizatorios" id="menu-indenizatorios">
+                        <i class='bx bx-archive-in'></i>
+                        <span>Indenizatórios</span>
+                    </a>
+                </li>
                 <li class="master-only">
                     <a href="#" data-target="aprovacoes">
                         <i class='bx bx-shield-quarter'></i>
@@ -198,7 +204,68 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
+        <!-- Modal Lote Indenizatório -->
+    <div id="modal-lote-indenizatorio" class="modal-overlay form-hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="modal-lote-title">Cadastrar Lote Indenizatório</h2>
+                <button class="btn-close" id="btn-close-lote-modal"><i class='bx bx-x'></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-lote-indenizatorio">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lote-numero">Número do Lote</label>
+                            <input type="text" id="lote-numero" required placeholder="Lote Nº">
+                        </div>
+                        <div class="form-group">
+                            <label for="lote-cre">CRE</label>
+                            <input type="text" id="lote-cre" required placeholder="Ex: 1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lote-empresa">Empresa</label>
+                            <select id="lote-empresa" required>
+                                <option value="" disabled selected>Selecione uma Empresa</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="lote-alunos">Total de Alunos</label>
+                            <input type="number" id="lote-alunos" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lote-geo">Município (Geo)</label>
+                            <input type="text" id="lote-geo" required placeholder="Nome do Município">
+                        </div>
+                        <div class="form-group">
+                            <label for="lote-km">Quilometragem (KM)</label>
+                            <input type="number" id="lote-km" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="lote-valorkm">Valor do KM (R$)</label>
+                            <input type="text" id="lote-valorkm" class="currency-input" placeholder="R$ 0,00">
+                        </div>
+                        <div class="form-group">
+                            <label for="lote-valordiario">Valor Diário (R$)</label>
+                            <input type="text" id="lote-valordiario" class="currency-input" placeholder="R$ 0,00">
+                        </div>
+                    </div>
+                    <div class="form-footer" style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 12px;">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-lote">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background: #e76f51;">Salvar Lote</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visualizar Contrato -->
         <main class="main-content">
             <header class="topbar" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Welcome Back, User</h2>
@@ -238,6 +305,42 @@
                             <div class="stat-icon">
                                 <i class='bx bx-file'></i>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Indenizatórios View -->
+                <section id="indenizatorios" class="view">
+                    <div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h1>Lotes Indenizatórios</h1>
+                            <p>Gestão de lotes independentes do transporte escolar.</p>
+                        </div>
+                        <button class="btn btn-primary admin-only" id="btn-novo-lote-indenizatorio" style="background: #e76f51; color: #fff; border-radius: 8px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <i class='bx bx-plus' style="font-size: 20px;"></i> Adicionar Novo Lote
+                        </button>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius); box-shadow: var(--shadow-soft);">
+                        <div style="overflow-x: auto;">
+                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                <thead style="background: #f8fafc;">
+                                    <tr>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">LOTE</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">CRE</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">EMPRESA</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">ALUNOS</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">MUNICÍPIO (GEO)</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">VALOR KM</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">KM</th>
+                                        <th style="padding: 15px 20px; text-align: left; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">VALOR DIÁRIO</th>
+                                        <th style="padding: 15px 20px; text-align: right; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">AÇÕES</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-lotes-indenizatorios">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
