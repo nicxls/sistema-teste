@@ -308,8 +308,8 @@
                             <p style="color: var(--text-light); font-size: 14px;">Gestão estratégica de lotes de transporte escolar</p>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportTableToExcel('tabela-indenizatoria', 'Lotes_Indenizatorios')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportTableToPDF('tabela-indenizatoria', 'Relatório de Lotes Indenizatórios')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportIndenizatorios('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
+                            <button class="btn btn-secondary" onclick="exportIndenizatorios('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
                             <button class="btn-primary-elite" onclick="openModalLote()">
                                 <i class='bx bx-plus-circle'></i> Novo Lote
                             </button>
@@ -345,8 +345,8 @@
                         </button>
                         
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportTableToExcel('tabela-empresas', 'Empresas_Cadastradas')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportTableToPDF('tabela-empresas', 'Relação de Empresas')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportEmpresas('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
+                            <button class="btn btn-secondary" onclick="exportEmpresas('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
                         </div>
                     </div>
 
@@ -407,8 +407,8 @@
                     <div class="header-section">
                         <h1>Gestão de Contratos</h1>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportTableToExcel('tabela-contratos', 'Contratos_Ativos')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportTableToPDF('tabela-contratos', 'Relação de Contratos')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportContratos('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
+                            <button class="btn btn-secondary" onclick="exportContratos('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
                             <button class="btn btn-primary admin-only" id="btn-novo-contrato">
                                 <i class='bx bx-plus'></i> Novo Contrato
                             </button>

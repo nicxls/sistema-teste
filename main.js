@@ -2436,25 +2436,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // EXPORTAÇÕES E LOGS
     // ==========================================
-    window.exportTableToExcel = function(tableId, filename) {
-        let table = document.getElementById(tableId);
-        if (!table) return showToast('Tabela não encontrada', 'error');
+    window.exportDataToExcel = function(data, filename) {
+        if (!data || data.length === 0) return showToast('Nenhum dado para exportar', 'error');
         try {
-            let wb = XLSX.utils.table_to_book(table, { sheet: "Dados" });
+            let wb = XLSX.utils.book_new();
+            let ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Dados");
             XLSX.writeFile(wb, filename + ".xlsx");
             showToast('Arquivo Excel exportado!', 'success');
         } catch(e) { showToast('Erro ao exportar Excel', 'error'); }
     };
 
-    window.exportTableToPDF = function(tableId, title) {
+    window.exportDataToPDF = function(data, title) {
+        if (!data || data.length === 0) return showToast('Nenhum dado para exportar', 'error');
         try {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('landscape'); // Landscape by default for large tables
+            const doc = new jsPDF('landscape'); 
             doc.text(title, 14, 15);
-            doc.autoTable({ html: '#' + tableId, startY: 20, theme: 'grid', styles: { fontSize: 8 } });
+            const head = [Object.keys(data[0])];
+            const body = data.map(obj => Object.values(obj));
+            doc.autoTable({ head: head, body: body, startY: 20, theme: 'grid', styles: { fontSize: 8 } });
             doc.save(title + ".pdf");
             showToast('PDF Exportado!', 'success');
         } catch(e) { showToast('Erro ao exportar PDF', 'error'); }
+    };
+
+    window.exportEmpresas = function(type) {
+        const data = getEmpresas().map(e => ({
+            'Razão Social': e.razao,
+            'CNPJ': e.cnpj,
+            'E-mail': e.email,
+            'Telefone': e.telefone
+        }));
+        if(type === 'Excel') exportDataToExcel(data, 'Empresas_Cadastradas');
+        else exportDataToPDF(data, 'Relação de Empresas');
+    };
+
+    window.exportContratos = function(type) {
+        const data = getContratos().map(c => {
+            const emp = getEmpresas().find(e => String(e.id) === String(c.empresaId));
+            return {
+                'Número': c.numero,
+                'PROA': c.proa,
+                'Lote': c.lote,
+                'Serviço': c.tipo,
+                'Empresa': emp ? emp.razao : 'N/A',
+                'Status': c.situacao,
+                'Gestor': c.gestor
+            };
+        });
+        if(type === 'Excel') exportDataToExcel(data, 'Contratos_Ativos');
+        else exportDataToPDF(data, 'Relação de Contratos');
+    };
+
+    window.exportIndenizatorios = async function(type) {
+        try {
+            const resLotes = await fetch(`${API_URL}/indenizatorios`);
+            const lotes = await resLotes.json();
+            const resEmp = await fetch(`${API_URL}/empresas`);
+            const empresas = await resEmp.json();
+            
+            const data = lotes.map(l => {
+                const emp = empresas.find(e => String(e.id) === String(l.empresa_id));
+                return {
+                    'Lote': l.lote,
+                    'CRE': l.cre,
+                    'Empresa': emp ? emp.razao : 'N/A',
+                    'Alunos': l.alunos,
+                    'KM': l.km,
+                    'Valor Diário (R$)': l.valor_diario
+                };
+            });
+            if(type === 'Excel') exportDataToExcel(data, 'Lotes_Indenizatorios');
+            else exportDataToPDF(data, 'Relatório de Lotes Indenizatórios');
+        } catch(err) {
+            showToast('Erro ao obter dados', 'error');
+        }
     };
 
     async function loadLogsTable() {
