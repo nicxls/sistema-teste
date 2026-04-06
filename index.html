@@ -220,7 +220,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="topbar" style="display: flex; justify-content: space-between; align-items: center;">
+            <header class="topbar" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 9999;">
                 <h2>Welcome Back, User</h2>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Notificações -->
@@ -229,7 +229,7 @@
                             <i class='bx bx-bell' style="font-size: 24px;"></i>
                             <span id="notif-badge" style="display: none; position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: var(--danger-color); border-radius: 50%; border: 2px solid var(--bg-color);"></span>
                         </button>
-                        <div id="notif-dropdown" class="form-hidden" style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 100;">
+                        <div id="notif-dropdown" class="form-hidden" style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 10000;">
                             <div style="padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">Avisos de Vencimento</div>
                             <div id="notif-list" style="max-height: 250px; overflow-y: auto; padding: 10px;">
                                 <div style="padding: 10px; text-align: center; color: var(--text-light); font-size: 12px;">Nenhuma notificação nova</div>
