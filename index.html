@@ -694,6 +694,8 @@
                         <h1 id="fat-group-title" style="font-size: 20px; color: var(--text-color); margin: 0;">
                             Faturamentos - Setor</h1>
                         <div style="display: flex; align-items: center; gap: 10px;">
+                            <button class="btn btn-secondary" onclick="exportFaturamentos('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none; padding: 8px 12px; font-size: 13px;"><i class='bx bx-file-blank'></i> Excel</button>
+                            <button class="btn btn-secondary" onclick="exportFaturamentos('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none; padding: 8px 12px; font-size: 13px;"><i class='bx bxs-file-pdf'></i> PDF</button>
                             <label for="select-ano-fat"
                                 style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
                             <select id="select-ano-fat"
