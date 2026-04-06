@@ -30,6 +30,18 @@ const db = require('./db');
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration: Tabela logs_auditoria
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS logs_auditoria (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario VARCHAR(255),
+                acao VARCHAR(50),
+                modulo VARCHAR(50),
+                detalhes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -53,6 +65,32 @@ app.use(bodyParser.json());
 const notifyUpdate = () => {
     io.emit('data-updated');
 };
+
+// Função helper para gravar logs de auditoria
+const registrarLog = async (usuario, acao, modulo, detalhes) => {
+    try {
+        const usr = usuario || 'Sistema'; // Fallback
+        await db.execute(
+            'INSERT INTO logs_auditoria (usuario, acao, modulo, detalhes) VALUES (?, ?, ?, ?)',
+            [usr, acao, modulo, detalhes]
+        );
+    } catch (error) {
+        console.error('Erro ao salvar log de auditoria:', error);
+    }
+};
+
+// ==========================================
+// LOGS DE AUDITORIA
+// ==========================================
+app.get('/api/logs', async (req, res) => {
+    try {
+        // Ordenado do mais recente para o mais antigo, limite 500 para evitar travamento
+        const [rows] = await db.execute('SELECT * FROM logs_auditoria ORDER BY created_at DESC LIMIT 500');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ==========================================
 // AUTHENTICATION & USERS
@@ -250,12 +288,13 @@ app.get('/api/empresas', async (req, res) => {
 });
 
 app.post('/api/empresas', async (req, res) => {
-    const { razao, cnpj, email, telefone } = req.body;
+    const { razao, cnpj, email, telefone, userRole, username } = req.body;
     try {
         const [result] = await db.execute(
             'INSERT INTO empresas (razao, cnpj, email, telefone) VALUES (?, ?, ?, ?)',
             [razao, cnpj, email, telefone]
         );
+        registrarLog(username, 'CRIAR', 'Empresas', `Nova empresa: ${razao} (${cnpj})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -268,7 +307,7 @@ app.post('/api/empresas', async (req, res) => {
 
 app.put('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { razao, cnpj, email, telefone, userRole } = req.body;
+    const { razao, cnpj, email, telefone, userRole, username } = req.body;
     
     // Proteção básica no backend
     if (userRole === 'usuario') {
@@ -280,6 +319,7 @@ app.put('/api/empresas/:id', async (req, res) => {
             'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
             [razao, cnpj, email, telefone, id]
         );
+        registrarLog(username, 'EDITAR', 'Empresas', `Empresa ID ${id} editada (${razao})`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -292,7 +332,7 @@ app.put('/api/empresas/:id', async (req, res) => {
 
 app.delete('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { userRole } = req.query; // Pega o role por query no delete
+    const { userRole, username } = req.query; // Pega o role por query no delete
     
     // Proteção básica no backend
     if (userRole === 'usuario') {
@@ -301,6 +341,7 @@ app.delete('/api/empresas/:id', async (req, res) => {
     
     try {
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Empresas', `Registro de Empresa ID ${id} foi removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -345,6 +386,7 @@ app.post('/api/contratos', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
             ]
         );
+        registrarLog(data.username, 'CRIAR', 'Contratos', `Novo contrato Nº ${data.numero} (${data.tipo})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -370,6 +412,7 @@ app.put('/api/contratos/:id', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
             ]
         );
+        registrarLog(data.username, 'EDITAR', 'Contratos', `Contrato ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -379,8 +422,10 @@ app.put('/api/contratos/:id', async (req, res) => {
 
 app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
+    const { username } = req.query;
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Contratos', `Contrato ID ${id} removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -445,6 +490,7 @@ app.post('/api/indenizatorios', async (req, res) => {
                 parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0
             ]
         );
+        registrarLog(data.username, 'CRIAR', 'Indenizatórios', `Lote ${data.lote} criado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -467,6 +513,7 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
                 id
             ]
         );
+        registrarLog(data.username, 'EDITAR', 'Indenizatórios', `Lote ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -476,8 +523,10 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
 
 app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { id } = req.params;
+    const { username } = req.query;
     try {
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Indenizatórios', `Lote ID ${id} foi excluído`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {

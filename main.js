@@ -944,6 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
             loadPostosDashboard(servico);
         }
+        if (targetId === 'logs') loadLogsTable();
     }
 
     function updateContractTypeOptions() {
@@ -1054,13 +1055,126 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // DASHBOARD
+    // DASHBOARD & GRÁFICOS
     // ==========================================
+    let dashboardChart = null;
+
     function loadDashboardStats() {
         const empresasCount = getEmpresas().length;
-        const contratosCount = getContratos().length;
+        const contratos = getContratos();
+        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
+        const contratosGasto = contratos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
+        
         document.getElementById('count-empresas').textContent = empresasCount;
-        document.getElementById('count-contratos').textContent = contratosCount;
+        document.getElementById('count-contratos').textContent = contratosAtivos;
+        
+        const spanGasto = document.getElementById('count-gasto');
+        if(spanGasto) spanGasto.textContent = formatCurrency(contratosGasto);
+
+        const statusVig = document.getElementById('status-vigente');
+        const statusFin = document.getElementById('status-finalizado');
+        if(statusVig) statusVig.textContent = contratosAtivos;
+        if(statusFin) statusFin.textContent = contratos.filter(c => c.situacao && c.situacao !== 'Ativo').length;
+
+        // Render Gráfico
+        renderDashboardChart(contratos);
+
+        // Dispara verificador de alertas
+        checkAlertasVencimento(contratos);
+    }
+
+    function renderDashboardChart(contratos) {
+        const canvas = document.getElementById('chart-servicos');
+        if(!canvas) return;
+        
+        // Contagem por Tipo
+        const labels = ['Merendeiras', 'Limpeza', 'Vigilância', 'Porteiros', 'Transporte Escolar'];
+        const dataMap = { 'Merendeiras':0, 'Limpeza':0, 'Vigilância':0, 'Porteiros':0, 'Transporte Escolar':0 };
+        contratos.forEach(c => {
+            if(c.situacao === 'Ativo' && dataMap[c.tipo] !== undefined) {
+                dataMap[c.tipo]++;
+            }
+        });
+        const dataValues = labels.map(l => dataMap[l]);
+
+        if(dashboardChart) dashboardChart.destroy();
+        
+        const ctx = canvas.getContext('2d');
+        dashboardChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: ['#e63946', '#2a9d8f', '#e9c46a', '#f4a261', '#219ebc'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function checkAlertasVencimento(contratos) {
+        const alertas = [];
+        const hoje = new Date();
+        let countVencendo = 0;
+        
+        contratos.forEach(c => {
+            if (c.situacao === 'Ativo' && c.periodoFinal) {
+                const dataFim = new Date(c.periodoFinal);
+                const diffTime = dataFim - hoje;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 60 && diffDays > 0) {
+                    countVencendo++;
+                    alertas.push({ dias: diffDays, contrato: c.numero, cre: c.cre, servico: c.tipo });
+                }
+            }
+        });
+        
+        const badge = document.getElementById('notif-badge');
+        const list = document.getElementById('notif-list');
+        const elCount = document.getElementById('count-vencendo');
+        if(elCount) elCount.textContent = countVencendo;
+
+        if (alertas.length > 0 && badge && list) {
+            badge.style.display = 'block';
+            list.innerHTML = alertas.sort((a,b)=>a.dias-b.dias).map(a => {
+                const color = a.dias <= 30 ? 'var(--danger-color)' : 'var(--warning-color)';
+                return `<div style="padding: 10px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; min-width: 8px; background: ${color};"></div>
+                    <div style="flex: 1;">
+                        <strong style="font-size: 13px;">Nº ${a.contrato || '-'} (${a.servico})</strong><br>
+                        <span style="font-size: 11.5px; color: var(--text-light);">Vence em ${a.dias} dias. CRE: ${a.cre}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } else if (badge && list) {
+            badge.style.display = 'none';
+            list.innerHTML = `<div style="padding: 10px; text-align: center; color: var(--text-light); font-size: 12px;">Nenhuma notificação nova</div>`;
+        }
+    }
+
+    // Toggle Dropdown Notificações
+    const btnNotif = document.getElementById('btn-notifications');
+    const dropdownNotif = document.getElementById('notif-dropdown');
+    if (btnNotif && dropdownNotif) {
+        btnNotif.onclick = () => {
+            dropdownNotif.classList.toggle('form-hidden');
+            dropdownNotif.style.display = dropdownNotif.classList.contains('form-hidden') ? 'none' : 'block';
+        };
+        document.addEventListener('click', (e) => {
+            if (!btnNotif.contains(e.target) && !dropdownNotif.contains(e.target)) {
+                dropdownNotif.classList.add('form-hidden');
+                dropdownNotif.style.display = 'none';
+            }
+        });
     }
 
     // ==========================================
@@ -1161,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role })
+                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
             });
 
             const data = await response.json();
@@ -1284,8 +1398,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteEmpresa = async function (id) {
         if (confirm('Tem certeza que deseja excluir esta empresa?')) {
             try {
-                const userRole = JSON.parse(localStorage.getItem('currentUser'))?.role;
-                await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}`, { method: 'DELETE' });
+                const userObj = JSON.parse(localStorage.getItem('currentUser'));
+                const userRole = userObj?.role;
+                const username = userObj?.usuario;
+                await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadEmpresasTable();
                 populateEmpresasSelect();
@@ -1396,7 +1512,8 @@ document.addEventListener('DOMContentLoaded', () => {
             periodoFinal: document.getElementById('con-periodofinal').value,
             situacao: document.getElementById('con-situacao').value,
             gestor: document.getElementById('con-gestor').value,
-            anexos: finalAnexos
+            anexos: finalAnexos,
+            username: JSON.parse(localStorage.getItem('currentUser'))?.usuario
         };
 
         if (tipo === 'Transporte Escolar') {
@@ -1497,12 +1614,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.deleteContrato = async function (id) {
-        if (confirm('Tem certeza que deseja excluir este contrato?')) {
+        if (confirm('Tem certeza que deseja excluir permanentemente este contrato?')) {
             try {
-                await fetch(`${API_URL}/contratos/${id}`, { method: 'DELETE' });
+                const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
+                await fetch(`${API_URL}/contratos/${id}?username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadContratosTable();
-                showToast('Contrato excluído.', 'success');
+                showToast('Contrato excluído com sucesso');
             } catch (error) {}
         }
     }
@@ -2200,7 +2318,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 geo: document.getElementById('lote-geo').value,
                 km: document.getElementById('lote-km').value,
                 valor_km: parseFloat(document.getElementById('lote-valorkm').value.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
-                valor_diario: parseFloat(document.getElementById('lote-valordiario').value.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0
+                valor_diario: parseFloat(document.getElementById('lote-valordiario').value.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
+                username: JSON.parse(localStorage.getItem('currentUser'))?.usuario
             };
 
             try {
@@ -2288,7 +2407,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteLoteIndenizatorio = async function(id) {
         if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
         try {
-            const res = await fetch(`${API_URL}/indenizatorios/${id}`, { method: 'DELETE' });
+            const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
+            const res = await fetch(`${API_URL}/indenizatorios/${id}?username=${username}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Erro ao excluir lote');
             showToast('Lote excluído com sucesso');
             loadIndenizatoriosTable();
@@ -2312,5 +2432,64 @@ document.addEventListener('DOMContentLoaded', () => {
             loadIndenizatoriosTable();
         }
     });
+
+    // ==========================================
+    // EXPORTAÇÕES E LOGS
+    // ==========================================
+    window.exportTableToExcel = function(tableId, filename) {
+        let table = document.getElementById(tableId);
+        if (!table) return showToast('Tabela não encontrada', 'error');
+        try {
+            let wb = XLSX.utils.table_to_book(table, { sheet: "Dados" });
+            XLSX.writeFile(wb, filename + ".xlsx");
+            showToast('Arquivo Excel exportado!', 'success');
+        } catch(e) { showToast('Erro ao exportar Excel', 'error'); }
+    };
+
+    window.exportTableToPDF = function(tableId, title) {
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape'); // Landscape by default for large tables
+            doc.text(title, 14, 15);
+            doc.autoTable({ html: '#' + tableId, startY: 20, theme: 'grid', styles: { fontSize: 8 } });
+            doc.save(title + ".pdf");
+            showToast('PDF Exportado!', 'success');
+        } catch(e) { showToast('Erro ao exportar PDF', 'error'); }
+    };
+
+    async function loadLogsTable() {
+        const container = document.getElementById('lista-logs');
+        if (!container) return;
+        try {
+            const res = await fetch(`${API_URL}/logs`);
+            const data = await res.json();
+            container.innerHTML = data.map(log => {
+                const dateObj = new Date(log.created_at);
+                const dataFormatada = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR').substring(0,5);
+                
+                let badgeColor = 'var(--primary-color)';
+                let icon = 'bx-info-circle';
+                if(log.acao === 'CRIAR') { badgeColor = '#2b9348'; icon = 'bx-plus-circle'; }
+                if(log.acao === 'EXCLUIR') { badgeColor = '#d90429'; icon = 'bx-trash'; }
+                if(log.acao === 'EDITAR') { badgeColor = '#e85d04'; icon = 'bx-edit'; }
+
+                return `<tr style="border-bottom: 1px solid var(--border-color); font-family: 'Inter', sans-serif;">
+                    <td style="padding: 12px 15px; font-size: 12.5px; color: var(--text-light);">${dataFormatada}</td>
+                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-color); font-weight: 600;">${log.usuario}</td>
+                    <td style="padding: 12px 15px; font-size: 11px;">
+                        <span style="background:${badgeColor}; color: #fff; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;"><i class='bx ${icon}'></i> ${log.acao}</span>
+                    </td>
+                    <td style="padding: 12px 15px; font-size: 13px; font-weight: 500; color: var(--text-color);">${log.modulo}</td>
+                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-light);">${log.detalhes}</td>
+                </tr>`;
+            }).join('');
+            if(data.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-light);">Nenhum log registrado.</td></tr>`;
+            }
+        } catch(e) { 
+            console.error(e);
+            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">Erro ao carregar logs.</td></tr>`;
+        }
+    }
 
 });
