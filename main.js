@@ -2515,50 +2515,47 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.exportFaturamentos = function(type) {
-        const servicoTitle = document.getElementById('fat-group-title').textContent.replace('Faturamentos - ', '').trim();
-        if (!servicoTitle || servicoTitle === 'Setor') {
-            return showToast('Selecione um Setor no menu lateral primeiro', 'error');
+        if (!currentFatContratoId) {
+            return showToast('Nenhum contrato selecionado.', 'error');
         }
         
         const ano = document.getElementById('select-ano-fat').value;
-        const contratos = getContratos().filter(c => c.tipo === servicoTitle);
+        const con = getContratos().find(c => String(c.id) === String(currentFatContratoId));
+        if(!con) return showToast('Contrato não encontrado', 'error');
+
         const empresas = getEmpresas();
+        const emp = empresas.find(e => String(e.id) === String(con.empresaId));
+        const empName = emp ? emp.razao : 'Desconhecida';
         
         let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
         let exportData = [];
-
-        contratos.forEach(con => {
-            const emp = empresas.find(e => String(e.id) === String(con.empresaId));
-            const empName = emp ? emp.razao : 'Desconhecida';
-            
-            let fatList = dbFat[con.id] || [];
-            
-            for (let i = 0; i < 12; i++) {
-                const data = fatList[i] || {};
-                // Exporta a linha se houver valor faturado, número de processo ou se tiver sido modificado da situação pendente inicial com dinheiro 0.
-                if(data.valor > 0 || data.processo || data.abertura || data.situacao === 'Pago') {
-                    exportData.push({
-                        'Ano': ano,
-                        'Mês': months[i],
-                        'Empresa': empName,
-                        'Nº Contrato': con.numero || '-',
-                        'Processo FAT': data.processo || '-',
-                        'Situação': data.situacao || 'Pendente',
-                        'Data Pag.': data.pagamento ? data.pagamento.split('-').reverse().join('/') : '-',
-                        'Total Faturado (R$)': data.valor ? formatCurrency(parseFloat(data.valor) || 0) : 'R$ 0,00'
-                    });
-                }
+        let fatList = dbFat[con.id] || [];
+        
+        for (let i = 0; i < 12; i++) {
+            const data = fatList[i] || {};
+            // Exporta a linha se houver valor faturado, número de processo ou se tiver sido modificado da situação pendente inicial com dinheiro 0.
+            if(data.valor > 0 || data.processo || data.abertura || data.situacao === 'Pago') {
+                exportData.push({
+                    'Ano': ano,
+                    'Mês': months[i],
+                    'Empresa': empName,
+                    'Nº Contrato': con.numero || '-',
+                    'Processo FAT': data.processo || '-',
+                    'Situação': data.situacao || 'Pendente',
+                    'Data Pag.': data.pagamento ? data.pagamento.split('-').reverse().join('/') : '-',
+                    'Total Faturado (R$)': data.valor ? formatCurrency(parseFloat(data.valor) || 0) : 'R$ 0,00'
+                });
             }
-        });
-
-        if (exportData.length === 0) {
-            return showToast(`Nenhum faturamento alterado/salvo em ${ano} para ${servicoTitle}.`, 'error');
         }
 
-        if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${servicoTitle}_${ano}`);
-        else exportDataToPDF(exportData, `Relatório de Faturamentos - ${servicoTitle} (${ano})`);
+        if (exportData.length === 0) {
+            return showToast(`Nenhum faturamento registrado em ${ano} para este contrato.`, 'error');
+        }
+
+        if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${con.numero || 'Sem_Num'}_${ano}`);
+        else exportDataToPDF(exportData, `Relatório Faturamento - Contrato ${con.numero || 'Sem Número'} (${ano})`);
     };
 
     async function loadLogsTable() {

@@ -694,8 +694,6 @@
                         <h1 id="fat-group-title" style="font-size: 20px; color: var(--text-color); margin: 0;">
                             Faturamentos - Setor</h1>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportFaturamentos('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none; padding: 8px 12px; font-size: 13px;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportFaturamentos('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none; padding: 8px 12px; font-size: 13px;"><i class='bx bxs-file-pdf'></i> PDF</button>
                             <label for="select-ano-fat"
                                 style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
                             <select id="select-ano-fat"
@@ -897,10 +895,10 @@
 
                 <div
                     style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
-                    <button class="btn" id="btn-relatorio-pdf"
-                        style="background: #2b9348; color: white; display: flex; align-items: center; gap: 8px;">
-                        <i class='bx bx-download'></i> Gerar Relatório PDF
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="exportFaturamentos('Excel')" title="Exportar Excel deste contrato" style="background: #217346; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i class='bx bx-file-blank'></i> Exportar Excel</button>
+                        <button class="btn btn-secondary" onclick="exportFaturamentos('PDF')" title="Exportar PDF deste contrato" style="background: #e63946; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i class='bx bxs-file-pdf'></i> Exportar PDF</button>
+                    </div>
                     <div style="display: flex; gap: 12px;">
                         <button id="btn-cancel-fat" class="btn"
                             style="background: transparent; border: 1px solid var(--border-color); color: var(--text-color);">Cancelar</button>
