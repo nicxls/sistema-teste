@@ -1606,6 +1606,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
                     <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
                     <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
+                    <button class="btn-icon" style="color: #8b5cf6; background: rgba(139,92,246,0.15);" onclick="openAditivosContrato('${con.id}', '${con.numero}')" title="Aditivos"><i class='bx bx-receipt'></i></button>
                     <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
                 </td>
             `;
@@ -1906,15 +1907,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFatContratoId = null;
     const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-    window.openModalFaturamentos = function(contratoId, contratoNumero) {
+    window.openModalFaturamentos = async function(contratoId, contratoNumero) {
         currentFatContratoId = contratoId;
         const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
         document.getElementById('modal-fat-title').textContent = `Gerenciar Faturamentos ${ano} - Contrato ${contratoNumero}`;
         
-        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
-        let fatList = dbFat[contratoId] || Array(12).fill({});
-
         const tbody = document.getElementById('fat-grid-body');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Carregando Faturamentos... <i class="bx bx-loader-alt bx-spin"></i></td></tr>';
+        
+        modalFat.classList.remove('form-hidden'); // Show modal early to indicate loading
+        
+        let fatList = Array(12).fill({});
+        try {
+            const res = await fetch(`http://localhost:3000/api/faturamentos/${contratoId}/${ano}`);
+            if(res.ok) fatList = await res.json();
+            // Cache locally for exports to avoid second fetch when clicking export
+            localStorage.setItem(`temp_fat_${contratoId}_${ano}`, JSON.stringify(fatList));
+        } catch(err) {
+            console.error('Erro ao carrega faturamentos do banco:', err);
+            showToast('Erro ao carregar do banco de dados', 'error');
+        }
+
         tbody.innerHTML = '';
 
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -1969,8 +1982,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const fatInput = tr.querySelector(`#fat-val-${idx}`);
             if(fatInput) fatInput.addEventListener('input', maskCurrency);
         });
-
-        modalFat.classList.remove('form-hidden');
     }
 
     const closeModalFat = () => modalFat.classList.add('form-hidden');
@@ -1979,8 +1990,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCancelFat) btnCancelFat.addEventListener('click', closeModalFat);
 
     if (btnSaveFat) {
-        btnSaveFat.addEventListener('click', () => {
+        btnSaveFat.addEventListener('click', async () => {
             if (!currentFatContratoId) return;
+
+            const btnOriginalText = btnSaveFat.innerHTML;
+            btnSaveFat.innerHTML = 'Salvando... <i class="bx bx-loader-alt bx-spin"></i>';
+            btnSaveFat.disabled = true;
 
             let fatArray = [];
             for (let i = 0; i < 12; i++) {
@@ -1994,12 +2009,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
-            let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
-            dbFat[currentFatContratoId] = fatArray;
-            localStorage.setItem(`faturamentos_${ano}`, JSON.stringify(dbFat));
+            
+            try {
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const req = await fetch(`http://localhost:3000/api/faturamentos/${currentFatContratoId}/${ano}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dados: fatArray, username: user.username })
+                });
 
-            showToast('Faturamentos salvos com sucesso!');
-            closeModalFat();
+                if(req.ok) {
+                    showToast('Faturamentos salvos com sucesso!');
+                    localStorage.setItem(`temp_fat_${currentFatContratoId}_${ano}`, JSON.stringify(fatArray));
+                    closeModalFat();
+                } else {
+                    const err = await req.json();
+                    showToast('Erro: ' + err.error, 'error');
+                }
+            } catch(error) {
+                console.error(error);
+                showToast('Erro ao gravar faturamentos', 'error');
+            } finally {
+                btnSaveFat.innerHTML = btnOriginalText;
+                btnSaveFat.disabled = false;
+            }
         });
     }
 
@@ -2527,11 +2560,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const emp = empresas.find(e => String(e.id) === String(con.empresaId));
         const empName = emp ? emp.razao : 'Desconhecida';
         
-        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
         let exportData = [];
-        let fatList = dbFat[con.id] || [];
+        let fatList = JSON.parse(localStorage.getItem(`temp_fat_${con.id}_${ano}`) || '[]');
+        if(fatList.length === 0) {
+            return showToast('Dados de faturamento não carregados', 'error');
+        }
         
         for (let i = 0; i < 12; i++) {
             const data = fatList[i] || {};

@@ -42,6 +42,34 @@ const db = require('./db');
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration: Tabela faturamentos
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS faturamentos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                contrato_id INT NOT NULL,
+                ano VARCHAR(4) NOT NULL,
+                dados LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_faturamento (contrato_id, ano)
+            )
+        `);
+
+        // Migration: Tabela aditivos
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS aditivos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                contrato_id INT NOT NULL,
+                numero VARCHAR(50),
+                tipo VARCHAR(50),
+                data_assinatura DATE,
+                vigencia_inicio DATE,
+                vigencia_fim DATE,
+                novo_valor DECIMAL(15,2),
+                anexo_b64 LONGTEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -87,6 +115,95 @@ app.get('/api/logs', async (req, res) => {
         // Ordenado do mais recente para o mais antigo, limite 500 para evitar travamento
         const [rows] = await db.execute('SELECT * FROM logs_auditoria ORDER BY created_at DESC LIMIT 500');
         res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// FATURAMENTOS APIs
+// ==========================================
+
+app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
+    try {
+        const { contratoId, ano } = req.params;
+        const [rows] = await db.execute('SELECT dados FROM faturamentos WHERE contrato_id = ? AND ano = ?', [contratoId, ano]);
+        if (rows.length > 0) {
+            res.json(JSON.parse(rows[0].dados));
+        } else {
+            res.json(Array(12).fill({}));
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
+    try {
+        const { contratoId, ano } = req.params;
+        const { dados, username } = req.body;
+        const dadosStr = JSON.stringify(dados);
+        
+        await db.execute(
+            `INSERT INTO faturamentos (contrato_id, ano, dados) VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE dados = ?`,
+            [contratoId, ano, dadosStr, dadosStr]
+        );
+        
+        await registrarLog(username, 'Edição', 'Faturamentos', `Atualização de faturamentos do contrato ID ${contratoId} - Ano ${ano}`);
+        notifyUpdate();
+        res.json({ message: 'Faturamentos salvos com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// ADITIVOS APIs
+// ==========================================
+
+app.get('/api/aditivos/:contratoId', async (req, res) => {
+    try {
+        const { contratoId } = req.params;
+        const [rows] = await db.execute('SELECT * FROM aditivos WHERE contrato_id = ? ORDER BY data_assinatura ASC, id ASC', [contratoId]);
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/aditivos/:contratoId', async (req, res) => {
+    try {
+        const { contratoId } = req.params;
+        const { numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64, username } = req.body;
+        
+        await db.execute(
+            `INSERT INTO aditivos 
+             (contrato_id, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                contratoId, numero, tipo, data_assinatura, 
+                vigencia_inicio || null, vigencia_fim || null, 
+                novo_valor || null, anexo_b64 || null
+            ]
+        );
+        
+        await registrarLog(username, 'Criação', 'Aditivos', `Novo aditivo (${numero}) do tipo ${tipo} adicionado ao contrato ID ${contratoId}`);
+        notifyUpdate();
+        res.json({ message: 'Aditivo criado com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/aditivos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const username = req.query.username;
+        await db.execute('DELETE FROM aditivos WHERE id = ?', [id]);
+        await registrarLog(username, 'Exclusão', 'Aditivos', `Exclusão do aditivo ID ${id}`);
+        notifyUpdate();
+        res.json({ message: 'Aditivo removido com sucesso!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

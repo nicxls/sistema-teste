@@ -1068,6 +1068,80 @@
         </div>
     </div>
 
+    <!-- Modal Aditivos Contratuais -->
+    <div id="modal-aditivos" class="modal-overlay form-hidden" style="z-index: 10001;">
+        <div class="modal-content" style="max-width: 800px; padding: 0; background: var(--bg-color); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-xl);">
+            <div style="padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border-radius: var(--radius) var(--radius) 0 0;">
+                <h3 id="modal-aditivos-title" style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gestão de Aditivos</h3>
+                <button class="btn-icon" onclick="document.getElementById('modal-aditivos').classList.add('form-hidden')" style="color: var(--text-light);"><i class='bx bx-x' style="font-size: 28px;"></i></button>
+            </div>
+            
+            <div style="padding: 20px 24px; text-align: right; background: var(--bg-color);">
+                <button id="btn-novo-aditivo" class="btn btn-primary admin-only" style="background: #8b5cf6;"><i class='bx bx-plus'></i> Registrar Aditivo</button>
+            </div>
+
+            <!-- Formulário Novo Aditivo (Oculto) -->
+            <div id="form-aditivo-container" style="display: none; padding: 24px; margin: 0 24px 20px 24px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <h4 style="margin: 0 0 15px 0; color: var(--text-color); font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Novo Registro</h4>
+                <form id="form-aditivo">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Nº do Aditivo</label>
+                            <input type="text" id="adi-numero" required placeholder="Ex: 01/2025" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Tipo de Alteração</label>
+                            <select id="adi-tipo" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                                <option value="Prazo">Prorrogação de Prazo</option>
+                                <option value="Valor">Acréscimo de Valor</option>
+                                <option value="Supressao">Supressão</option>
+                                <option value="Misto">Prazo e Valor</option>
+                                <option value="Reajuste">Reajuste/Repactuação</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">A Partir de (Vigência)</label>
+                            <input type="date" id="adi-vigencia-ini" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Novo Fim (Opcional)</label>
+                            <input type="date" id="adi-vigencia-fim" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Novo Valor Global (Opcional)</label>
+                            <input type="text" id="adi-valor" placeholder="R$ 0,00" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        </div>
+                        <div>
+                            <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Data de Assinatura</label>
+                            <input type="date" id="adi-data" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-size: 13px; color: var(--text-light); display:block; margin-bottom: 5px;">Anexo (PDF)</label>
+                        <input type="file" id="adi-file" accept=".pdf" style="width: 100%; padding: 10px; border: 1px dashed var(--border-color); border-radius: 6px; background: var(--bg-color);">
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" id="btn-cancel-aditivo" class="btn" style="background: transparent; border: 1px solid var(--border-color);">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" style="background: #8b5cf6;"><i class='bx bx-check'></i> Salvar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Listagem -->
+            <div id="aditivos-list-container" style="padding: 0 24px 24px 24px; overflow-y: auto; max-height: 45vh; background: var(--bg-color);">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Lote Indenizatório (Design Espelhado do Contrato) -->
     <div id="modal-lote" class="modal-overlay form-hidden" style="z-index: 9999;">
         <div class="modal-content" style="max-width: 900px; padding: 30px; background: #fff; border-radius: 12px;">
