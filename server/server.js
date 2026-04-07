@@ -638,12 +638,84 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/indenizatorios/:id', async (req, res) => {
+// ==========================================
+// FATURAMENTOS
+// ==========================================
+
+app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
+    const { contratoId, ano } = req.params;
+    try {
+        const [rows] = await db.execute(
+            'SELECT dados FROM faturamentos WHERE contrato_id = ? AND ano = ?',
+            [contratoId, ano]
+        );
+        if (rows.length > 0) {
+            res.json(JSON.parse(rows[0].dados));
+        } else {
+            res.json(Array(12).fill({}));
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
+    const { contratoId, ano } = req.params;
+    const { dados, username } = req.body;
+    try {
+        await db.execute(
+            `INSERT INTO faturamentos (contrato_id, ano, dados) VALUES (?, ?, ?) 
+             ON DUPLICATE KEY UPDATE dados = VALUES(dados)`,
+            [contratoId, ano, JSON.stringify(dados)]
+        );
+        registrarLog(username, 'EDITAR', 'Faturamentos', `Faturamentos atualizados: Contrato ${contratoId}, Ano ${ano}`);
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// ADITIVOS
+// ==========================================
+
+app.get('/api/aditivos/:contratoId', async (req, res) => {
+    const { contratoId } = req.params;
+    try {
+        const [rows] = await db.execute(
+            'SELECT * FROM aditivos WHERE contrato_id = ? ORDER BY data_assinatura DESC',
+            [contratoId]
+        );
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/aditivos/:contratoId', async (req, res) => {
+    const { contratoId } = req.params;
+    const { numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64, username } = req.body;
+    try {
+        await db.execute(
+            `INSERT INTO aditivos (contrato_id, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [contratoId, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64]
+        );
+        registrarLog(username, 'CRIAR', 'Aditivos', `Novo aditivo ${numero} para contrato ${contratoId}`);
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/aditivos/:id', async (req, res) => {
     const { id } = req.params;
     const { username } = req.query;
     try {
-        await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
-        registrarLog(username, 'EXCLUIR', 'Indenizatórios', `Lote ID ${id} foi excluído`);
+        await db.execute('DELETE FROM aditivos WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Aditivos', `Aditivo ID ${id} removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {

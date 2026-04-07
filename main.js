@@ -1919,7 +1919,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let fatList = Array(12).fill({});
         try {
-            const res = await fetch(`http://localhost:3000/api/faturamentos/${contratoId}/${ano}`);
+            const res = await fetch(`${API_URL}/faturamentos/${contratoId}/${ano}`);
             if(res.ok) fatList = await res.json();
             // Cache locally for exports to avoid second fetch when clicking export
             localStorage.setItem(`temp_fat_${contratoId}_${ano}`, JSON.stringify(fatList));
@@ -2012,7 +2012,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const req = await fetch(`http://localhost:3000/api/faturamentos/${currentFatContratoId}/${ano}`, {
+                const req = await fetch(`${API_URL}/faturamentos/${currentFatContratoId}/${ano}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ dados: fatArray, username: user.username })
