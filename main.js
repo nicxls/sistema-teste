@@ -1895,21 +1895,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${con.numero || '-'}</td>
                 <td>${empName}</td>
                 <td>${vigencia}</td>
-                <td style="padding: 16px 24px; text-align: center;">
-                    <div style="display: flex; gap: 8px; justify-content: center;">
-                        <button class="btn-icon" onclick="openModalFaturamentos('${con.id}', '${con.numero}')" title="Faturamentos" style="color: var(--primary-color);">
-                            <i class='bx bx-calendar-check' style="font-size: 18px;"></i>
-                        </button>
-                        <button class="btn-icon" onclick="openAditivosContrato('${con.id}')" title="Aditivos Contratuais" style="color: #8b5cf6;">
-                            <i class='bx bx-receipt' style="font-size: 18px;"></i>
-                        </button>
-                        <button class="btn-icon" onclick="editContrato('${con.id}')" title="Editar" style="color: #f59e0b;">
-                            <i class='bx bx-edit' style="font-size: 18px;"></i>
-                        </button>
-                        <button class="btn-icon" onclick="deleteContrato('${con.id}')" title="Excluir" style="color: #ef4444;">
-                            <i class='bx bx-trash' style="font-size: 18px;"></i>
-                        </button>
-                    </div>
+                <td>
+                    <button class="btn btn-secondary" onclick="openModalFaturamentos('${con.id}', '${con.numero}')" style="font-size:12px; padding: 6px 12px; background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color);">
+                        <i class='bx bx-edit'></i> Gerenciar Faturamentos
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
