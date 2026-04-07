@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
             const [empRes, conRes, posRes] = await Promise.all([
-                fetch(`${API_URL}/empresas?t=${time}`),
+                fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/postos?t=${time}`)
             ]);
@@ -1276,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
+                body: JSON.stringify({ ...empresaData, sistema: selectedSystem, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
             });
 
             const data = await response.json();

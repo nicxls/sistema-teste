@@ -40,25 +40,34 @@ const db = require('./db');
             console.log('Tabela faturamentos antiga removida.');
         }
 
-        await db.execute(`
-            CREATE TABLE IF NOT EXISTS faturamentos (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                contrato_id INT NOT NULL,
-                ano VARCHAR(4) NOT NULL,
-                mes INT NOT NULL,
-                processo VARCHAR(255),
-                abertura DATE,
-                situacao VARCHAR(50) DEFAULT 'Pendente',
-                pagamento DATE,
-                valor DECIMAL(15,2) DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_faturamento_mes (contrato_id, ano, mes)
-            )
-        `);
-    } catch (err) {
-        console.error('Erro na migração:', err);
-    }
-})();
+            await db.execute(`
+                CREATE TABLE IF NOT EXISTS faturamentos (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    contrato_id INT NOT NULL,
+                    ano VARCHAR(4) NOT NULL,
+                    mes INT NOT NULL,
+                    processo VARCHAR(255),
+                    abertura DATE,
+                    situacao VARCHAR(50) DEFAULT 'Pendente',
+                    pagamento DATE,
+                    valor DECIMAL(15,2) DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_faturamento_mes (contrato_id, ano, mes)
+                )
+            `);
+
+            // Migration: Adicionar coluna 'sistema' na tabela empresas
+            const [empColumns] = await db.execute('SHOW COLUMNS FROM empresas LIKE "sistema"');
+            if (empColumns.length === 0) {
+                await db.execute('ALTER TABLE empresas ADD COLUMN sistema VARCHAR(50) DEFAULT "mao-de-obra"');
+                // Forçar atualização de registros existentes (nulos ou vazios) para 'mao-de-obra'
+                await db.execute('UPDATE empresas SET sistema = "mao-de-obra" WHERE sistema IS NULL OR sistema = ""');
+                console.log('Coluna "sistema" adicionada à tabela "empresas" e registros migrados.');
+            }
+        } catch (err) {
+            console.error('Erro na migração:', err);
+        }
+    })();
 
 const app = express();
 const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
@@ -338,8 +347,16 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
 // ==========================================
 
 app.get('/api/empresas', async (req, res) => {
+    const { system } = req.query;
     try {
-        const [rows] = await db.execute('SELECT * FROM empresas ORDER BY razao ASC');
+        let query = 'SELECT * FROM empresas';
+        let params = [];
+        if (system) {
+            query += ' WHERE sistema = ?';
+            params.push(system);
+        }
+        query += ' ORDER BY razao ASC';
+        const [rows] = await db.execute(query, params);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -347,11 +364,11 @@ app.get('/api/empresas', async (req, res) => {
 });
 
 app.post('/api/empresas', async (req, res) => {
-    const { razao, cnpj, email, telefone, userRole, username } = req.body;
+    const { razao, cnpj, email, telefone, sistema, userRole, username } = req.body;
     try {
         const [result] = await db.execute(
-            'INSERT INTO empresas (razao, cnpj, email, telefone) VALUES (?, ?, ?, ?)',
-            [razao, cnpj, email, telefone]
+            'INSERT INTO empresas (razao, cnpj, email, telefone, sistema) VALUES (?, ?, ?, ?, ?)',
+            [razao, cnpj, email, telefone, sistema || 'mao-de-obra']
         );
         notifyUpdate();
         res.json({ id: result.insertId });
@@ -365,7 +382,7 @@ app.post('/api/empresas', async (req, res) => {
 
 app.put('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { razao, cnpj, email, telefone, userRole, username } = req.body;
+    const { razao, cnpj, email, telefone, sistema, userRole, username } = req.body;
     
     // Proteção básica no backend
     if (userRole === 'usuario') {
@@ -374,8 +391,8 @@ app.put('/api/empresas/:id', async (req, res) => {
     
     try {
         await db.execute(
-            'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
-            [razao, cnpj, email, telefone, id]
+            'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ?, sistema = ? WHERE id = ?',
+            [razao, cnpj, email, telefone, sistema, id]
         );
         notifyUpdate();
         res.json({ success: true });
