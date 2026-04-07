@@ -849,9 +849,16 @@
                 style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
                 <div
                     style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
-                    <h3 id="modal-fat-title"
-                        style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar
-                        Faturamentos 2025 - Contrato XYZ</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h3 id="modal-fat-title" style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar Faturamentos</h3>
+                        <select id="select-ano-fat" onchange="loadFaturamentosAtualizado()" style="padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-weight: 600; cursor: pointer;">
+                            <option value="2023">2023</option>
+                            <option value="2024">2024</option>
+                            <option value="2025" selected>2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
                     <button id="btn-close-fat-modal" class="btn-icon" style="color: var(--text-light);"><i
                             class='bx bx-x' style="font-size: 28px;"></i></button>
                 </div>
