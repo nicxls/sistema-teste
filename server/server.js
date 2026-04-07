@@ -80,6 +80,18 @@ const registrarLog = async (usuario, acao, modulo, detalhes) => {
 };
 
 // ==========================================
+// DIAGNÓSTICO TEMPORÁRIO (REMOVER APÓS USO)
+// ==========================================
+app.get('/api/diagnostico-usuarios', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT id, usuario, role, LENGTH(senha) as tamanho_senha FROM usuarios');
+        res.json({ total: rows.length, usuarios: rows });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
 // LOGS DE AUDITORIA
 // ==========================================
 app.get('/api/logs', async (req, res) => {
