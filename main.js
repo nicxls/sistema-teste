@@ -2018,10 +2018,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const username = user.usuario || user.username || 'Sistema';
+
                 const req = await fetch(`${API_URL}/faturamentos/${currentFatContratoId}/${ano}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dados: fatArray, username: user.username })
+                    body: JSON.stringify({ dados: fatArray, username: username })
                 });
 
                 if(req.ok) {
@@ -2029,8 +2031,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem(`temp_fat_${currentFatContratoId}_${ano}`, JSON.stringify(fatArray));
                     closeModalFat();
                 } else {
-                    const err = await req.json();
-                    showToast('Erro: ' + err.error, 'error');
+                    const err = await req.json().catch(() => ({ error: 'Erro desconhecido no servidor' }));
+                    showToast('Erro: ' + (err.error || 'Falha ao salvar'), 'error');
+                    console.error('Erro de API:', err);
                 }
             } catch(error) {
                 console.error(error);
