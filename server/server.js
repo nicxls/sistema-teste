@@ -34,10 +34,14 @@ const db = require('./db');
 
         // Migration: Tabela faturamentos (Estrutura Granular para salvar mês a mês)
         // Se a coluna 'dados' existir, removemos para converter para a nova estrutura
-        [columns] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "dados"');
-        if (columns.length > 0) {
-            await db.execute('DROP TABLE faturamentos');
-            console.log('Tabela faturamentos antiga removida.');
+        try {
+            const [columns] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "dados"');
+            if (columns.length > 0) {
+                await db.execute('DROP TABLE faturamentos');
+                console.log('Tabela faturamentos antiga removida.');
+            }
+        } catch (e) {
+            // Tabela não existe, apenas ignora
         }
 
             await db.execute(`
