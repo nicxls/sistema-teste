@@ -1,3 +1,9 @@
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const http = require('http');
+const { Server } = require('socket.io');
+require('dotenv').config();
 const path = require('path');
 const db = require('./db');
 
