@@ -32,18 +32,6 @@ const db = require('./db');
             )
         `);
 
-        // Migration: Tabela logs_auditoria
-        await db.execute(`
-            CREATE TABLE IF NOT EXISTS logs_auditoria (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                usuario VARCHAR(255),
-                acao VARCHAR(50),
-                modulo VARCHAR(50),
-                detalhes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
         // Migration: Tabela faturamentos
         await db.execute(`
             CREATE TABLE IF NOT EXISTS faturamentos (
@@ -53,22 +41,6 @@ const db = require('./db');
                 dados LONGTEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY unique_faturamento (contrato_id, ano)
-            )
-        `);
-
-        // Migration: Tabela aditivos
-        await db.execute(`
-            CREATE TABLE IF NOT EXISTS aditivos (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                contrato_id INT NOT NULL,
-                numero VARCHAR(50),
-                tipo VARCHAR(50),
-                data_assinatura DATE,
-                vigencia_inicio DATE,
-                vigencia_fim DATE,
-                novo_valor DECIMAL(15,2),
-                anexo_b64 LONGTEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
     } catch (err) {
@@ -101,32 +73,6 @@ const notifyUpdate = () => {
     io.emit('data-updated');
 };
 
-// Função helper para gravar logs de auditoria
-const registrarLog = async (usuario, acao, modulo, detalhes) => {
-    try {
-        const usr = usuario || 'Sistema'; // Fallback
-        await db.execute(
-            'INSERT INTO logs_auditoria (usuario, acao, modulo, detalhes) VALUES (?, ?, ?, ?)',
-            [usr, acao, modulo, detalhes]
-        );
-    } catch (error) {
-        console.error('Erro ao salvar log de auditoria:', error);
-    }
-};
-
-// ==========================================
-// LOGS DE AUDITORIA
-// ==========================================
-app.get('/api/logs', async (req, res) => {
-    try {
-        // Ordenado do mais recente para o mais antigo, limite 500 para evitar travamento
-        const [rows] = await db.execute('SELECT * FROM logs_auditoria ORDER BY created_at DESC LIMIT 500');
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // ==========================================
 // FATURAMENTOS APIs
 // ==========================================
@@ -157,60 +103,8 @@ app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
             [contratoId, ano, dadosStr, dadosStr]
         );
         
-        await registrarLog(username, 'Edição', 'Faturamentos', `Atualização de faturamentos do contrato ID ${contratoId} - Ano ${ano}`);
         notifyUpdate();
         res.json({ message: 'Faturamentos salvos com sucesso!' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==========================================
-// ADITIVOS APIs
-// ==========================================
-
-app.get('/api/aditivos/:contratoId', async (req, res) => {
-    try {
-        const { contratoId } = req.params;
-        const [rows] = await db.execute('SELECT * FROM aditivos WHERE contrato_id = ? ORDER BY data_assinatura ASC, id ASC', [contratoId]);
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/aditivos/:contratoId', async (req, res) => {
-    try {
-        const { contratoId } = req.params;
-        const { numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64, username } = req.body;
-        
-        await db.execute(
-            `INSERT INTO aditivos 
-             (contrato_id, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                contratoId, numero, tipo, data_assinatura, 
-                vigencia_inicio || null, vigencia_fim || null, 
-                novo_valor || null, anexo_b64 || null
-            ]
-        );
-        
-        await registrarLog(username, 'Criação', 'Aditivos', `Novo aditivo (${numero}) do tipo ${tipo} adicionado ao contrato ID ${contratoId}`);
-        notifyUpdate();
-        res.json({ message: 'Aditivo criado com sucesso!' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/aditivos/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const username = req.query.username;
-        await db.execute('DELETE FROM aditivos WHERE id = ?', [id]);
-        await registrarLog(username, 'Exclusão', 'Aditivos', `Exclusão do aditivo ID ${id}`);
-        notifyUpdate();
-        res.json({ message: 'Aditivo removido com sucesso!' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -418,7 +312,6 @@ app.post('/api/empresas', async (req, res) => {
             'INSERT INTO empresas (razao, cnpj, email, telefone) VALUES (?, ?, ?, ?)',
             [razao, cnpj, email, telefone]
         );
-        registrarLog(username, 'CRIAR', 'Empresas', `Nova empresa: ${razao} (${cnpj})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -443,7 +336,6 @@ app.put('/api/empresas/:id', async (req, res) => {
             'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
             [razao, cnpj, email, telefone, id]
         );
-        registrarLog(username, 'EDITAR', 'Empresas', `Empresa ID ${id} editada (${razao})`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -465,7 +357,6 @@ app.delete('/api/empresas/:id', async (req, res) => {
     
     try {
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
-        registrarLog(username, 'EXCLUIR', 'Empresas', `Registro de Empresa ID ${id} foi removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -510,7 +401,6 @@ app.post('/api/contratos', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
             ]
         );
-        registrarLog(data.username, 'CRIAR', 'Contratos', `Novo contrato Nº ${data.numero} (${data.tipo})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -536,7 +426,6 @@ app.put('/api/contratos/:id', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
             ]
         );
-        registrarLog(data.username, 'EDITAR', 'Contratos', `Contrato ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -549,7 +438,6 @@ app.delete('/api/contratos/:id', async (req, res) => {
     const { username } = req.query;
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
-        registrarLog(username, 'EXCLUIR', 'Contratos', `Contrato ID ${id} removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -614,7 +502,6 @@ app.post('/api/indenizatorios', async (req, res) => {
                 parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0
             ]
         );
-        registrarLog(data.username, 'CRIAR', 'Indenizatórios', `Lote ${data.lote} criado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -637,7 +524,6 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
                 id
             ]
         );
-        registrarLog(data.username, 'EDITAR', 'Indenizatórios', `Lote ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {

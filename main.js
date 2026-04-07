@@ -950,7 +950,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
             loadPostosDashboard(servico);
         }
-        if (targetId === 'logs') loadLogsTable();
     }
 
     function updateContractTypeOptions() {
@@ -1612,7 +1611,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-icon" onclick="viewContrato('${con.id}')" title="Visualizar"><i class='bx bx-show'></i></button>
                     <button class="btn-icon admin-only" onclick="editContrato('${con.id}')" title="Editar"><i class='bx bx-pencil'></i></button>
                     <button class="btn-icon" style="color: #fca311; background: rgba(252,163,17,0.15);" onclick="openAnexosContrato('${con.id}')" title="Anexos"><i class='bx bx-paperclip'></i></button>
-                    <button class="btn-icon" style="color: #8b5cf6; background: rgba(139,92,246,0.15);" onclick="openAditivosContrato('${con.id}', '${con.numero}')" title="Aditivos"><i class='bx bx-receipt'></i></button>
                     <button class="btn-icon delete admin-only" onclick="deleteContrato('${con.id}')" title="Excluir"><i class='bx bx-trash'></i></button>
                 </td>
             `;
@@ -2044,151 +2042,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // ==========================================
-    // ADITIVOS CONTRATUAIS
-    // ==========================================
-    let currentAditivoContratoId = null;
-
-    window.openAditivosContrato = function(contratoId) {
-        currentAditivoContratoId = contratoId;
-        const con = getContratos().find(c => String(c.id) === String(contratoId));
-        document.getElementById('modal-aditivos-title').innerText = `Aditivos - Contrato ${con ? con.numero : ''}`;
-        
-        document.getElementById('form-aditivo-container').style.display = 'none';
-        document.getElementById('modal-aditivos').classList.remove('form-hidden');
-        loadAditivosList(contratoId);
-    };
-
-    async function loadAditivosList(contratoId) {
-        const container = document.getElementById('aditivos-list-container');
-        container.innerHTML = '<div style="text-align:center; padding:20px;"><i class="bx bx-loader-alt bx-spin"></i> Carregando...</div>';
-        
-        try {
-            const res = await fetch(`${API_URL}/aditivos/${contratoId}`);
-            const data = await res.json();
-            
-            if (data.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-light);">Nenhum aditivo registrado para este contrato.</div>';
-                return;
-            }
-
-            container.innerHTML = data.map(adi => {
-                const dataAss = adi.data_assinatura ? new Date(adi.data_assinatura).toLocaleDateString('pt-BR') : '-';
-                const valor = adi.novo_valor ? formatCurrency(adi.novo_valor) : 'N/A';
-                
-                return `
-                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <div>
-                                <span style="background: #ede9fe; color: #7c3aed; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase;">Aditivo ${adi.numero}</span>
-                                <h4 style="margin: 5px 0 0 0; font-size: 14px; color: var(--text-color);">${adi.tipo}</h4>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                ${adi.anexo_b64 ? `<button class="btn-icon" onclick="viewAditivoAnexo('${adi.id}')" title="Ver PDF" style="color: #4361ee;"><i class='bx bx-file'></i></button>` : ''}
-                                <button class="btn-icon admin-only" onclick="deleteAditivo('${adi.id}')" title="Excluir" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: var(--text-light);">
-                            <div>Assinado em: <b>${dataAss}</b></div>
-                            <div>Novo Valor: <b>${valor}</b></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        } catch (err) {
-            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--danger-color);">Erro ao carregar aditivos.</div>';
-        }
-    }
-
-    document.getElementById('btn-novo-aditivo')?.addEventListener('click', () => {
-        document.getElementById('form-aditivo').reset();
-        document.getElementById('form-aditivo-container').style.display = 'block';
-    });
-
-    document.getElementById('btn-cancel-aditivo')?.addEventListener('click', () => {
-        document.getElementById('form-aditivo-container').style.display = 'none';
-    });
-
-    document.getElementById('form-aditivo')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        
-        const fileInput = document.getElementById('adi-file');
-        let fileBase64 = null;
-        
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            if (file.size > 5 * 1024 * 1024) return showToast('Arquivo muito grande (máx 5MB)', 'error');
-            fileBase64 = await toBase64(file);
-        }
-
-        const payload = {
-            numero: document.getElementById('adi-numero').value,
-            tipo: document.getElementById('adi-tipo').value,
-            data_assinatura: document.getElementById('adi-data').value,
-            vigencia_inicio: document.getElementById('adi-vigencia-ini').value,
-            vigencia_fim: document.getElementById('adi-vigencia-fim').value,
-            novo_valor: parseCurrency(document.getElementById('adi-valor').value),
-            anexo_b64: fileBase64,
-            username: user.usuario
-        };
-
-        try {
-            const res = await fetch(`${API_URL}/aditivos/${currentAditivoContratoId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            if (res.ok) {
-                showToast('Aditivo registrado com sucesso!');
-                document.getElementById('form-aditivo-container').style.display = 'none';
-                loadAditivosList(currentAditivoContratoId);
-                fetchAllData(); // Atualiza contratos se valor mudou
-            } else {
-                showToast('Erro ao salvar aditivo', 'error');
-            }
-        } catch (err) {
-            showToast('Erro de conexão', 'error');
-        }
-    });
-
-    window.deleteAditivo = async function(id) {
-        if (!confirm('Excluir este aditivo?')) return;
-        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        try {
-            const res = await fetch(`${API_URL}/aditivos/${id}?username=${user.usuario}`, { method: 'DELETE' });
-            if (res.ok) {
-                showToast('Aditivo removido');
-                loadAditivosList(currentAditivoContratoId);
-                fetchAllData();
-            }
-        } catch (err) {
-            showToast('Erro ao excluir', 'error');
-        }
-    };
-
-    window.viewAditivoAnexo = async function(id) {
-        try {
-            const res = await fetch(`${API_URL}/aditivos/${currentAditivoContratoId}`);
-            const data = await res.json();
-            const adi = data.find(a => String(a.id) === String(id));
-            if (adi && adi.anexo_b64) {
-                const win = window.open();
-                win.document.write('<iframe src="' + adi.anexo_b64 + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
-            }
-        } catch (e) {
-            showToast('Erro ao abrir anexo', 'error');
-        }
-    };
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
 
     // ==========================================
     // POSTOS LOGIC
@@ -2746,40 +2599,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${con.numero || 'Sem_Num'}_${ano}`);
         else exportDataToPDF(exportData, `Relatório Faturamento - Contrato ${con.numero || 'Sem Número'} (${ano})`);
     };
-
-    async function loadLogsTable() {
-        const container = document.getElementById('lista-logs');
-        if (!container) return;
-        try {
-            const res = await fetch(`${API_URL}/logs`);
-            const data = await res.json();
-            container.innerHTML = data.map(log => {
-                const dateObj = new Date(log.created_at);
-                const dataFormatada = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR').substring(0,5);
-                
-                let badgeColor = 'var(--primary-color)';
-                let icon = 'bx-info-circle';
-                if(log.acao === 'CRIAR') { badgeColor = '#2b9348'; icon = 'bx-plus-circle'; }
-                if(log.acao === 'EXCLUIR') { badgeColor = '#d90429'; icon = 'bx-trash'; }
-                if(log.acao === 'EDITAR') { badgeColor = '#e85d04'; icon = 'bx-edit'; }
-
-                return `<tr style="border-bottom: 1px solid var(--border-color); font-family: 'Inter', sans-serif;">
-                    <td style="padding: 12px 15px; font-size: 12.5px; color: var(--text-light);">${dataFormatada}</td>
-                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-color); font-weight: 600;">${log.usuario}</td>
-                    <td style="padding: 12px 15px; font-size: 11px;">
-                        <span style="background:${badgeColor}; color: #fff; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;"><i class='bx ${icon}'></i> ${log.acao}</span>
-                    </td>
-                    <td style="padding: 12px 15px; font-size: 13px; font-weight: 500; color: var(--text-color);">${log.modulo}</td>
-                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-light);">${log.detalhes}</td>
-                </tr>`;
-            }).join('');
-            if(data.length === 0) {
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-light);">Nenhum log registrado.</td></tr>`;
-            }
-        } catch(e) { 
-            console.error(e);
-            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">Erro ao carregar logs.</td></tr>`;
-        }
-    }
 
 });
