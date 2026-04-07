@@ -1131,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffTime = dataFim - hoje;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
-                if (diffDays <= 60 && diffDays > 0) {
+                if (diffDays <= 90 && diffDays > 0) {
                     countVencendo++;
                     alertas.push({ dias: diffDays, contrato: c.numero, cre: c.cre, servico: c.tipo });
                 }
