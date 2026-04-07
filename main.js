@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // INITIALIZATION & STATE
     // ==========================================
-    const API_URL = 'http://76.13.165.221:3000/api';
-    const SOCKET_URL = 'http://76.13.165.221:3000';
+    const API_URL = '/api';
+    const SOCKET_URL = window.location.origin;
     
     console.log('Usando API:', API_URL);
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
