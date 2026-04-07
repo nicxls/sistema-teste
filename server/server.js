@@ -116,10 +116,12 @@ app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
     try {
         const { contratoId, ano } = req.params;
         const { dados } = req.body; // Array de 12 objetos
+        const cId = parseInt(contratoId);
+
+        if (!cId || !ano) throw new Error('Parâmetros de contrato ou ano inválidos.');
         
         for (let i = 0; i < 12; i++) {
             const item = dados[i] || {};
-            // Só salva se houver alguma informação preenchida
             const pProcesso = item.processo || null;
             const pAbertura = (item.abertura && item.abertura.trim() !== '') ? item.abertura : null;
             const pSituacao = item.situacao || 'Pendente';
@@ -136,7 +138,7 @@ app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
                         situacao = VALUES(situacao), 
                         pagamento = VALUES(pagamento), 
                         valor = VALUES(valor)`,
-                    [contratoId, ano, i, pProcesso, pAbertura, pSituacao, pPagamento, pValor]
+                    [cId, ano, i, pProcesso, pAbertura, pSituacao, pPagamento, pValor]
                 );
             }
         }
@@ -144,7 +146,8 @@ app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
         notifyUpdate();
         res.json({ message: 'Faturamentos salvos com sucesso!' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Erro ao salvar faturamento:', error);
+        res.status(500).json({ error: 'Erro no servidor: ' + error.message });
     }
 });
 
