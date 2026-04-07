@@ -1,9 +1,4 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const http = require('http'); // Necessário para o Socket.IO
-const { Server } = require('socket.io'); // Socket.IO
-require('dotenv').config();
+const path = require('path');
 const db = require('./db');
 
 // Auto-Migration: Garante que a coluna anexos exista
@@ -87,7 +82,13 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '10mb' })); // Aumentar limite para Base64 de PDFs
+app.use(express.static(path.join(__dirname, '..')));
+
+// Rota para servir o frontend
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Função helper para notificar todos os clientes via WebSocket
 const notifyUpdate = () => {
@@ -638,92 +639,9 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// FATURAMENTOS
-// ==========================================
-
-app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
-    const { contratoId, ano } = req.params;
-    try {
-        const [rows] = await db.execute(
-            'SELECT dados FROM faturamentos WHERE contrato_id = ? AND ano = ?',
-            [contratoId, ano]
-        );
-        if (rows.length > 0) {
-            res.json(JSON.parse(rows[0].dados));
-        } else {
-            res.json(Array(12).fill({}));
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
-    const { contratoId, ano } = req.params;
-    const { dados, username } = req.body;
-    try {
-        await db.execute(
-            `INSERT INTO faturamentos (contrato_id, ano, dados) VALUES (?, ?, ?) 
-             ON DUPLICATE KEY UPDATE dados = VALUES(dados)`,
-            [contratoId, ano, JSON.stringify(dados)]
-        );
-        registrarLog(username, 'EDITAR', 'Faturamentos', `Faturamentos atualizados: Contrato ${contratoId}, Ano ${ano}`);
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==========================================
-// ADITIVOS
-// ==========================================
-
-app.get('/api/aditivos/:contratoId', async (req, res) => {
-    const { contratoId } = req.params;
-    try {
-        const [rows] = await db.execute(
-            'SELECT * FROM aditivos WHERE contrato_id = ? ORDER BY data_assinatura DESC',
-            [contratoId]
-        );
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/aditivos/:contratoId', async (req, res) => {
-    const { contratoId } = req.params;
-    const { numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64, username } = req.body;
-    try {
-        await db.execute(
-            `INSERT INTO aditivos (contrato_id, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [contratoId, numero, tipo, data_assinatura, vigencia_inicio, vigencia_fim, novo_valor, anexo_b64]
-        );
-        registrarLog(username, 'CRIAR', 'Aditivos', `Novo aditivo ${numero} para contrato ${contratoId}`);
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/aditivos/:id', async (req, res) => {
-    const { id } = req.params;
-    const { username } = req.query;
-    try {
-        await db.execute('DELETE FROM aditivos WHERE id = ?', [id]);
-        registrarLog(username, 'EXCLUIR', 'Aditivos', `Aditivo ID ${id} removido`);
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // Iniciar servidor usando o objeto 'server' que inclui o Socket.IO
 server.listen(PORT, () => {
     console.log(`Servidor rodando em tempo real na porta ${PORT}`);
 });
+
