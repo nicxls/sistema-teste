@@ -3,14 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // INITIALIZATION & STATE
     // ==========================================
-    const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '76.13.165.221') 
-        ? 'http://76.13.165.221:3000/api' 
-        : '/api';
+    const API_URL = 'http://76.13.165.221:3000/api';
+    const SOCKET_URL = 'http://76.13.165.221:3000';
     
     console.log('Usando API:', API_URL);
-    const SOCKET_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '76.13.165.221')
-        ? 'http://76.13.165.221:3000'
-        : window.location.origin;
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
