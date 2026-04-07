@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS empresas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     razao VARCHAR(255) NOT NULL,
+    cnpj VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(150),
-    telefone VARCHAR(20),
-    sistema VARCHAR(50) DEFAULT 'mao-de-obra'
+    telefone VARCHAR(20)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabela de Contratos

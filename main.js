@@ -4,9 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALIZATION & STATE
     // ==========================================
     const API_URL = '/api';
-    const SOCKET_URL = window.location.origin;
-    
-    console.log('Usando API:', API_URL);
+    const SOCKET_URL = window.location.origin; 
     let selectedSystem = localStorage.getItem('selectedSystem') || null;
     let cachedEmpresas = [];
     let cachedContratos = [];
@@ -176,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
             const [empRes, conRes, posRes] = await Promise.all([
-                fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
+                fetch(`${API_URL}/empresas?t=${time}`),
                 fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/postos?t=${time}`)
             ]);
@@ -946,6 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
             loadPostosDashboard(servico);
         }
+        if (targetId === 'logs') loadLogsTable();
     }
 
     function updateContractTypeOptions() {
@@ -1276,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...empresaData, sistema: selectedSystem, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
+                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
             });
 
             const data = await response.json();
@@ -1907,27 +1906,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFatContratoId = null;
     const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-    window.openModalFaturamentos = async function(contratoId, contratoNumero) {
+    window.openModalFaturamentos = function(contratoId, contratoNumero) {
         currentFatContratoId = contratoId;
         const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
         document.getElementById('modal-fat-title').textContent = `Gerenciar Faturamentos ${ano} - Contrato ${contratoNumero}`;
         
-        const tbody = document.getElementById('fat-grid-body');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Carregando Faturamentos... <i class="bx bx-loader-alt bx-spin"></i></td></tr>';
-        
-        modalFat.classList.remove('form-hidden'); // Show modal early to indicate loading
-        
-        let fatList = Array(12).fill({});
-        try {
-            const res = await fetch(`${API_URL}/faturamentos/${contratoId}/${ano}`);
-            if(res.ok) fatList = await res.json();
-            // Cache locally for exports to avoid second fetch when clicking export
-            localStorage.setItem(`temp_fat_${contratoId}_${ano}`, JSON.stringify(fatList));
-        } catch(err) {
-            console.error('Erro ao carrega faturamentos do banco:', err);
-            showToast('Erro ao carregar do banco de dados', 'error');
-        }
+        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
+        let fatList = dbFat[contratoId] || Array(12).fill({});
 
+        const tbody = document.getElementById('fat-grid-body');
         tbody.innerHTML = '';
 
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -1982,6 +1969,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const fatInput = tr.querySelector(`#fat-val-${idx}`);
             if(fatInput) fatInput.addEventListener('input', maskCurrency);
         });
+
+        modalFat.classList.remove('form-hidden');
     }
 
     const closeModalFat = () => modalFat.classList.add('form-hidden');
@@ -1990,12 +1979,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCancelFat) btnCancelFat.addEventListener('click', closeModalFat);
 
     if (btnSaveFat) {
-        btnSaveFat.addEventListener('click', async () => {
+        btnSaveFat.addEventListener('click', () => {
             if (!currentFatContratoId) return;
-
-            const btnOriginalText = btnSaveFat.innerHTML;
-            btnSaveFat.innerHTML = 'Salvando... <i class="bx bx-loader-alt bx-spin"></i>';
-            btnSaveFat.disabled = true;
 
             let fatArray = [];
             for (let i = 0; i < 12; i++) {
@@ -2009,33 +1994,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
-            
-            try {
-                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const username = user.usuario || user.username || 'Sistema';
+            let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
+            dbFat[currentFatContratoId] = fatArray;
+            localStorage.setItem(`faturamentos_${ano}`, JSON.stringify(dbFat));
 
-                const req = await fetch(`${API_URL}/faturamentos/${currentFatContratoId}/${ano}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dados: fatArray, username: username })
-                });
-
-                if(req.ok) {
-                    showToast('Faturamentos salvos com sucesso!');
-                    localStorage.setItem(`temp_fat_${currentFatContratoId}_${ano}`, JSON.stringify(fatArray));
-                    closeModalFat();
-                } else {
-                    const err = await req.json().catch(() => ({ error: 'Erro desconhecido no servidor' }));
-                    showToast('Erro: ' + (err.error || 'Falha ao salvar'), 'error');
-                    console.error('Erro de API:', err);
-                }
-            } catch(error) {
-                console.error(error);
-                showToast('Erro ao gravar faturamentos', 'error');
-            } finally {
-                btnSaveFat.innerHTML = btnOriginalText;
-                btnSaveFat.disabled = false;
-            }
+            showToast('Faturamentos salvos com sucesso!');
+            closeModalFat();
         });
     }
 
@@ -2563,13 +2527,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const emp = empresas.find(e => String(e.id) === String(con.empresaId));
         const empName = emp ? emp.razao : 'Desconhecida';
         
+        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
         let exportData = [];
-        let fatList = JSON.parse(localStorage.getItem(`temp_fat_${con.id}_${ano}`) || '[]');
-        if(fatList.length === 0) {
-            return showToast('Dados de faturamento não carregados', 'error');
-        }
+        let fatList = dbFat[con.id] || [];
         
         for (let i = 0; i < 12; i++) {
             const data = fatList[i] || {};
@@ -2595,5 +2557,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${con.numero || 'Sem_Num'}_${ano}`);
         else exportDataToPDF(exportData, `Relatório Faturamento - Contrato ${con.numero || 'Sem Número'} (${ano})`);
     };
+
+    async function loadLogsTable() {
+        const container = document.getElementById('lista-logs');
+        if (!container) return;
+        try {
+            const res = await fetch(`${API_URL}/logs`);
+            const data = await res.json();
+            container.innerHTML = data.map(log => {
+                const dateObj = new Date(log.created_at);
+                const dataFormatada = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR').substring(0,5);
+                
+                let badgeColor = 'var(--primary-color)';
+                let icon = 'bx-info-circle';
+                if(log.acao === 'CRIAR') { badgeColor = '#2b9348'; icon = 'bx-plus-circle'; }
+                if(log.acao === 'EXCLUIR') { badgeColor = '#d90429'; icon = 'bx-trash'; }
+                if(log.acao === 'EDITAR') { badgeColor = '#e85d04'; icon = 'bx-edit'; }
+
+                return `<tr style="border-bottom: 1px solid var(--border-color); font-family: 'Inter', sans-serif;">
+                    <td style="padding: 12px 15px; font-size: 12.5px; color: var(--text-light);">${dataFormatada}</td>
+                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-color); font-weight: 600;">${log.usuario}</td>
+                    <td style="padding: 12px 15px; font-size: 11px;">
+                        <span style="background:${badgeColor}; color: #fff; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;"><i class='bx ${icon}'></i> ${log.acao}</span>
+                    </td>
+                    <td style="padding: 12px 15px; font-size: 13px; font-weight: 500; color: var(--text-color);">${log.modulo}</td>
+                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-light);">${log.detalhes}</td>
+                </tr>`;
+            }).join('');
+            if(data.length === 0) {
+                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-light);">Nenhum log registrado.</td></tr>`;
+            }
+        } catch(e) { 
+            console.error(e);
+            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">Erro ao carregar logs.</td></tr>`;
+        }
+    }
 
 });

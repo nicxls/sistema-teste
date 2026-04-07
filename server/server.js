@@ -1,10 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const http = require('http');
-const { Server } = require('socket.io');
+const http = require('http'); // Necessário para o Socket.IO
+const { Server } = require('socket.io'); // Socket.IO
 require('dotenv').config();
-const path = require('path');
 const db = require('./db');
 
 // Auto-Migration: Garante que a coluna anexos exista
@@ -32,46 +31,21 @@ const db = require('./db');
             )
         `);
 
-        // Migration: Tabela faturamentos (Estrutura Granular para salvar mês a mês)
-        // Se a coluna 'dados' existir, removemos para converter para a nova estrutura
-        try {
-            const [columns] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "dados"');
-            if (columns.length > 0) {
-                await db.execute('DROP TABLE faturamentos');
-                console.log('Tabela faturamentos antiga removida.');
-            }
-        } catch (e) {
-            // Tabela não existe, apenas ignora
-        }
-
-            await db.execute(`
-                CREATE TABLE IF NOT EXISTS faturamentos (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    contrato_id INT NOT NULL,
-                    ano VARCHAR(4) NOT NULL,
-                    mes INT NOT NULL,
-                    processo VARCHAR(255),
-                    abertura DATE,
-                    situacao VARCHAR(50) DEFAULT 'Pendente',
-                    pagamento DATE,
-                    valor DECIMAL(15,2) DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE KEY unique_faturamento_mes (contrato_id, ano, mes)
-                )
-            `);
-
-            // Migration: Adicionar coluna 'sistema' na tabela empresas
-            const [empColumns] = await db.execute('SHOW COLUMNS FROM empresas LIKE "sistema"');
-            if (empColumns.length === 0) {
-                await db.execute('ALTER TABLE empresas ADD COLUMN sistema VARCHAR(50) DEFAULT "mao-de-obra"');
-                // Forçar atualização de registros existentes (nulos ou vazios) para 'mao-de-obra'
-                await db.execute('UPDATE empresas SET sistema = "mao-de-obra" WHERE sistema IS NULL OR sistema = ""');
-                console.log('Coluna "sistema" adicionada à tabela "empresas" e registros migrados.');
-            }
-        } catch (err) {
-            console.error('Erro na migração:', err);
-        }
-    })();
+        // Migration: Tabela logs_auditoria
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS logs_auditoria (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario VARCHAR(255),
+                acao VARCHAR(50),
+                modulo VARCHAR(50),
+                detalhes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+    } catch (err) {
+        console.error('Erro na migração:', err);
+    }
+})();
 
 const app = express();
 const server = http.createServer(app); // Criar servidor HTTP para o Socket.IO
@@ -85,82 +59,36 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' })); // Aumentar limite para Base64 de PDFs
-app.use(express.static(path.join(__dirname, '..')));
-
-// Rota para servir o frontend
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
+app.use(bodyParser.json());
 
 // Função helper para notificar todos os clientes via WebSocket
 const notifyUpdate = () => {
     io.emit('data-updated');
 };
 
-// ==========================================
-// FATURAMENTOS APIs
-// ==========================================
-
-app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
+// Função helper para gravar logs de auditoria
+const registrarLog = async (usuario, acao, modulo, detalhes) => {
     try {
-        const { contratoId, ano } = req.params;
-        const [rows] = await db.execute('SELECT * FROM faturamentos WHERE contrato_id = ? AND ano = ?', [contratoId, ano]);
-        
-        let fatList = Array(12).fill().map(() => ({}));
-        rows.forEach(row => {
-            if (row.mes >= 0 && row.mes <= 11) {
-                fatList[row.mes] = {
-                    processo: row.processo,
-                    abertura: row.abertura ? row.abertura.toISOString().split('T')[0] : null,
-                    situacao: row.situacao,
-                    pagamento: row.pagamento ? row.pagamento.toISOString().split('T')[0] : null,
-                    valor: String(row.valor)
-                };
-            }
-        });
-        res.json(fatList);
+        const usr = usuario || 'Sistema'; // Fallback
+        await db.execute(
+            'INSERT INTO logs_auditoria (usuario, acao, modulo, detalhes) VALUES (?, ?, ?, ?)',
+            [usr, acao, modulo, detalhes]
+        );
+    } catch (error) {
+        console.error('Erro ao salvar log de auditoria:', error);
+    }
+};
+
+// ==========================================
+// LOGS DE AUDITORIA
+// ==========================================
+app.get('/api/logs', async (req, res) => {
+    try {
+        // Ordenado do mais recente para o mais antigo, limite 500 para evitar travamento
+        const [rows] = await db.execute('SELECT * FROM logs_auditoria ORDER BY created_at DESC LIMIT 500');
+        res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
-    try {
-        const { contratoId, ano } = req.params;
-        const { dados } = req.body; // Array de 12 objetos
-        const cId = parseInt(contratoId);
-
-        if (!cId || !ano) throw new Error('Parâmetros de contrato ou ano inválidos.');
-        
-        for (let i = 0; i < 12; i++) {
-            const item = dados[i] || {};
-            const pProcesso = item.processo || null;
-            const pAbertura = (item.abertura && item.abertura.trim() !== '') ? item.abertura : null;
-            const pSituacao = item.situacao || 'Pendente';
-            const pPagamento = (item.pagamento && item.pagamento.trim() !== '') ? item.pagamento : null;
-            const pValor = parseFloat(item.valor) || 0;
-
-            if (pProcesso || pAbertura || pSituacao !== 'Pendente' || pPagamento || pValor > 0) {
-                 await db.execute(
-                    `INSERT INTO faturamentos (contrato_id, ano, mes, processo, abertura, situacao, pagamento, valor) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
-                     ON DUPLICATE KEY UPDATE 
-                        processo = VALUES(processo), 
-                        abertura = VALUES(abertura), 
-                        situacao = VALUES(situacao), 
-                        pagamento = VALUES(pagamento), 
-                        valor = VALUES(valor)`,
-                    [cId, ano, i, pProcesso, pAbertura, pSituacao, pPagamento, pValor]
-                );
-            }
-        }
-        
-        notifyUpdate();
-        res.json({ message: 'Faturamentos salvos com sucesso!' });
-    } catch (error) {
-        console.error('Erro ao salvar faturamento:', error);
-        res.status(500).json({ error: 'Erro no servidor: ' + error.message });
     }
 });
 
@@ -351,16 +279,8 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
 // ==========================================
 
 app.get('/api/empresas', async (req, res) => {
-    const { system } = req.query;
     try {
-        let query = 'SELECT * FROM empresas';
-        let params = [];
-        if (system) {
-            query += ' WHERE sistema = ?';
-            params.push(system);
-        }
-        query += ' ORDER BY razao ASC';
-        const [rows] = await db.execute(query, params);
+        const [rows] = await db.execute('SELECT * FROM empresas ORDER BY razao ASC');
         res.json(rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -368,12 +288,13 @@ app.get('/api/empresas', async (req, res) => {
 });
 
 app.post('/api/empresas', async (req, res) => {
-    const { razao, cnpj, email, telefone, sistema, userRole, username } = req.body;
+    const { razao, cnpj, email, telefone, userRole, username } = req.body;
     try {
         const [result] = await db.execute(
-            'INSERT INTO empresas (razao, cnpj, email, telefone, sistema) VALUES (?, ?, ?, ?, ?)',
-            [razao, cnpj, email, telefone, sistema || 'mao-de-obra']
+            'INSERT INTO empresas (razao, cnpj, email, telefone) VALUES (?, ?, ?, ?)',
+            [razao, cnpj, email, telefone]
         );
+        registrarLog(username, 'CRIAR', 'Empresas', `Nova empresa: ${razao} (${cnpj})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -386,7 +307,7 @@ app.post('/api/empresas', async (req, res) => {
 
 app.put('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { razao, cnpj, email, telefone, sistema, userRole, username } = req.body;
+    const { razao, cnpj, email, telefone, userRole, username } = req.body;
     
     // Proteção básica no backend
     if (userRole === 'usuario') {
@@ -395,9 +316,10 @@ app.put('/api/empresas/:id', async (req, res) => {
     
     try {
         await db.execute(
-            'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ?, sistema = ? WHERE id = ?',
-            [razao, cnpj, email, telefone, sistema, id]
+            'UPDATE empresas SET razao = ?, cnpj = ?, email = ?, telefone = ? WHERE id = ?',
+            [razao, cnpj, email, telefone, id]
         );
+        registrarLog(username, 'EDITAR', 'Empresas', `Empresa ID ${id} editada (${razao})`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -419,6 +341,7 @@ app.delete('/api/empresas/:id', async (req, res) => {
     
     try {
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Empresas', `Registro de Empresa ID ${id} foi removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -463,6 +386,7 @@ app.post('/api/contratos', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || [])
             ]
         );
+        registrarLog(data.username, 'CRIAR', 'Contratos', `Novo contrato Nº ${data.numero} (${data.tipo})`);
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
@@ -488,6 +412,7 @@ app.put('/api/contratos/:id', async (req, res) => {
                 parseFloat(data.valor_mensal) || 0, data.postos || null, JSON.stringify(data.anexos || []), id
             ]
         );
+        registrarLog(data.username, 'EDITAR', 'Contratos', `Contrato ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -500,6 +425,7 @@ app.delete('/api/contratos/:id', async (req, res) => {
     const { username } = req.query;
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Contratos', `Contrato ID ${id} removido`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -564,6 +490,7 @@ app.post('/api/indenizatorios', async (req, res) => {
                 parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, parseFloat(data.valor_diario) || 0
             ]
         );
+        registrarLog(data.username, 'CRIAR', 'Indenizatórios', `Lote ${data.lote} criado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -586,6 +513,7 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
                 id
             ]
         );
+        registrarLog(data.username, 'EDITAR', 'Indenizatórios', `Lote ID ${id} atualizado`);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
@@ -593,9 +521,20 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/indenizatorios/:id', async (req, res) => {
+    const { id } = req.params;
+    const { username } = req.query;
+    try {
+        await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
+        registrarLog(username, 'EXCLUIR', 'Indenizatórios', `Lote ID ${id} foi excluído`);
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Iniciar servidor usando o objeto 'server' que inclui o Socket.IO
 server.listen(PORT, () => {
     console.log(`Servidor rodando em tempo real na porta ${PORT}`);
 });
-

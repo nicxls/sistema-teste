@@ -171,6 +171,12 @@
                             style="background: var(--danger-color); color: #fff; border-radius: 50%; opacity: 0; padding: 2px 6px; font-size: 10px; margin-left: auto;">0</span>
                     </a>
                 </li>
+                <li class="master-only">
+                    <a href="#" data-target="logs" id="menu-logs">
+                        <i class='bx bx-list-check'></i>
+                        <span>Auditoria do Sistema</span>
+                    </a>
+                </li>
                 <li id="menu-indenizatorios-li" style="display: none;">
                     <a href="#" data-target="indenizatorios" id="menu-indenizatorios">
                         <i class='bx bx-spreadsheet'></i>
@@ -214,7 +220,7 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="topbar" style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 9999;">
+            <header class="topbar" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>Welcome Back, User</h2>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Notificações -->
@@ -223,7 +229,7 @@
                             <i class='bx bx-bell' style="font-size: 24px;"></i>
                             <span id="notif-badge" style="display: none; position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: var(--danger-color); border-radius: 50%; border: 2px solid var(--bg-color);"></span>
                         </button>
-                        <div id="notif-dropdown" class="form-hidden" style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 10000;">
+                        <div id="notif-dropdown" class="form-hidden" style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 100;">
                             <div style="padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">Avisos de Vencimento</div>
                             <div id="notif-list" style="max-height: 250px; overflow-y: auto; padding: 10px;">
                                 <div style="padding: 10px; text-align: center; color: var(--text-light); font-size: 12px;">Nenhuma notificação nova</div>
@@ -849,16 +855,9 @@
                 style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
                 <div
                     style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h3 id="modal-fat-title" style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar Faturamentos</h3>
-                        <select id="select-ano-fat" onchange="loadFaturamentosAtualizado()" style="padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-weight: 600; cursor: pointer;">
-                            <option value="2023">2023</option>
-                            <option value="2024">2024</option>
-                            <option value="2025" selected>2025</option>
-                            <option value="2026">2026</option>
-                            <option value="2027">2027</option>
-                        </select>
-                    </div>
+                    <h3 id="modal-fat-title"
+                        style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Gerenciar
+                        Faturamentos 2025 - Contrato XYZ</h3>
                     <button id="btn-close-fat-modal" class="btn-icon" style="color: var(--text-light);"><i
                             class='bx bx-x' style="font-size: 28px;"></i></button>
                 </div>
@@ -1068,7 +1067,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Modal Lote Indenizatório (Design Espelhado do Contrato) -->
     <div id="modal-lote" class="modal-overlay form-hidden" style="z-index: 9999;">
