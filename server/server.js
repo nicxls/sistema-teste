@@ -32,15 +32,27 @@ const db = require('./db');
             )
         `);
 
-        // Migration: Tabela faturamentos
+        // Migration: Tabela faturamentos (Estrutura Granular para salvar mês a mês)
+        // Se a coluna 'dados' existir, removemos para converter para a nova estrutura
+        [columns] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "dados"');
+        if (columns.length > 0) {
+            await db.execute('DROP TABLE faturamentos');
+            console.log('Tabela faturamentos antiga removida.');
+        }
+
         await db.execute(`
             CREATE TABLE IF NOT EXISTS faturamentos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 contrato_id INT NOT NULL,
                 ano VARCHAR(4) NOT NULL,
-                dados LONGTEXT,
+                mes INT NOT NULL,
+                processo VARCHAR(255),
+                abertura DATE,
+                situacao VARCHAR(50) DEFAULT 'Pendente',
+                pagamento DATE,
+                valor DECIMAL(15,2) DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_faturamento (contrato_id, ano)
+                UNIQUE KEY unique_faturamento_mes (contrato_id, ano, mes)
             )
         `);
     } catch (err) {
@@ -80,12 +92,21 @@ const notifyUpdate = () => {
 app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
     try {
         const { contratoId, ano } = req.params;
-        const [rows] = await db.execute('SELECT dados FROM faturamentos WHERE contrato_id = ? AND ano = ?', [contratoId, ano]);
-        if (rows.length > 0) {
-            res.json(JSON.parse(rows[0].dados));
-        } else {
-            res.json(Array(12).fill({}));
-        }
+        const [rows] = await db.execute('SELECT * FROM faturamentos WHERE contrato_id = ? AND ano = ?', [contratoId, ano]);
+        
+        let fatList = Array(12).fill().map(() => ({}));
+        rows.forEach(row => {
+            if (row.mes >= 0 && row.mes <= 11) {
+                fatList[row.mes] = {
+                    processo: row.processo,
+                    abertura: row.abertura ? row.abertura.toISOString().split('T')[0] : null,
+                    situacao: row.situacao,
+                    pagamento: row.pagamento ? row.pagamento.toISOString().split('T')[0] : null,
+                    valor: String(row.valor)
+                };
+            }
+        });
+        res.json(fatList);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -94,14 +115,31 @@ app.get('/api/faturamentos/:contratoId/:ano', async (req, res) => {
 app.post('/api/faturamentos/:contratoId/:ano', async (req, res) => {
     try {
         const { contratoId, ano } = req.params;
-        const { dados, username } = req.body;
-        const dadosStr = JSON.stringify(dados);
+        const { dados } = req.body; // Array de 12 objetos
         
-        await db.execute(
-            `INSERT INTO faturamentos (contrato_id, ano, dados) VALUES (?, ?, ?) 
-             ON DUPLICATE KEY UPDATE dados = ?`,
-            [contratoId, ano, dadosStr, dadosStr]
-        );
+        for (let i = 0; i < 12; i++) {
+            const item = dados[i] || {};
+            // Só salva se houver alguma informação preenchida
+            const pProcesso = item.processo || null;
+            const pAbertura = (item.abertura && item.abertura.trim() !== '') ? item.abertura : null;
+            const pSituacao = item.situacao || 'Pendente';
+            const pPagamento = (item.pagamento && item.pagamento.trim() !== '') ? item.pagamento : null;
+            const pValor = parseFloat(item.valor) || 0;
+
+            if (pProcesso || pAbertura || pSituacao !== 'Pendente' || pPagamento || pValor > 0) {
+                 await db.execute(
+                    `INSERT INTO faturamentos (contrato_id, ano, mes, processo, abertura, situacao, pagamento, valor) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+                     ON DUPLICATE KEY UPDATE 
+                        processo = VALUES(processo), 
+                        abertura = VALUES(abertura), 
+                        situacao = VALUES(situacao), 
+                        pagamento = VALUES(pagamento), 
+                        valor = VALUES(valor)`,
+                    [contratoId, ano, i, pProcesso, pAbertura, pSituacao, pPagamento, pValor]
+                );
+            }
+        }
         
         notifyUpdate();
         res.json({ message: 'Faturamentos salvos com sucesso!' });
