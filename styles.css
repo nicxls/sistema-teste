@@ -303,6 +303,8 @@ body {
 .status-atrasado { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
 
 .topbar {
+    position: relative;
+    z-index: 1000;
     height: 70px;
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
