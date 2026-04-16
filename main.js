@@ -2553,7 +2553,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
-        }
  
         if (exportData.length === 0) {
             return showToast(`Nenhum faturamento registrado em ${ano} para este contrato.`, 'error');
