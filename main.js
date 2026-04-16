@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
             const [empRes, conRes, posRes] = await Promise.all([
-                fetch(`${API_URL}/empresas?t=${time}`),
+                fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/postos?t=${time}`)
             ]);
@@ -944,7 +944,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
             loadPostosDashboard(servico);
         }
-        if (targetId === 'logs') loadLogsTable();
     }
 
     function updateContractTypeOptions() {
@@ -1275,7 +1274,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...empresaData, userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, username: JSON.parse(localStorage.getItem('currentUser'))?.usuario })
+                body: JSON.stringify({ 
+                    ...empresaData, 
+                    modulo: selectedSystem,
+                    userRole: JSON.parse(localStorage.getItem('currentUser'))?.role, 
+                    username: JSON.parse(localStorage.getItem('currentUser'))?.usuario 
+                })
             });
 
             const data = await response.json();
@@ -2549,48 +2553,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
-
+        }
+ 
         if (exportData.length === 0) {
             return showToast(`Nenhum faturamento registrado em ${ano} para este contrato.`, 'error');
         }
-
+ 
         if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${con.numero || 'Sem_Num'}_${ano}`);
         else exportDataToPDF(exportData, `Relatório Faturamento - Contrato ${con.numero || 'Sem Número'} (${ano})`);
     };
-
-    async function loadLogsTable() {
-        const container = document.getElementById('lista-logs');
-        if (!container) return;
-        try {
-            const res = await fetch(`${API_URL}/logs`);
-            const data = await res.json();
-            container.innerHTML = data.map(log => {
-                const dateObj = new Date(log.created_at);
-                const dataFormatada = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR').substring(0,5);
-                
-                let badgeColor = 'var(--primary-color)';
-                let icon = 'bx-info-circle';
-                if(log.acao === 'CRIAR') { badgeColor = '#2b9348'; icon = 'bx-plus-circle'; }
-                if(log.acao === 'EXCLUIR') { badgeColor = '#d90429'; icon = 'bx-trash'; }
-                if(log.acao === 'EDITAR') { badgeColor = '#e85d04'; icon = 'bx-edit'; }
-
-                return `<tr style="border-bottom: 1px solid var(--border-color); font-family: 'Inter', sans-serif;">
-                    <td style="padding: 12px 15px; font-size: 12.5px; color: var(--text-light);">${dataFormatada}</td>
-                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-color); font-weight: 600;">${log.usuario}</td>
-                    <td style="padding: 12px 15px; font-size: 11px;">
-                        <span style="background:${badgeColor}; color: #fff; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;"><i class='bx ${icon}'></i> ${log.acao}</span>
-                    </td>
-                    <td style="padding: 12px 15px; font-size: 13px; font-weight: 500; color: var(--text-color);">${log.modulo}</td>
-                    <td style="padding: 12px 15px; font-size: 13px; color: var(--text-light);">${log.detalhes}</td>
-                </tr>`;
-            }).join('');
-            if(data.length === 0) {
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-light);">Nenhum log registrado.</td></tr>`;
-            }
-        } catch(e) { 
-            console.error(e);
-            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--danger-color);">Erro ao carregar logs.</td></tr>`;
-        }
-    }
-
+ 
 });

@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS empresas (
     razao VARCHAR(255) NOT NULL,
     cnpj VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(150),
-    telefone VARCHAR(20)
+    telefone VARCHAR(20),
+    modulo VARCHAR(50) DEFAULT 'mao-de-obra'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabela de Contratos

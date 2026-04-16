@@ -171,12 +171,6 @@
                             style="background: var(--danger-color); color: #fff; border-radius: 50%; opacity: 0; padding: 2px 6px; font-size: 10px; margin-left: auto;">0</span>
                     </a>
                 </li>
-                <li class="master-only">
-                    <a href="#" data-target="logs" id="menu-logs">
-                        <i class='bx bx-list-check'></i>
-                        <span>Auditoria do Sistema</span>
-                    </a>
-                </li>
                 <li id="menu-indenizatorios-li" style="display: none;">
                     <a href="#" data-target="indenizatorios" id="menu-indenizatorios">
                         <i class='bx bx-spreadsheet'></i>
@@ -648,29 +642,6 @@
                     </div>
                 </section>
 
-                <!-- Logs / Auditoria View (Master Only) -->
-                <section id="logs" class="view">
-                    <div class="header-section">
-                        <h1>Auditoria do Sistema</h1>
-                        <p>Rastreio de modificações e exclusões no sistema (Apenas Mestre).</p>
-                    </div>
-                    <div class="data-table" style="max-height: 600px; overflow-y: auto;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th style="padding: 15px; text-align: left; position: sticky; top: 0; background: var(--bg-color); z-index: 10;">Data/Hora</th>
-                                    <th style="padding: 15px; text-align: left; position: sticky; top: 0; background: var(--bg-color); z-index: 10;">Usuário</th>
-                                    <th style="padding: 15px; text-align: left; position: sticky; top: 0; background: var(--bg-color); z-index: 10;">Ação</th>
-                                    <th style="padding: 15px; text-align: left; position: sticky; top: 0; background: var(--bg-color); z-index: 10;">Módulo</th>
-                                    <th style="padding: 15px; text-align: left; position: sticky; top: 0; background: var(--bg-color); z-index: 10;">Detalhes</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-logs">
-                                <!-- Preenchido via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
 
                 <!-- Faturamentos Placehoder -->
                 <section id="faturamentos" class="view">
