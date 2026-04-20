@@ -73,3 +73,4 @@ CREATE TABLE IF NOT EXISTS escolas_alocadas (
 -- Usuário Master Padrão
 INSERT IGNORE INTO usuarios (usuario, senha, role) 
 VALUES ('nicolas-silva', 'inter2017', 'master');
+CREATE TABLE IF NOT EXISTS faturamentos (id INT AUTO_INCREMENT PRIMARY KEY, ano INT NOT NULL, contrato_id INT NOT NULL, dados LONGTEXT, UNIQUE KEY(ano, contrato_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

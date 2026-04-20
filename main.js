@@ -1910,12 +1910,27 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFatContratoId = null;
     const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
-    window.openModalFaturamentos = function(contratoId, contratoNumero) {
+    async function getDbFatFromServer(ano) {
+        try {
+            const res = await fetch(`${API_URL}/faturamentos?ano=${ano}`);
+            const data = await res.json();
+            let dbFat = {};
+            for (const item of data) {
+                dbFat[item.contrato_id] = JSON.parse(item.dados);
+            }
+            return dbFat;
+        } catch(e) {
+            console.error(e);
+            return {};
+        }
+    }
+
+    window.openModalFaturamentos = async function(contratoId, contratoNumero) {
         currentFatContratoId = contratoId;
         const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
         document.getElementById('modal-fat-title').textContent = `Gerenciar Faturamentos ${ano} - Contrato ${contratoNumero}`;
         
-        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
+        let dbFat = await getDbFatFromServer(ano);
         let fatList = dbFat[contratoId] || Array(12).fill({});
 
         const tbody = document.getElementById('fat-grid-body');
@@ -1983,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCancelFat) btnCancelFat.addEventListener('click', closeModalFat);
 
     if (btnSaveFat) {
-        btnSaveFat.addEventListener('click', () => {
+        btnSaveFat.addEventListener('click', async () => {
             if (!currentFatContratoId) return;
 
             let fatArray = [];
@@ -1998,12 +2013,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
-            let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
-            dbFat[currentFatContratoId] = fatArray;
-            localStorage.setItem(`faturamentos_${ano}`, JSON.stringify(dbFat));
-
-            showToast('Faturamentos salvos com sucesso!');
-            closeModalFat();
+            
+            try {
+                const res = await fetch(`${API_URL}/faturamentos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ano, contratoId: currentFatContratoId, dados: fatArray })
+                });
+                
+                if (res.ok) {
+                    showToast('Faturamentos salvos com sucesso!');
+                    closeModalFat();
+                } else {
+                    showToast('Erro ao salvar faturamentos no servidor.', 'error');
+                }
+            } catch(e) {
+                console.error(e);
+                showToast('Falha na conexão ao salvar faturamentos.', 'error');
+            }
         });
     }
 
@@ -2518,7 +2545,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.exportFaturamentos = function(type) {
+    window.exportFaturamentos = async function(type) {
         if (!currentFatContratoId) {
             return showToast('Nenhum contrato selecionado.', 'error');
         }
@@ -2531,7 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const emp = empresas.find(e => String(e.id) === String(con.empresaId));
         const empName = emp ? emp.razao : 'Desconhecida';
         
-        let dbFat = JSON.parse(localStorage.getItem(`faturamentos_${ano}`) || '{}');
+        let dbFat = await getDbFatFromServer(ano);
         const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
         let exportData = [];

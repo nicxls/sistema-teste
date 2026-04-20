@@ -39,6 +39,17 @@ const db = require('./db');
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration: Tabela faturamentos
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS faturamentos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                ano INT NOT NULL,
+                contrato_id INT NOT NULL,
+                dados LONGTEXT,
+                UNIQUE KEY(ano, contrato_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -511,6 +522,40 @@ app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { username } = req.query;
     try {
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// FATURAMENTOS
+// ==========================================
+
+app.get('/api/faturamentos', async (req, res) => {
+    const { ano } = req.query;
+    try {
+        let query = 'SELECT * FROM faturamentos';
+        let params = [];
+        if (ano) {
+            query += ' WHERE ano = ?';
+            params.push(ano);
+        }
+        const [rows] = await db.execute(query, params);
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/faturamentos', async (req, res) => {
+    const { ano, contratoId, dados } = req.body;
+    try {
+        await db.execute(
+            'INSERT INTO faturamentos (ano, contrato_id, dados) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE dados = ?',
+            [ano, contratoId, JSON.stringify(dados), JSON.stringify(dados)]
+        );
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
