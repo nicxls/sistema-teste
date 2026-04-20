@@ -2354,7 +2354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`${API_URL}/indenizatorios`);
             const lotes = await res.json();
-            const resEmp = await fetch(`${API_URL}/empresas`);
+            const resEmp = await fetch(`${API_URL}/empresas?system=${selectedSystem}`);
             const empresas = await resEmp.json();
 
             container.innerHTML = '';
@@ -2497,7 +2497,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const resLotes = await fetch(`${API_URL}/indenizatorios`);
             const lotes = await resLotes.json();
-            const resEmp = await fetch(`${API_URL}/empresas`);
+            const resEmp = await fetch(`${API_URL}/empresas?system=${selectedSystem}`);
             const empresas = await resEmp.json();
             
             const data = lotes.map(l => {
