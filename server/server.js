@@ -46,10 +46,15 @@ const db = require('./db');
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 ano INT NOT NULL,
                 contrato_id INT NOT NULL,
-                dados LONGTEXT,
                 UNIQUE KEY(ano, contrato_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         `);
+
+        const [fatCols] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "dados"');
+        if (fatCols.length === 0) {
+            await db.execute('ALTER TABLE faturamentos ADD COLUMN dados LONGTEXT');
+            console.log('Coluna "dados" adicionada à tabela "faturamentos".');
+        }
     } catch (err) {
         console.error('Erro na migração:', err);
     }
