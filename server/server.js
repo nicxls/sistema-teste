@@ -557,6 +557,7 @@ app.get('/api/faturamentos', async (req, res) => {
 app.post('/api/faturamentos', async (req, res) => {
     const { ano, contratoId, dados } = req.body;
     try {
+        console.log('Recebendo faturamento:', { ano, contratoId, dadosLength: dados?.length });
         if (!ano || !contratoId) {
             return res.status(400).json({ error: 'Ano e ContratoId são obrigatórios' });
         }
