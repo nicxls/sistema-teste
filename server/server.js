@@ -40,7 +40,19 @@ const db = require('./db');
             )
         `);
 
-        // Migration: Tabela faturamentos
+        // Migration: Tabela faturamentos - Limpeza de estrutura legada
+        const [tableExists] = await db.execute("SHOW TABLES LIKE 'faturamentos'");
+        if (tableExists.length > 0) {
+            const [mesCols] = await db.execute('SHOW COLUMNS FROM faturamentos LIKE "mes"');
+            if (mesCols.length > 0) {
+                // Existe coluna 'mes' antiga. Vamos remover a obrigatoriedade ou o campo para não travar o novo sistema
+                console.log('Detectada estrutura antiga em faturamentos. Ajustando...');
+                try {
+                    await db.execute('ALTER TABLE faturamentos MODIFY mes INT NULL');
+                } catch(e) { console.log('Erro ao modificar mes:', e.message); }
+            }
+        }
+
         await db.execute(`
             CREATE TABLE IF NOT EXISTS faturamentos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
