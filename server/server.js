@@ -552,13 +552,18 @@ app.get('/api/faturamentos', async (req, res) => {
 app.post('/api/faturamentos', async (req, res) => {
     const { ano, contratoId, dados } = req.body;
     try {
-        await db.execute(
+        if (!ano || !contratoId) {
+            return res.status(400).json({ error: 'Ano e ContratoId são obrigatórios' });
+        }
+        
+        const [result] = await db.execute(
             'INSERT INTO faturamentos (ano, contrato_id, dados) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE dados = ?',
-            [ano, contratoId, JSON.stringify(dados), JSON.stringify(dados)]
+            [parseInt(ano), parseInt(contratoId), JSON.stringify(dados), JSON.stringify(dados)]
         );
         notifyUpdate();
-        res.json({ success: true });
+        res.json({ success: true, id: result.insertId || null });
     } catch (error) {
+        console.error('Erro ao salvar faturamento:', error);
         res.status(500).json({ error: error.message });
     }
 });

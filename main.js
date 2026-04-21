@@ -1853,7 +1853,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetView) targetView.classList.add('active-view');
             
             document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-            if (menuFaturamentos) menuFaturamentos.classList.add('active');
+            const menuFat = document.getElementById('menu-faturamentos');
+            if (menuFat) menuFat.classList.add('active');
 
             if (targetId === 'faturamentos-lista') {
                 document.getElementById('fat-group-title').textContent = `Faturamentos - ${label}`;
@@ -2018,14 +2019,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch(`${API_URL}/faturamentos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ano, contratoId: currentFatContratoId, dados: fatArray })
+                    body: JSON.stringify({ 
+                        ano: parseInt(ano), 
+                        contratoId: parseInt(currentFatContratoId), 
+                        dados: fatArray 
+                    })
                 });
                 
                 if (res.ok) {
                     showToast('Faturamentos salvos com sucesso!');
                     closeModalFat();
                 } else {
-                    showToast('Erro ao salvar faturamentos no servidor.', 'error');
+                    const errorData = await res.json();
+                    console.error('Erro no servidor:', errorData);
+                    showToast(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`, 'error');
                 }
             } catch(e) {
                 console.error(e);
