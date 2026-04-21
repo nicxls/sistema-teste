@@ -2032,7 +2032,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const errorData = await res.json();
                     console.error('Erro no servidor:', errorData);
-                    showToast(`Erro ao salvar: ${errorData.error || 'Erro desconhecido'}`, 'error');
+                    let displayMsg = errorData.error || (typeof errorData === 'object' ? JSON.stringify(errorData) : errorData);
+                    showToast(`Erro ao salvar: ${displayMsg}`, 'error');
                 }
             } catch(e) {
                 console.error(e);
