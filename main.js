@@ -2176,7 +2176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div style="font-size: 12px; color: var(--text-light); margin-top: 4px;">${empName}</div>
                             </div>
                             <div style="display: flex; gap: 15px;">
-                                <button class="btn-icon" style="color: #2b9348; font-size: 14px; display: flex; align-items: center; gap: 5px;" onclick="alert('Funcionalidade de Relatório em desenvolvimento')">
+                                <button class="btn-icon" style="color: #2b9348; font-size: 14px; display: flex; align-items: center; gap: 5px;" onclick="choiceExportPostos('${con.id}')">
                                     <i class='bx bx-download'></i> Relatório
                                 </button>
                                 <button class="btn-icon" style="color: #4361ee; font-size: 14px; display: flex; align-items: center; gap: 5px;" onclick="openEscolasModal('${con.id}')">
@@ -2658,6 +2658,67 @@ document.addEventListener('DOMContentLoaded', () => {
  
         if(type === 'Excel') exportDataToExcel(exportData, `Faturamentos_${con.numero || 'Sem_Num'}_${ano}`);
         else exportDataToPDF(exportData, `Relatório Faturamento - Contrato ${con.numero || 'Sem Número'} (${ano})`);
+    };
+
+    // --- NOVAS FUNÇÕES DE EXPORTAÇÃO DE POSTOS ---
+
+    window.choiceExportPostos = function(id) {
+        const modalView = document.getElementById('generic-modal');
+        const modalBody = document.getElementById('modal-body');
+        const title = document.getElementById('modal-generic-title');
+        
+        if (title) title.textContent = "Exportar Relatório de Postos";
+        
+        modalBody.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="margin-bottom: 25px; color: var(--text-light); font-size: 15px;">Selecione o formato desejado para exportar os dados dos postos deste contrato.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-content: center; max-width: 400px; margin: 0 auto;">
+                    <button class="btn" onclick="exportPostosRelatorio('${id}', 'Excel'); document.getElementById('generic-modal').classList.add('form-hidden');" style="background: #217346; color: #fff; border: none; padding: 25px 20px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: transform 0.2s ease; cursor: pointer;">
+                        <i class='bx bx-file-blank' style="font-size: 40px;"></i>
+                        <span style="font-weight: 600; font-size: 14px;">Excel (.xlsx)</span>
+                    </button>
+                    <button class="btn" onclick="exportPostosRelatorio('${id}', 'PDF'); document.getElementById('generic-modal').classList.add('form-hidden');" style="background: #e63946; color: #fff; border: none; padding: 25px 20px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: transform 0.2s ease; cursor: pointer;">
+                        <i class='bx bxs-file-pdf' style="font-size: 40px;"></i>
+                        <span style="font-weight: 600; font-size: 14px;">PDF (.pdf)</span>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modalView.classList.remove('form-hidden');
+    };
+
+    window.exportPostosRelatorio = async function(contratoId, type) {
+        const con = getContratos().find(c => String(c.id) === String(contratoId));
+        if(!con) return showToast('Contrato não encontrado', 'error');
+
+        const emp = getEmpresas().find(e => String(e.id) === String(con.empresaId));
+        const empName = emp ? emp.razao : 'Desconhecida';
+        
+        // Filtra os postos desse contrato do cache global
+        const arrEscolas = cachedPostos.filter(p => String(p.contrato_id) === String(contratoId));
+        
+        if (arrEscolas.length === 0) {
+            return showToast('Nenhuma escola/posto cadastrado para este contrato.', 'error');
+        }
+
+        const data = arrEscolas.map(esc => ({
+            'Município': esc.municipio || '-',
+            'Escola': esc.nome || '-',
+            'Valor Unitário': esc.valor || '-',
+            'Carga Horária': esc.carga_horaria || '-',
+            'Implantados': esc.implantados || 0,
+            'Vagos': esc.vagos || 0
+        }));
+
+        const filename = `Relatorio_Postos_Contrato_${(con.numero || 'S-N').replace(/[/\\?%*:|"<>]/g, '_')}`;
+        const title = `Relatório de Postos - Contrato ${con.numero || '-'} (${empName})`;
+
+        if (type === 'Excel') {
+            exportDataToExcel(data, filename);
+        } else {
+            exportDataToPDF(data, title);
+        }
     };
  
 });
