@@ -2284,6 +2284,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Lógica de Importação Excel para Escolas
+    const btnImportExcel = document.getElementById('btn-import-escolas-excel');
+    const inputImportExcel = document.getElementById('input-import-escolas-excel');
+
+    if (btnImportExcel && inputImportExcel) {
+        btnImportExcel.addEventListener('click', () => inputImportExcel.click());
+
+        inputImportExcel.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) {
+                        return showToast('A planilha está vazia.', 'error');
+                    }
+
+                    // Remove a mensagem de "vazio" se existir
+                    const emptyDiv = document.getElementById('empty-escolas');
+                    if (emptyDiv) emptyDiv.remove();
+
+                    jsonData.forEach((row, idx) => {
+                        // Tenta mapear colunas por nomes comuns (Case-insensitive via Object.keys se necessário, mas aqui faremos direto)
+                        const findVal = (keys) => {
+                            for(let k of keys) {
+                                if (row[k] !== undefined) return row[k];
+                            }
+                            return '';
+                        };
+
+                        const escola = {
+                            municipio: findVal(['Município', 'Municipio', 'MUNICÍPIO', 'MUNICIPIO', 'City', 'Cidade']),
+                            nome: findVal(['Escola', 'Nome', 'Nome da Escola', 'School', 'Name']),
+                            valor: findVal(['Valor', 'Valor Unitário', 'Preço', 'Value', 'Price']),
+                            carga_horaria: findVal(['Carga Horária', 'Carga', 'CH', 'Hours', 'Workload']),
+                            implantados: findVal(['Implantados', 'Postos Implantados', 'Ativos']) || 0,
+                            vagos: findVal(['Vagos', 'Postos Vagos', 'Vagas']) || 0
+                        };
+                        
+                        appendEscolaBlock(escola, Date.now() + idx);
+                    });
+
+                    showToast(`${jsonData.length} escolas carregadas da planilha! Clique em Salvar para confirmar.`);
+                    containerEscolasBlocks.scrollTo(0, containerEscolasBlocks.scrollHeight);
+                    
+                    // Reseta o input
+                    inputImportExcel.value = '';
+                } catch (err) {
+                    console.error('Erro ao processar Excel:', err);
+                    showToast('Erro ao processar o arquivo Excel.', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
     const closeModEsc = () => modalEscolas.classList.add('form-hidden');
     if (btnCloseEscolasModal) btnCloseEscolasModal.addEventListener('click', closeModEsc);
     if (btnFecharEscolas) btnFecharEscolas.addEventListener('click', closeModEsc);

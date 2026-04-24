@@ -992,9 +992,15 @@
                         style="font-size: 24px;"></i></button>
             </div>
 
-            <div style="padding: 20px 24px; text-align: right; background: var(--bg-color);">
-                <button id="btn-add-escola" class="btn btn-primary admin-only" style="background: #2b9348;"><i
-                        class='bx bx-plus'></i> Adicionar Nova Escola</button>
+            <div style="padding: 20px 24px; text-align: right; background: var(--bg-color); display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-import-escolas-excel" class="btn btn-secondary master-only" style="background: #217346; color: #fff; border: none; display: flex; align-items: center; gap: 8px;">
+                    <i class='bx bx-upload'></i> Importar Excel
+                </button>
+                <input type="file" id="input-import-escolas-excel" style="display: none;" accept=".xlsx, .xls">
+                
+                <button id="btn-add-escola" class="btn btn-primary admin-only" style="background: #2b9348; display: flex; align-items: center; gap: 8px;">
+                    <i class='bx bx-plus'></i> Adicionar Nova Escola
+                </button>
             </div>
 
             <div id="escolas-blocks-container"
