@@ -1797,6 +1797,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    window.visualizarAnexo = function(contratoId, anexoId) {
+        const con = getContratos().find(c => String(c.id) === String(contratoId));
+        if (!con) return showToast('Contrato não encontrado', 'error');
+        const anexo = (con.anexos || []).find(a => String(a.id) === String(anexoId));
+        if (!anexo) return showToast('Anexo não encontrado', 'error');
+
+        try {
+            const dataUrl = anexo.data;
+            const base64Parts = dataUrl.split(',');
+            if (base64Parts.length < 2) throw new Error('Formato de arquivo inválido');
+            
+            const contentType = base64Parts[0].split(':')[1].split(';')[0];
+            const base64Data = base64Parts[1];
+            
+            const byteCharacters = atob(base64Data);
+            const byteArrays = [];
+            
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            
+            const blob = new Blob(byteArrays, {type: contentType});
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const win = window.open(blobUrl, '_blank');
+            if (!win) {
+                showToast('Pop-up bloqueado. Por favor, permita pop-ups para visualizar o anexo.', 'error');
+            }
+        } catch (e) {
+            console.error('Erro ao visualizar anexo:', e);
+            showToast('Erro ao abrir o arquivo.', 'error');
+        }
+    };
+
     window.openAnexosContrato = function(id) {
         const con = getContratos().find(c => String(c.id) === String(id));
         if(!con) return;
@@ -1824,9 +1864,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
                         </div>
                     </div>
-                    <a href="${a.data}" target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                    <button onclick="visualizarAnexo('${con.id}', '${a.id}')" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; display: flex; align-items: center; gap: 5px; cursor: pointer; text-decoration: none;">
                         <i class='bx bx-show'></i> Visualizar
-                    </a>
+                    </button>
                 `;
                 container.appendChild(el);
             });
