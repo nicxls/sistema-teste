@@ -56,9 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Dados atualizados via Socket.');
                 fetchAllData();
             });
-            socket.on('connect_error', () => {
-                startPolling(); // Fallback se o socket falhar
-            });
+    socket.on('new-solicitation', (data) => {
+        const sound = document.getElementById('notification-sound');
+        if (sound) sound.play().catch(() => {});
+        
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        if (user && user.role === 'master') {
+            showBeautifulAlert('Nova Solicitação', `O usuário ${data.usuario} enviou uma nova solicitação de ${data.tipo.toLowerCase()}.`, false);
+            updateBadgeRequests();
+            loadAprovacoesTable();
+        }
+    });
         } else {
             startPolling();
         }
@@ -750,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Solicitações de Dados (Exclusão)
             const resDados = await fetch(`${API_URL}/aprovacoes`);
             const aprovacoesDados = await resDados.json();
-            const tbodyDados = document.getElementById('lista-aprovacoes-dados');
+            const tbodyDados = document.getElementById('tbody-aprov-dados');
             
             if(tbodyDados) {
                 tbodyDados.innerHTML = '';
@@ -1449,32 +1457,65 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     async function solicitarExclusao(tipo, id, dados = {}) {
-        const justificativa = prompt(`JUSTIFICATIVA OBRIGATÓRIA:\nPor que você deseja excluir este ${tipo.toLowerCase()}?`);
-        if (!justificativa || justificativa.trim().length < 5) {
-            showToast('Justificativa inválida ou muito curta.', 'error');
-            return false;
-        }
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal-justificativa');
+            const textarea = document.getElementById('justificativa-texto');
+            const btnConfirm = document.getElementById('btn-confirmar-justificativa');
+            const btnCancel = document.getElementById('btn-cancelar-justificativa');
+            
+            if (!modal || !textarea) return resolve(false);
 
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        try {
-            await fetch(`${API_URL}/aprovacoes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    usuario: user.usuario,
-                    tipo: tipo,
-                    acao: 'Excluir',
-                    referencia_id: id,
-                    justificativa: justificativa,
-                    dados: dados
-                })
-            });
-            showToast('Solicitação de exclusão enviada com sucesso!');
-            return true;
-        } catch (error) {
-            showToast('Erro ao enviar solicitação.', 'error');
-            return false;
-        }
+            textarea.value = '';
+            modal.classList.remove('form-hidden');
+            
+            const cleanup = () => {
+                modal.classList.add('form-hidden');
+                btnConfirm.onclick = null;
+                btnCancel.onclick = null;
+            };
+
+            btnCancel.onclick = () => {
+                cleanup();
+                resolve(false);
+            };
+
+            btnConfirm.onclick = async () => {
+                const justificativa = textarea.value.trim();
+                if (justificativa.length < 5) {
+                    showToast('Justificativa muito curta.', 'error');
+                    return;
+                }
+
+                const user = JSON.parse(localStorage.getItem('currentUser'));
+                try {
+                    const response = await fetch(`${API_URL}/aprovacoes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            usuario: user.usuario,
+                            tipo: tipo,
+                            acao: 'Excluir',
+                            referencia_id: id,
+                            justificativa: justificativa,
+                            dados: dados
+                        })
+                    });
+                    if (response.ok) {
+                        socket.emit('new-solicitation', { tipo, acao: 'Excluir', usuario: user.usuario });
+                        showToast('Solicitação de exclusão enviada!');
+                        cleanup();
+                        updateBadgeRequests();
+                        resolve(true);
+                    } else {
+                        throw new Error();
+                    }
+                } catch (error) {
+                    showToast('Erro ao enviar solicitação.', 'error');
+                    cleanup();
+                    resolve(false);
+                }
+            };
+        });
     }
 
     window.deleteEmpresa = async function (id) {
