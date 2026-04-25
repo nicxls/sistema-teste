@@ -70,7 +70,28 @@ CREATE TABLE IF NOT EXISTS escolas_alocadas (
     FOREIGN KEY (contrato_id) REFERENCES contratos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Tabela de Faturamentos
+CREATE TABLE IF NOT EXISTS faturamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    ano INT NOT NULL, 
+    contrato_id INT NOT NULL, 
+    dados LONGTEXT, 
+    UNIQUE KEY(ano, contrato_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabela de Aprovações de Dados (Exclusões, etc)
+CREATE TABLE IF NOT EXISTS aprovacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(255),
+    tipo VARCHAR(50), -- 'Empresa', 'Contrato', 'Lote'
+    acao VARCHAR(50), -- 'Excluir'
+    referencia_id INT, -- ID do item a ser deletado
+    justificativa TEXT,
+    dados JSON,
+    status VARCHAR(20) DEFAULT 'Pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Usuário Master Padrão
 INSERT IGNORE INTO usuarios (usuario, senha, role) 
 VALUES ('nicolas-silva', 'inter2017', 'master');
-CREATE TABLE IF NOT EXISTS faturamentos (id INT AUTO_INCREMENT PRIMARY KEY, ano INT NOT NULL, contrato_id INT NOT NULL, dados LONGTEXT, UNIQUE KEY(ano, contrato_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

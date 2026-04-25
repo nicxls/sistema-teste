@@ -742,46 +742,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-            // Solicitações Pendentes
-            reqs.forEach(req => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${req.usuario}</td>
-                    <td>${req.email}</td>
-                    <td><span class="badge Pendente">PENDENTE</span></td>
-                    <td style="display: flex; gap: 8px;">
-                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
-                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
-                        <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+    async function loadAprovacoesTable() {
+        try {
+            // 1. Solicitações de Acesso
+            const resAcessos = await fetch(`${API_URL}/admin/acessos`);
+            const { solicitacoes: reqs, usuarios: users } = await resAcessos.json();
+            const tbodyAcessos = document.getElementById('lista-aprovacoes-acessos');
+            
+            if (tbodyAcessos) {
+                tbodyAcessos.innerHTML = '';
+                // Solicitações Pendentes
+                reqs.forEach(req => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${req.usuario}</td>
+                        <td>${req.email}</td>
+                        <td><span class="badge Pendente">PENDENTE</span></td>
+                        <td style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
+                            <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
+                            <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
+                        </td>
+                    `;
+                    tbodyAcessos.appendChild(tr);
+                });
 
-            // Usuários Ativos (Gerenciamento)
-            users.forEach(usr => {
-                const tr = document.createElement('tr');
-                // Badge color logic
-                const badgeClass = usr.role === 'admin' ? 'Ativo' : 'Pendente';
-                const badgeText = usr.role === 'admin' ? 'ADMINISTRADOR' : 'USUÁRIO';
+                // Usuários Ativos (Gerenciamento)
+                users.forEach(usr => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${usr.user}</td>
+                        <td>-</td>
+                        <td>
+                            <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
+                                <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
+                                <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
+                            </select>
+                        </td>
+                        <td>
+                            <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
+                        </td>
+                    `;
+                    tbodyAcessos.appendChild(tr);
+                });
+            }
 
-                tr.innerHTML = `
-                    <td>${usr.user}</td>
-                    <td>-</td>
-                    <td>
-                        <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
-                            <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
-                            <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (error) {}
+            // 2. Solicitações de Dados (Exclusão)
+            const resDados = await fetch(`${API_URL}/aprovacoes`);
+            const aprovacoesDados = await resDados.json();
+            const tbodyDados = document.getElementById('lista-aprovacoes-dados');
+            
+            if(tbodyDados) {
+                tbodyDados.innerHTML = '';
+                if (aprovacoesDados.length === 0) {
+                    tbodyDados.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-light); padding:20px;">Nenhuma solicitação de exclusão pendente.</td></tr>';
+                } else {
+                    aprovacoesDados.forEach(r => {
+                        const tr = document.createElement('tr');
+                        const dataObj = typeof r.dados === 'string' ? JSON.parse(r.dados) : r.dados;
+                        const labelItem = dataObj.razao || dataObj.numero || 'Item';
+                        
+                        tr.innerHTML = `
+                            <td>${r.usuario}</td>
+                            <td><strong>${r.acao} ${r.tipo}</strong><br><small>${labelItem} (ID: ${r.referencia_id})</small></td>
+                            <td style="max-width: 250px; white-space: normal; font-size: 12px;">${r.justificativa || '-'}</td>
+                            <td>${formatDate(r.data_solicitacao)}</td>
+                            <td>
+                                <div style="display:flex; gap:10px;">
+                                    <button class="btn-icon" onclick="decidirAprovacaoDados(${r.id}, 'aprovar')" title="Aprovar" style="color:var(--success-color); font-size:20px;"><i class='bx bx-check-circle'></i></button>
+                                    <button class="btn-icon" onclick="decidirAprovacaoDados(${r.id}, 'rejeitar')" title="Rejeitar" style="color:var(--danger-color); font-size:20px;"><i class='bx bx-x-circle'></i></button>
+                                </div>
+                            </td>
+                        `;
+                        tbodyDados.appendChild(tr);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar aprovações:', error);
+        }
     }
+
+    window.decidirAprovacaoDados = async function(id, decisao) {
+        if (!confirm(`Tem certeza que deseja ${decisao === 'aprovar' ? 'APROVAR e EXECUTAR' : 'REJEITAR'} esta solicitação?`)) return;
+        
+        try {
+            await fetch(`${API_URL}/aprovacoes/${id}/decidir`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decisao })
+            });
+            showToast(decisao === 'aprovar' ? 'Solicitação aprovada e executada!' : 'Solicitação rejeitada.', 'success');
+            loadAprovacoesTable();
+            fetchAllData();
+        } catch (error) {
+            showToast('Erro ao processar decisão.', 'error');
+        }
+    };
 
     window.revokeAdmin = async function (username) {
         if (confirm(`Tem certeza que deseja EXCLUIR permanentemente o usuário '${username}'?`)) {
@@ -1058,28 +1115,60 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     let dashboardChart = null;
 
+    let postosChart = null;
+
     function loadDashboardStats() {
         const empresasCount = getEmpresas().length;
         const contratos = getContratos();
-        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
-        const contratosGasto = contratos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
+        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo');
         
         document.getElementById('count-empresas').textContent = empresasCount;
-        document.getElementById('count-contratos').textContent = contratosAtivos;
+        document.getElementById('count-contratos').textContent = contratosAtivos.length;
         
-        const spanGasto = document.getElementById('count-gasto');
-        if(spanGasto) spanGasto.textContent = formatCurrency(contratosGasto);
+        // Métricas de Postos
+        const totalPostos = cachedPostos.reduce((sum, p) => sum + (parseInt(p.implantados) || 0) + (parseInt(p.vagos) || 0), 0);
+        const totalImplantados = cachedPostos.reduce((sum, p) => sum + (parseInt(p.implantados) || 0), 0);
+        const totalVagos = cachedPostos.reduce((sum, p) => sum + (parseInt(p.vagos) || 0), 0);
+
+        if(document.getElementById('count-total-postos')) document.getElementById('count-total-postos').textContent = totalPostos;
+        if(document.getElementById('count-postos-implantados')) document.getElementById('count-postos-implantados').textContent = totalImplantados;
+        if(document.getElementById('count-postos-vagos')) document.getElementById('count-postos-vagos').textContent = totalVagos;
 
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
-        if(statusVig) statusVig.textContent = contratosAtivos;
+        if(statusVig) statusVig.textContent = contratosAtivos.length;
         if(statusFin) statusFin.textContent = contratos.filter(c => c.situacao && c.situacao !== 'Ativo').length;
 
-        // Render Gráfico
         renderDashboardChart(contratos);
-
-        // Dispara verificador de alertas
+        renderDashboardPostosChart(totalImplantados, totalVagos);
         checkAlertasVencimento(contratos);
+    }
+
+    function renderDashboardPostosChart(implantados, vagos) {
+        const canvas = document.getElementById('chart-postos-ocupacao');
+        if(!canvas) return;
+
+        if(postosChart) postosChart.destroy();
+        
+        const ctx = canvas.getContext('2d');
+        postosChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Implantados', 'Vagos'],
+                datasets: [{
+                    data: [implantados, vagos],
+                    backgroundColor: ['#2a9d8f', '#e63946'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10 } } }
+                }
+            }
+        });
     }
 
     function renderDashboardChart(contratos) {
@@ -1399,12 +1488,47 @@ document.addEventListener('DOMContentLoaded', () => {
         modalView.classList.remove('form-hidden');
     };
 
+    async function solicitarExclusao(tipo, id, dados = {}) {
+        const justificativa = prompt(`JUSTIFICATIVA OBRIGATÓRIA:\nPor que você deseja excluir este ${tipo.toLowerCase()}?`);
+        if (!justificativa || justificativa.trim().length < 5) {
+            showToast('Justificativa inválida ou muito curta.', 'error');
+            return false;
+        }
+
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        try {
+            await fetch(`${API_URL}/aprovacoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    usuario: user.usuario,
+                    tipo: tipo,
+                    acao: 'Excluir',
+                    referencia_id: id,
+                    justificativa: justificativa,
+                    dados: dados
+                })
+            });
+            showToast('Solicitação de exclusão enviada com sucesso!');
+            return true;
+        } catch (error) {
+            showToast('Erro ao enviar solicitação.', 'error');
+            return false;
+        }
+    }
+
     window.deleteEmpresa = async function (id) {
+        const userObj = JSON.parse(localStorage.getItem('currentUser'));
+        const userRole = userObj?.role;
+        const username = userObj?.usuario;
+
+        if (userRole === 'admin') {
+            await solicitarExclusao('Empresa', id, { razao: getEmpresas().find(e => e.id == id)?.razao });
+            return;
+        }
+
         if (confirm('Tem certeza que deseja excluir esta empresa?')) {
             try {
-                const userObj = JSON.parse(localStorage.getItem('currentUser'));
-                const userRole = userObj?.role;
-                const username = userObj?.usuario;
                 await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadEmpresasTable();
@@ -1618,9 +1742,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.deleteContrato = async function (id) {
+        const userObj = JSON.parse(localStorage.getItem('currentUser'));
+        const userRole = userObj?.role;
+        const username = userObj?.usuario;
+
+        if (userRole === 'admin') {
+            const con = getContratos().find(c => c.id == id);
+            await solicitarExclusao('Contrato', id, { numero: con?.numero });
+            return;
+        }
+
         if (confirm('Tem certeza que deseja excluir permanentemente este contrato?')) {
             try {
-                const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
                 await fetch(`${API_URL}/contratos/${id}?username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadContratosTable();
@@ -2547,6 +2680,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteLoteIndenizatorio = async function(id) {
+        const userObj = JSON.parse(localStorage.getItem('currentUser'));
+        const userRole = userObj?.role;
+
+        if (userRole === 'admin') {
+            await solicitarExclusao('Lote', id);
+            return;
+        }
+
         if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
         try {
             const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;

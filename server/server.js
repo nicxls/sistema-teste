@@ -285,6 +285,65 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+    }
+});
+
+// ==========================================
+// APROVAÇÕES DE DADOS (Solicitações de Exclusão)
+// ==========================================
+
+app.post('/api/aprovacoes', async (req, res) => {
+    const { usuario, tipo, acao, referencia_id, justificativa, dados } = req.body;
+    try {
+        await db.execute(
+            'INSERT INTO aprovacoes (usuario, tipo, acao, referencia_id, justificativa, dados) VALUES (?, ?, ?, ?, ?, ?)',
+            [usuario, tipo, acao, referencia_id, justificativa, JSON.stringify(dados || {})]
+        );
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/aprovacoes', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM aprovacoes WHERE status = "Pendente" ORDER BY data_solicitacao DESC');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/aprovacoes/:id/decidir', async (req, res) => {
+    const { id } = req.params;
+    const { decisao } = req.body; // 'aprovar' ou 'rejeitar'
+    
+    try {
+        if (decisao === 'aprovar') {
+            const [reqs] = await db.execute('SELECT * FROM aprovacoes WHERE id = ?', [id]);
+            if (reqs.length > 0) {
+                const r = reqs[0];
+                if (r.acao === 'Excluir') {
+                    let table = '';
+                    if (r.tipo === 'Empresa') table = 'empresas';
+                    else if (r.tipo === 'Contrato') table = 'contratos';
+                    else if (r.tipo === 'Lote') table = 'lotes_indenizatorios';
+
+                    if (table) {
+                        await db.execute(`DELETE FROM ${table} WHERE id = ?`, [r.referencia_id]);
+                    }
+                }
+                await db.execute('UPDATE aprovacoes SET status = "Aprovado" WHERE id = ?', [id]);
+            }
+        } else {
+            await db.execute('UPDATE aprovacoes SET status = "Rejeitado" WHERE id = ?', [id]);
+        }
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // ==========================================

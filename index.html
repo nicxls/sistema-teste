@@ -249,31 +249,47 @@
                         <p>Visão de inteligência e resumo analítico do sistema.</p>
                     </div>
                     
-                    <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL DE EMPRESAS</h3>
-                            <h2 id="count-empresas" style="font-size: 28px; color: var(--text-color); margin: 0;">0</h2>
+                    <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 20px;">
+                        <div class="stat-card">
+                            <h3 style="font-size: 11px; color: var(--text-light); margin-bottom: 8px;">TOTAL DE EMPRESAS</h3>
+                            <h2 id="count-empresas" style="font-size: 24px; color: var(--text-color); margin: 0;">0</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">CONTRATOS ATIVOS</h3>
-                            <h2 id="count-contratos" style="font-size: 28px; color: var(--success-color); margin: 0;">0</h2>
+                        <div class="stat-card">
+                            <h3 style="font-size: 11px; color: var(--text-light); margin-bottom: 8px;">CONTRATOS ATIVOS</h3>
+                            <h2 id="count-contratos" style="font-size: 24px; color: var(--success-color); margin: 0;">0</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border-left: 4px solid var(--warning-color);">
-                            <h3 style="font-size: 12px; color: var(--warning-color); font-weight: 600; margin-bottom: 10px;">VENCEM EM 90 DIAS</h3>
-                            <h2 id="count-vencendo" style="font-size: 28px; color: var(--text-color); margin: 0;">0</h2>
+                        <div class="stat-card" style="border-left: 3px solid var(--warning-color);">
+                            <h3 style="font-size: 11px; color: var(--warning-color); font-weight: 600; margin-bottom: 8px;">VENCEM EM 90 DIAS</h3>
+                            <h2 id="count-vencendo" style="font-size: 24px; color: var(--text-color); margin: 0;">0</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">GASTO MENSAL ESTIMADO</h3>
-                            <h2 id="count-gasto" style="font-size: 20px; color: var(--primary-color); margin: 0;">R$ 0,00</h2>
+                        <div class="stat-card">
+                            <h3 style="font-size: 11px; color: var(--text-light); margin-bottom: 8px;">TOTAL DE POSTOS</h3>
+                            <h2 id="count-total-postos" style="font-size: 24px; color: var(--primary-color); margin: 0;">0</h2>
+                        </div>
+                        <div class="stat-card">
+                            <h3 style="font-size: 11px; color: var(--text-light); margin-bottom: 8px;">IMPLANTADOS</h3>
+                            <h2 id="count-postos-implantados" style="font-size: 24px; color: var(--success-color); margin: 0;">0</h2>
+                        </div>
+                        <div class="stat-card">
+                            <h3 style="font-size: 11px; color: var(--text-light); margin-bottom: 8px;">VAGOS</h3>
+                            <h2 id="count-postos-vagos" style="font-size: 24px; color: var(--danger-color); margin: 0;">0</h2>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
-                        <!-- Gráfico Dinâmico -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <!-- Gráfico de Serviços -->
                         <div style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
                             <h3 style="font-size: 14px; margin-bottom: 15px;">Divisão de Serviços Ativos</h3>
-                            <div style="position: relative; height: 250px; width: 100%;">
+                            <div style="position: relative; height: 220px; width: 100%;">
                                 <canvas id="chart-servicos"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico de Postos -->
+                        <div style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+                            <h3 style="font-size: 14px; margin-bottom: 15px;">Ocupação de Postos (Geral)</h3>
+                            <div style="position: relative; height: 220px; width: 100%;">
+                                <canvas id="chart-postos-ocupacao"></canvas>
                             </div>
                         </div>
 
@@ -622,23 +638,51 @@
                 <!-- Aprovações View -->
                 <section id="aprovacoes" class="view">
                     <div class="header-section">
-                        <h1>Painel de Controle de Acessos</h1>
-                        <p>Aprovações de administradores pendentes (Mestre apenas).</p>
+                        <h1>Central de Aprovações</h1>
+                        <p>Gerencie solicitações de acesso e exclusão de dados.</p>
                     </div>
-                    <div class="data-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>E-mail</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-aprovacoes">
-                                <!-- Populated via JS -->
-                            </tbody>
-                        </table>
+
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <i class='bx bx-user-plus'></i> Solicitações de Acesso
+                        </h3>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>E-mail</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-aprovacoes-acessos">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <i class='bx bx-data'></i> Solicitações de Exclusão de Dados
+                        </h3>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Solicitante</th>
+                                        <th>Tipo/Item</th>
+                                        <th>Justificativa</th>
+                                        <th>Data</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-aprovacoes-dados">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
