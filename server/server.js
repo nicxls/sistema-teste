@@ -155,7 +155,7 @@ app.put('/api/admin/reset-password', async (req, res) => {
         
         // Remove or update the request if exists
         if (solicitacaoId) {
-            await db.execute('DELETE FROM solicitacoes_acesso WHERE id = ?', [solicitacaoId]);
+            await db.execute('DELETE FROM acessos WHERE id = ?', [solicitacaoId]);
         }
         
         notifyUpdate();
@@ -288,64 +288,6 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
 });
 
 // ==========================================
-// APROVAÇÕES DE DADOS (Solicitações de Exclusão)
-// ==========================================
-
-app.post('/api/aprovacoes', async (req, res) => {
-    const { usuario, tipo, acao, referencia_id, justificativa, dados } = req.body;
-    try {
-        await db.execute(
-            'INSERT INTO aprovacoes (usuario, tipo, acao, referencia_id, justificativa, dados) VALUES (?, ?, ?, ?, ?, ?)',
-            [usuario, tipo, acao, referencia_id, justificativa, JSON.stringify(dados || {})]
-        );
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/aprovacoes', async (req, res) => {
-    try {
-        const [rows] = await db.execute('SELECT * FROM aprovacoes WHERE status = "Pendente" ORDER BY data_solicitacao DESC');
-        res.json(rows);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/aprovacoes/:id/decidir', async (req, res) => {
-    const { id } = req.params;
-    const { decisao } = req.body; // 'aprovar' ou 'rejeitar'
-    
-    try {
-        if (decisao === 'aprovar') {
-            const [reqs] = await db.execute('SELECT * FROM aprovacoes WHERE id = ?', [id]);
-            if (reqs.length > 0) {
-                const r = reqs[0];
-                if (r.acao === 'Excluir') {
-                    let table = '';
-                    if (r.tipo === 'Empresa') table = 'empresas';
-                    else if (r.tipo === 'Contrato') table = 'contratos';
-                    else if (r.tipo === 'Lote') table = 'lotes_indenizatorios';
-
-                    if (table) {
-                        await db.execute(`DELETE FROM ${table} WHERE id = ?`, [r.referencia_id]);
-                    }
-                }
-                await db.execute('UPDATE aprovacoes SET status = "Aprovado" WHERE id = ?', [id]);
-            }
-        } else {
-            await db.execute('UPDATE aprovacoes SET status = "Rejeitado" WHERE id = ?', [id]);
-        }
-        notifyUpdate();
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ==========================================
 // EMPRESAS
 // ==========================================
 
@@ -412,8 +354,8 @@ app.delete('/api/empresas/:id', async (req, res) => {
     const { userRole, username } = req.query; // Pega o role por query no delete
     
     // Proteção básica no backend
-    if (userRole !== 'master') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
+    if (userRole === 'usuario') {
+        return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
     }
     
     try {
@@ -496,12 +438,7 @@ app.put('/api/contratos/:id', async (req, res) => {
 
 app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
-    const { userRole, username } = req.query;
-
-    if (userRole !== 'master') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
-    }
-
+    const { username } = req.query;
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
         notifyUpdate();
@@ -599,12 +536,7 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
 
 app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { id } = req.params;
-    const { userRole, username } = req.query;
-
-    if (userRole !== 'master') {
-        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
-    }
-
+    const { username } = req.query;
     try {
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
         notifyUpdate();

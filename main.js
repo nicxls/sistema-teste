@@ -56,17 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Dados atualizados via Socket.');
                 fetchAllData();
             });
-    socket.on('new-solicitation', (data) => {
-        const sound = document.getElementById('notification-sound');
-        if (sound) sound.play().catch(() => {});
-        
-        const user = JSON.parse(localStorage.getItem('currentUser'));
-        if (user && user.role === 'master') {
-            showBeautifulAlert('Nova Solicitação', `O usuário ${data.usuario} enviou uma nova solicitação de ${data.tipo.toLowerCase()}.`, false);
-            updateBadgeRequests();
-            loadAprovacoesTable();
-        }
-    });
+            socket.on('connect_error', () => {
+                startPolling(); // Fallback se o socket falhar
+            });
         } else {
             startPolling();
         }
@@ -653,31 +645,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function updateBadgeRequests() {
         try {
-            const resAcessos = await fetch(`${API_URL}/admin/acessos`);
-            const dataAcessos = await resAcessos.json();
-            
-            const resDados = await fetch(`${API_URL}/aprovacoes`);
-            const dataDados = await resDados.json();
-            
-            const totalPends = (dataAcessos.solicitacoes?.length || 0) + (dataDados?.length || 0);
-            
+            const response = await fetch(`${API_URL}/admin/acessos`);
+            const data = await response.json();
+            const pends = data.solicitacoes.length;
             const badge = document.getElementById('badge-requests');
-            if (badge) {
-                if (totalPends > 0) {
-                    badge.textContent = totalPends;
-                    badge.style.opacity = '1';
-                } else {
-                    badge.style.opacity = '0';
-                }
+            if (pends > 0) {
+                badge.textContent = pends;
+                badge.style.opacity = '1';
+            } else {
+                badge.style.opacity = '0';
             }
         } catch (error) {}
     }
 
+    async function loadAprovacoesTable() {
+        const tbody = document.getElementById('lista-aprovacoes');
+        if (!tbody) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/admin/acessos`);
+            const data = await response.json();
+            const reqs = data.solicitacoes;
+            const users = data.usuarios;
+
+            tbody.innerHTML = '';
+            if (reqs.length === 0 && users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum dado encontrado.</td></tr>`;
+                return;
+            }
+
+            function renderAcessosTable(acessos) {
+        const tbody = document.querySelector('#table-acessos tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = acessos.map(a => {
+            const isReset = a.status === 'reset_pendente';
+            const statusLabel = isReset ? '<span class="status-badge status-warning">Reset de Senha</span>' : `<span class="status-badge status-info">${a.status}</span>`;
+            
+            return `
+                <tr>
+                    <td>${a.usuario}</td>
+                    <td>${a.email}</td>
+                    <td>${a.perfil}</td>
+                    <td>${statusLabel}</td>
+                    <td>
+                        <div class="table-actions">
+                            ${isReset ? `
+                                <button class="btn-icon btn-edit" onclick="handleResetPassword(${a.id}, '${a.usuario}')" title="Definir Nova Senha">
+                                    <i class='bx bx-refresh'></i>
+                                </button>
+                            ` : `
+                                <button class="btn-icon btn-edit" onclick="approveAcesso(${a.id})" title="Aprovar">
+                                    <i class='bx bx-check'></i>
+                                </button>
+                            `}
+                            <button class="btn-icon btn-delete" onclick="deleteAcesso(${a.id})" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Admin Reset Function
     window.handleResetPassword = async function(solicitationId, username) {
         const novaSenha = prompt(`Digite a NOVA SENHA para o usuário "${username}":`);
         if (!novaSenha) return;
 
         try {
+            // First, find the user ID by username (we'll do this in a single route)
             const usersRes = await fetch(`${API_URL}/usuarios?t=${Date.now()}`);
             const allUsers = await usersRes.json();
             const targetUser = allUsers.find(u => u.usuario === username);
@@ -698,115 +736,52 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.error) throw new Error(data.error);
             
             showToast('Senha redefinida com sucesso!', 'success');
-            loadAprovacoesTable();
-            updateBadgeRequests();
+            fetchAcessos(); // Refresh table
         } catch (err) {
             showToast(err.message, 'error');
         }
     };
 
-    async function loadAprovacoesTable() {
-        try {
-            // 1. Solicitações de Acesso
-            const resAcessos = await fetch(`${API_URL}/admin/acessos`);
-            const { solicitacoes: reqs, usuarios: users } = await resAcessos.json();
-            const tbodyAcessos = document.getElementById('lista-aprovacoes-acessos');
-            
-            if (tbodyAcessos) {
-                tbodyAcessos.innerHTML = '';
-                // Solicitações Pendentes
-                reqs.forEach(req => {
-                    const isReset = req.status === 'reset_pendente';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${req.usuario}</td>
-                        <td>${req.email}</td>
-                        <td><span class="badge ${isReset ? 'Pendente' : 'Pendente'}">${isReset ? 'RESET SENHA' : 'PENDENTE'}</span></td>
-                        <td style="display: flex; gap: 8px;">
-                            ${isReset ? `
-                                <button class="btn btn-primary" onclick="handleResetPassword(${req.id}, '${req.usuario}')" title="Redefinir Senha" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-refresh'></i> Resetar</button>
-                            ` : `
-                                <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
-                                <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
-                            `}
-                            <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
-                        </td>
-                    `;
-                    tbodyAcessos.appendChild(tr);
-                });
-
-                // Usuários Ativos (Gerenciamento)
-                users.forEach(usr => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${usr.user}</td>
-                        <td>-</td>
-                        <td>
-                            <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
-                                <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
-                                <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
-                        </td>
-                    `;
-                    tbodyAcessos.appendChild(tr);
-                });
-            }
-
-            // 2. Solicitações de Dados (Exclusão)
-            const resDados = await fetch(`${API_URL}/aprovacoes`);
-            const aprovacoesDados = await resDados.json();
-            const tbodyDados = document.getElementById('tbody-aprov-dados');
-            
-            if(tbodyDados) {
-                tbodyDados.innerHTML = '';
-                if (aprovacoesDados.length === 0) {
-                    tbodyDados.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-light); padding:20px;">Nenhuma solicitação de exclusão pendente.</td></tr>';
-                } else {
-                    aprovacoesDados.forEach(r => {
-                        const tr = document.createElement('tr');
-                        const dataObj = typeof r.dados === 'string' ? JSON.parse(r.dados) : r.dados;
-                        const labelItem = dataObj.razao || dataObj.numero || 'Item';
-                        
-                        tr.innerHTML = `
-                            <td>${r.usuario}</td>
-                            <td><strong>${r.acao} ${r.tipo}</strong><br><small>${labelItem} (ID: ${r.referencia_id})</small></td>
-                            <td style="max-width: 250px; white-space: normal; font-size: 12px;">${r.justificativa || '-'}</td>
-                            <td>${formatDate(r.data_solicitacao)}</td>
-                            <td>
-                                <div style="display:flex; gap:10px;">
-                                    <button class="btn-icon" onclick="decidirAprovacaoDados(${r.id}, 'aprovar')" title="Aprovar" style="color:var(--success-color); font-size:20px;"><i class='bx bx-check-circle'></i></button>
-                                    <button class="btn-icon" onclick="decidirAprovacaoDados(${r.id}, 'rejeitar')" title="Rejeitar" style="color:var(--danger-color); font-size:20px;"><i class='bx bx-x-circle'></i></button>
-                                </div>
-                            </td>
-                        `;
-                        tbodyDados.appendChild(tr);
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao carregar aprovações:', error);
-        }
-    }
-
-    window.decidirAprovacaoDados = async function(id, decisao) {
-        if (!confirm(`Tem certeza que deseja ${decisao === 'aprovar' ? 'APROVAR e EXECUTAR' : 'REJEITAR'} esta solicitação?`)) return;
-        
-        try {
-            await fetch(`${API_URL}/aprovacoes/${id}/decidir`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ decisao })
+            // Solicitações Pendentes
+            reqs.forEach(req => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${req.usuario}</td>
+                    <td>${req.email}</td>
+                    <td><span class="badge Pendente">PENDENTE</span></td>
+                    <td style="display: flex; gap: 8px;">
+                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
+                        <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
+                        <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             });
-            showToast(decisao === 'aprovar' ? 'Solicitação aprovada e executada!' : 'Solicitação rejeitada.', 'success');
-            loadAprovacoesTable();
-            fetchAllData();
-        } catch (error) {
-            showToast('Erro ao processar decisão.', 'error');
-        }
-    };
+
+            // Usuários Ativos (Gerenciamento)
+            users.forEach(usr => {
+                const tr = document.createElement('tr');
+                // Badge color logic
+                const badgeClass = usr.role === 'admin' ? 'Ativo' : 'Pendente';
+                const badgeText = usr.role === 'admin' ? 'ADMINISTRADOR' : 'USUÁRIO';
+
+                tr.innerHTML = `
+                    <td>${usr.user}</td>
+                    <td>-</td>
+                    <td>
+                        <select onchange="changeUserRole('${usr.user}', this.value)" style="padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
+                            <option value="usuario" ${usr.role === 'usuario' ? 'selected' : ''}>Usuário (Leitura)</option>
+                            <option value="admin" ${usr.role === 'admin' ? 'selected' : ''}>Admin (Total)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn-icon" onclick="revokeAdmin('${usr.user}')" title="Excluir Usuário" style="color:var(--danger-color)"><i class='bx bx-trash'></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {}
+    }
 
     window.revokeAdmin = async function (username) {
         if (confirm(`Tem certeza que deseja EXCLUIR permanentemente o usuário '${username}'?`)) {
@@ -1083,60 +1058,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     let dashboardChart = null;
 
-    let postosChart = null;
-
     function loadDashboardStats() {
         const empresasCount = getEmpresas().length;
         const contratos = getContratos();
-        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo');
+        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
+        const contratosGasto = contratos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
         
         document.getElementById('count-empresas').textContent = empresasCount;
-        document.getElementById('count-contratos').textContent = contratosAtivos.length;
+        document.getElementById('count-contratos').textContent = contratosAtivos;
         
-        // Métricas de Postos
-        const totalPostos = cachedPostos.reduce((sum, p) => sum + (parseInt(p.implantados) || 0) + (parseInt(p.vagos) || 0), 0);
-        const totalImplantados = cachedPostos.reduce((sum, p) => sum + (parseInt(p.implantados) || 0), 0);
-        const totalVagos = cachedPostos.reduce((sum, p) => sum + (parseInt(p.vagos) || 0), 0);
-
-        if(document.getElementById('count-total-postos')) document.getElementById('count-total-postos').textContent = totalPostos;
-        if(document.getElementById('count-postos-implantados')) document.getElementById('count-postos-implantados').textContent = totalImplantados;
-        if(document.getElementById('count-postos-vagos')) document.getElementById('count-postos-vagos').textContent = totalVagos;
+        const spanGasto = document.getElementById('count-gasto');
+        if(spanGasto) spanGasto.textContent = formatCurrency(contratosGasto);
 
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
-        if(statusVig) statusVig.textContent = contratosAtivos.length;
+        if(statusVig) statusVig.textContent = contratosAtivos;
         if(statusFin) statusFin.textContent = contratos.filter(c => c.situacao && c.situacao !== 'Ativo').length;
 
+        // Render Gráfico
         renderDashboardChart(contratos);
-        renderDashboardPostosChart(totalImplantados, totalVagos);
+
+        // Dispara verificador de alertas
         checkAlertasVencimento(contratos);
-    }
-
-    function renderDashboardPostosChart(implantados, vagos) {
-        const canvas = document.getElementById('chart-postos-ocupacao');
-        if(!canvas) return;
-
-        if(postosChart) postosChart.destroy();
-        
-        const ctx = canvas.getContext('2d');
-        postosChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Implantados', 'Vagos'],
-                datasets: [{
-                    data: [implantados, vagos],
-                    backgroundColor: ['#2a9d8f', '#e63946'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 10 } } }
-                }
-            }
-        });
     }
 
     function renderDashboardChart(contratos) {
@@ -1456,80 +1399,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modalView.classList.remove('form-hidden');
     };
 
-    async function solicitarExclusao(tipo, id, dados = {}) {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('modal-justificativa');
-            const textarea = document.getElementById('justificativa-texto');
-            const btnConfirm = document.getElementById('btn-confirmar-justificativa');
-            const btnCancel = document.getElementById('btn-cancelar-justificativa');
-            
-            if (!modal || !textarea) return resolve(false);
-
-            textarea.value = '';
-            modal.classList.remove('form-hidden');
-            
-            const cleanup = () => {
-                modal.classList.add('form-hidden');
-                btnConfirm.onclick = null;
-                btnCancel.onclick = null;
-            };
-
-            btnCancel.onclick = () => {
-                cleanup();
-                resolve(false);
-            };
-
-            btnConfirm.onclick = async () => {
-                const justificativa = textarea.value.trim();
-                if (justificativa.length < 5) {
-                    showToast('Justificativa muito curta.', 'error');
-                    return;
-                }
-
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                try {
-                    const response = await fetch(`${API_URL}/aprovacoes`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            usuario: user.usuario,
-                            tipo: tipo,
-                            acao: 'Excluir',
-                            referencia_id: id,
-                            justificativa: justificativa,
-                            dados: dados
-                        })
-                    });
-                    if (response.ok) {
-                        socket.emit('new-solicitation', { tipo, acao: 'Excluir', usuario: user.usuario });
-                        showToast('Solicitação de exclusão enviada!');
-                        cleanup();
-                        updateBadgeRequests();
-                        resolve(true);
-                    } else {
-                        throw new Error();
-                    }
-                } catch (error) {
-                    showToast('Erro ao enviar solicitação.', 'error');
-                    cleanup();
-                    resolve(false);
-                }
-            };
-        });
-    }
-
     window.deleteEmpresa = async function (id) {
-        const userObj = JSON.parse(localStorage.getItem('currentUser'));
-        const userRole = userObj?.role;
-        const username = userObj?.usuario;
-
-        if (userRole !== 'master') {
-            await solicitarExclusao('Empresa', id, { razao: getEmpresas().find(e => e.id == id)?.razao });
-            return;
-        }
-
         if (confirm('Tem certeza que deseja excluir esta empresa?')) {
             try {
+                const userObj = JSON.parse(localStorage.getItem('currentUser'));
+                const userRole = userObj?.role;
+                const username = userObj?.usuario;
                 await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadEmpresasTable();
@@ -1743,19 +1618,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.deleteContrato = async function (id) {
-        const userObj = JSON.parse(localStorage.getItem('currentUser'));
-        const userRole = userObj?.role;
-        const username = userObj?.usuario;
-
-        if (userRole !== 'master') {
-            const con = getContratos().find(c => c.id == id);
-            await solicitarExclusao('Contrato', id, { numero: con?.numero });
-            return;
-        }
-
         if (confirm('Tem certeza que deseja excluir permanentemente este contrato?')) {
             try {
-                await fetch(`${API_URL}/contratos/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
+                await fetch(`${API_URL}/contratos/${id}?username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadContratosTable();
                 showToast('Contrato excluído com sucesso');
@@ -1931,46 +1797,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.visualizarAnexo = function(contratoId, anexoId) {
-        const con = getContratos().find(c => String(c.id) === String(contratoId));
-        if (!con) return showToast('Contrato não encontrado', 'error');
-        const anexo = (con.anexos || []).find(a => String(a.id) === String(anexoId));
-        if (!anexo) return showToast('Anexo não encontrado', 'error');
-
-        try {
-            const dataUrl = anexo.data;
-            const base64Parts = dataUrl.split(',');
-            if (base64Parts.length < 2) throw new Error('Formato de arquivo inválido');
-            
-            const contentType = base64Parts[0].split(':')[1].split(';')[0];
-            const base64Data = base64Parts[1];
-            
-            const byteCharacters = atob(base64Data);
-            const byteArrays = [];
-            
-            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-                const slice = byteCharacters.slice(offset, offset + 512);
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-            
-            const blob = new Blob(byteArrays, {type: contentType});
-            const blobUrl = URL.createObjectURL(blob);
-            
-            const win = window.open(blobUrl, '_blank');
-            if (!win) {
-                showToast('Pop-up bloqueado. Por favor, permita pop-ups para visualizar o anexo.', 'error');
-            }
-        } catch (e) {
-            console.error('Erro ao visualizar anexo:', e);
-            showToast('Erro ao abrir o arquivo.', 'error');
-        }
-    };
-
     window.openAnexosContrato = function(id) {
         const con = getContratos().find(c => String(c.id) === String(id));
         if(!con) return;
@@ -1998,9 +1824,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
                         </div>
                     </div>
-                    <button onclick="visualizarAnexo('${con.id}', '${a.id}')" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; border: none; border-radius: 4px; display: flex; align-items: center; gap: 5px; cursor: pointer; text-decoration: none;">
+                    <a href="${a.data}" target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 5px;">
                         <i class='bx bx-show'></i> Visualizar
-                    </button>
+                    </a>
                 `;
                 container.appendChild(el);
             });
@@ -2681,18 +2507,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteLoteIndenizatorio = async function(id) {
-        const userObj = JSON.parse(localStorage.getItem('currentUser'));
-        const userRole = userObj?.role;
-        const username = userObj?.usuario;
-
-        if (userRole !== 'master') {
-            await solicitarExclusao('Lote', id);
-            return;
-        }
-
         if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
         try {
-            const res = await fetch(`${API_URL}/indenizatorios/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+            const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
+            const res = await fetch(`${API_URL}/indenizatorios/${id}?username=${username}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Erro ao excluir lote');
             showToast('Lote excluído com sucesso');
             loadIndenizatoriosTable();
