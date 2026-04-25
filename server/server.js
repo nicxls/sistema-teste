@@ -155,7 +155,7 @@ app.put('/api/admin/reset-password', async (req, res) => {
         
         // Remove or update the request if exists
         if (solicitacaoId) {
-            await db.execute('DELETE FROM acessos WHERE id = ?', [solicitacaoId]);
+            await db.execute('DELETE FROM solicitacoes_acesso WHERE id = ?', [solicitacaoId]);
         }
         
         notifyUpdate();
@@ -284,7 +284,6 @@ app.delete('/api/admin/usuarios/:usuario', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
-    }
     }
 });
 

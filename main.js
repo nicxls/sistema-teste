@@ -645,77 +645,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function updateBadgeRequests() {
         try {
-            const response = await fetch(`${API_URL}/admin/acessos`);
-            const data = await response.json();
-            const pends = data.solicitacoes.length;
+            const resAcessos = await fetch(`${API_URL}/admin/acessos`);
+            const dataAcessos = await resAcessos.json();
+            
+            const resDados = await fetch(`${API_URL}/aprovacoes`);
+            const dataDados = await resDados.json();
+            
+            const totalPends = (dataAcessos.solicitacoes?.length || 0) + (dataDados?.length || 0);
+            
             const badge = document.getElementById('badge-requests');
-            if (pends > 0) {
-                badge.textContent = pends;
-                badge.style.opacity = '1';
-            } else {
-                badge.style.opacity = '0';
+            if (badge) {
+                if (totalPends > 0) {
+                    badge.textContent = totalPends;
+                    badge.style.opacity = '1';
+                } else {
+                    badge.style.opacity = '0';
+                }
             }
         } catch (error) {}
     }
 
-    async function loadAprovacoesTable() {
-        const tbody = document.getElementById('lista-aprovacoes');
-        if (!tbody) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/admin/acessos`);
-            const data = await response.json();
-            const reqs = data.solicitacoes;
-            const users = data.usuarios;
-
-            tbody.innerHTML = '';
-            if (reqs.length === 0 && users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum dado encontrado.</td></tr>`;
-                return;
-            }
-
-            function renderAcessosTable(acessos) {
-        const tbody = document.querySelector('#table-acessos tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = acessos.map(a => {
-            const isReset = a.status === 'reset_pendente';
-            const statusLabel = isReset ? '<span class="status-badge status-warning">Reset de Senha</span>' : `<span class="status-badge status-info">${a.status}</span>`;
-            
-            return `
-                <tr>
-                    <td>${a.usuario}</td>
-                    <td>${a.email}</td>
-                    <td>${a.perfil}</td>
-                    <td>${statusLabel}</td>
-                    <td>
-                        <div class="table-actions">
-                            ${isReset ? `
-                                <button class="btn-icon btn-edit" onclick="handleResetPassword(${a.id}, '${a.usuario}')" title="Definir Nova Senha">
-                                    <i class='bx bx-refresh'></i>
-                                </button>
-                            ` : `
-                                <button class="btn-icon btn-edit" onclick="approveAcesso(${a.id})" title="Aprovar">
-                                    <i class='bx bx-check'></i>
-                                </button>
-                            `}
-                            <button class="btn-icon btn-delete" onclick="deleteAcesso(${a.id})" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
-                                <i class='bx bx-trash'></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    // Admin Reset Function
     window.handleResetPassword = async function(solicitationId, username) {
         const novaSenha = prompt(`Digite a NOVA SENHA para o usuário "${username}":`);
         if (!novaSenha) return;
 
         try {
-            // First, find the user ID by username (we'll do this in a single route)
             const usersRes = await fetch(`${API_URL}/usuarios?t=${Date.now()}`);
             const allUsers = await usersRes.json();
             const targetUser = allUsers.find(u => u.usuario === username);
@@ -736,7 +690,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.error) throw new Error(data.error);
             
             showToast('Senha redefinida com sucesso!', 'success');
-            fetchAcessos(); // Refresh table
+            loadAprovacoesTable();
+            updateBadgeRequests();
         } catch (err) {
             showToast(err.message, 'error');
         }
@@ -753,14 +708,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbodyAcessos.innerHTML = '';
                 // Solicitações Pendentes
                 reqs.forEach(req => {
+                    const isReset = req.status === 'reset_pendente';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${req.usuario}</td>
                         <td>${req.email}</td>
-                        <td><span class="badge Pendente">PENDENTE</span></td>
+                        <td><span class="badge ${isReset ? 'Pendente' : 'Pendente'}">${isReset ? 'RESET SENHA' : 'PENDENTE'}</span></td>
                         <td style="display: flex; gap: 8px;">
-                            <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
-                            <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
+                            ${isReset ? `
+                                <button class="btn btn-primary" onclick="handleResetPassword(${req.id}, '${req.usuario}')" title="Redefinir Senha" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-refresh'></i> Resetar</button>
+                            ` : `
+                                <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'usuario')" title="Aprovar como Usuário" style="padding: 6px 10px; font-size: 11px; background: #8d99ae;"><i class='bx bx-low-vision'></i> Usuário</button>
+                                <button class="btn btn-primary" onclick="decideRequest('${req.id}', 'aceitar', 'admin')" title="Aprovar como Admin" style="padding: 6px 10px; font-size: 11px;"><i class='bx bx-shield-quarter'></i> Admin</button>
+                            `}
                             <button class="btn-icon" onclick="decideRequest('${req.id}', 'recusar')" title="Recusar" style="color:var(--danger-color)"><i class='bx bx-x-circle'></i></button>
                         </td>
                     `;
