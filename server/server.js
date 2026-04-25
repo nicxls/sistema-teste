@@ -412,8 +412,8 @@ app.delete('/api/empresas/:id', async (req, res) => {
     const { userRole, username } = req.query; // Pega o role por query no delete
     
     // Proteção básica no backend
-    if (userRole === 'usuario') {
-        return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
+    if (userRole !== 'master') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
     }
     
     try {
@@ -496,7 +496,12 @@ app.put('/api/contratos/:id', async (req, res) => {
 
 app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
-    const { username } = req.query;
+    const { userRole, username } = req.query;
+
+    if (userRole !== 'master') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
+    }
+
     try {
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
         notifyUpdate();
@@ -594,7 +599,12 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
 
 app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { id } = req.params;
-    const { username } = req.query;
+    const { userRole, username } = req.query;
+
+    if (userRole !== 'master') {
+        return res.status(403).json({ error: 'Acesso negado. Apenas o perfil Master pode realizar exclusões diretas.' });
+    }
+
     try {
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
         notifyUpdate();

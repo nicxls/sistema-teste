@@ -1482,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const userRole = userObj?.role;
         const username = userObj?.usuario;
 
-        if (userRole === 'admin') {
+        if (userRole !== 'master') {
             await solicitarExclusao('Empresa', id, { razao: getEmpresas().find(e => e.id == id)?.razao });
             return;
         }
@@ -1706,7 +1706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const userRole = userObj?.role;
         const username = userObj?.usuario;
 
-        if (userRole === 'admin') {
+        if (userRole !== 'master') {
             const con = getContratos().find(c => c.id == id);
             await solicitarExclusao('Contrato', id, { numero: con?.numero });
             return;
@@ -1714,7 +1714,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (confirm('Tem certeza que deseja excluir permanentemente este contrato?')) {
             try {
-                await fetch(`${API_URL}/contratos/${id}?username=${username}`, { method: 'DELETE' });
+                await fetch(`${API_URL}/contratos/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 await fetchAllData();
                 loadContratosTable();
                 showToast('Contrato excluído com sucesso');
@@ -2642,16 +2642,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteLoteIndenizatorio = async function(id) {
         const userObj = JSON.parse(localStorage.getItem('currentUser'));
         const userRole = userObj?.role;
+        const username = userObj?.usuario;
 
-        if (userRole === 'admin') {
+        if (userRole !== 'master') {
             await solicitarExclusao('Lote', id);
             return;
         }
 
         if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
         try {
-            const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
-            const res = await fetch(`${API_URL}/indenizatorios/${id}?username=${username}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/indenizatorios/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Erro ao excluir lote');
             showToast('Lote excluído com sucesso');
             loadIndenizatoriosTable();
