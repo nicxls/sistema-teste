@@ -647,10 +647,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/admin/acessos`);
             const data = await response.json();
-            const pends = data.solicitacoes.length;
+            const pendsAcesso = data.solicitacoes.length;
+            const pendsExclusao = data.exclusoes ? data.exclusoes.length : 0;
+            const total = pendsAcesso + pendsExclusao;
+
             const badge = document.getElementById('badge-requests');
-            if (pends > 0) {
-                badge.textContent = pends;
+            if (total > 0) {
+                badge.textContent = total;
                 badge.style.opacity = '1';
             } else {
                 badge.style.opacity = '0';
@@ -699,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <i class='bx bx-check'></i>
                                 </button>
                             `}
-                            <button class="btn-icon btn-delete" onclick="deleteAcesso(${a.id})" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
+                            <button class="btn-icon btn-delete" onclick="decideRequest(${a.id}, 'recusar')" title="${isReset ? 'Recusar Reset' : 'Recusar'}">
                                 <i class='bx bx-trash'></i>
                             </button>
                         </div>
@@ -761,10 +764,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Usuários Ativos (Gerenciamento)
             users.forEach(usr => {
                 const tr = document.createElement('tr');
-                // Badge color logic
-                const badgeClass = usr.role === 'admin' ? 'Ativo' : 'Pendente';
-                const badgeText = usr.role === 'admin' ? 'ADMINISTRADOR' : 'USUÁRIO';
-
                 tr.innerHTML = `
                     <td>${usr.user}</td>
                     <td>-</td>
@@ -780,16 +779,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 tbody.appendChild(tr);
             });
+
+            // --- NOVO: Solicitações de Exclusão ---
+            if (data.exclusoes && data.exclusoes.length > 0) {
+                const headerExcl = document.createElement('tr');
+                headerExcl.innerHTML = `<td colspan="4" style="background: rgba(0,0,0,0.05); font-weight: 700; padding: 10px 20px; font-size: 11px;">SOLICITAÇÕES DE EXCLUSÃO</td>`;
+                tbody.appendChild(headerExcl);
+
+                data.exclusoes.forEach(ex => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${ex.item_nome}</strong> <small style="color:var(--text-light)">(${ex.tipo})</small></td>
+                        <td>Solictado por: ${ex.usuario}</td>
+                        <td><span class="badge Pendente">AGUARDANDO</span></td>
+                        <td style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="decideExclusao('${ex.id}', 'aprovar')" title="Confirmar Exclusão" style="padding: 6px 10px; font-size: 11px; background: var(--danger-color);"><i class='bx bx-trash'></i> Excluir</button>
+                            <button class="btn-icon" onclick="decideExclusao('${ex.id}', 'recusar')" title="Recusar" style="color:var(--text-light)"><i class='bx bx-x-circle'></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
         } catch (error) {}
     }
 
     window.revokeAdmin = async function (username) {
         if (confirm(`Tem certeza que deseja EXCLUIR permanentemente o usuário '${username}'?`)) {
             try {
-                await fetch(`${API_URL}/admin/usuarios/${username}`, { method: 'DELETE' });
+                const res = await fetch(`${API_URL}/admin/usuarios/${username}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Erro ao remover usuário');
+                
                 showToast(`Usuário ${username} removido!`, 'success');
                 loadAprovacoesTable();
-            } catch (error) {}
+            } catch (error) {
+                console.error('Erro ao excluir usuário:', error);
+                showToast(error.message, 'error');
+            }
         }
     }
 
@@ -802,8 +828,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             showToast(`Perfil de ${username} alterado para ${newRole}!`, 'success');
             loadAprovacoesTable();
-            
-            // Se o usuário logado for o próprio que teve o perfil alterado (improvável para master), forçaria refresh
         } catch (error) {
             showToast('Erro ao alterar perfil.', 'error');
         }
@@ -821,6 +845,28 @@ document.addEventListener('DOMContentLoaded', () => {
             loadAprovacoesTable();
             updateBadgeRequests();
         } catch (error) {}
+    }
+
+    window.decideExclusao = async function (id, acao) {
+        if (acao === 'aprovar' && !confirm('Você tem certeza que deseja EXECUTAR esta exclusão solicitada?')) return;
+        
+        try {
+            const res = await fetch(`${API_URL}/admin/exclusao/${id}/decide`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acao })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Erro ao processar exclusão');
+
+            showToast(acao === 'aprovar' ? 'Item excluído com sucesso!' : 'Solicitação recusada.');
+            loadAprovacoesTable();
+            updateBadgeRequests();
+            fetchAllData(); // Refresh everything
+        } catch (error) {
+            console.error('Erro:', error);
+            showToast(error.message, 'error');
+        }
     }
 
     // ==========================================
@@ -1405,12 +1451,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userObj = JSON.parse(localStorage.getItem('currentUser'));
                 const userRole = userObj?.role;
                 const username = userObj?.usuario;
-                await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                
+                const res = await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    // Se o servidor retornou que foi solicitada (para admins), mostramos a mensagem
+                    if (data.requested) {
+                        return showToast(data.message, 'info');
+                    }
+                    throw new Error(data.error || 'Erro ao excluir empresa');
+                }
+
                 await fetchAllData();
                 loadEmpresasTable();
                 populateEmpresasSelect();
                 showToast('Empresa excluída.', 'success');
-            } catch (error) {}
+            } catch (error) {
+                console.error('Erro ao excluir empresa:', error);
+                showToast(error.message, 'error');
+            }
         }
     }
 
@@ -1620,12 +1680,27 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteContrato = async function (id) {
         if (confirm('Tem certeza que deseja excluir permanentemente este contrato?')) {
             try {
-                const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
-                await fetch(`${API_URL}/contratos/${id}?username=${username}`, { method: 'DELETE' });
+                const userObj = JSON.parse(localStorage.getItem('currentUser'));
+                const userRole = userObj?.role;
+                const username = userObj?.usuario;
+                
+                const res = await fetch(`${API_URL}/contratos/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    if (data.requested) {
+                        return showToast(data.message, 'info');
+                    }
+                    throw new Error(data.error || 'Erro ao excluir contrato');
+                }
+
                 await fetchAllData();
                 loadContratosTable();
                 showToast('Contrato excluído com sucesso');
-            } catch (error) {}
+            } catch (error) {
+                console.error('Erro ao excluir contrato:', error);
+                showToast(error.message, 'error');
+            }
         }
     }
 
@@ -2507,15 +2582,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.deleteLoteIndenizatorio = async function(id) {
-        if (!confirm('Tem certeza que deseja excluir este lote indenizatório?')) return;
-        try {
-            const username = JSON.parse(localStorage.getItem('currentUser'))?.usuario;
-            const res = await fetch(`${API_URL}/indenizatorios/${id}?username=${username}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Erro ao excluir lote');
-            showToast('Lote excluído com sucesso');
-            loadIndenizatoriosTable();
-        } catch (err) {
-            showToast(err.message, 'error');
+        if (confirm('Tem certeza que deseja excluir permanentemente este lote?')) {
+            try {
+                const userObj = JSON.parse(localStorage.getItem('currentUser'));
+                const userRole = userObj?.role;
+                const username = userObj?.usuario;
+
+                const res = await fetch(`${API_URL}/indenizatorios/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    if (data.requested) {
+                        return showToast(data.message, 'info');
+                    }
+                    throw new Error(data.error || 'Erro ao excluir lote');
+                }
+
+                showToast('Lote excluído com sucesso');
+                loadIndenizatoriosTable();
+            } catch (error) {
+                console.error('Erro ao excluir lote:', error);
+                showToast(error.message, 'error');
+            }
         }
     };
 

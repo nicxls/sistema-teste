@@ -67,6 +67,18 @@ const db = require('./db');
             await db.execute('ALTER TABLE faturamentos ADD COLUMN dados LONGTEXT');
             console.log('Coluna "dados" adicionada à tabela "faturamentos".');
         }
+        // Migration: Tabela solicitacoes_exclusao
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS solicitacoes_exclusao (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tipo VARCHAR(50), -- 'empresa' ou 'contrato'
+                item_id INT,
+                item_nome VARCHAR(255),
+                usuario VARCHAR(100),
+                status VARCHAR(50) DEFAULT 'pendente',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -138,9 +150,34 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             [usuario, email, 'SOLICITACA_RESET', users[0].perfil, 'reset_pendente']);
         
         notifyUpdate();
-        res.json({ message: 'Solicitação enviada! O Administrador irá resetar sua senha em breve.' });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+// Decidir Solicitação de Exclusão
+app.post('/api/admin/exclusao/:id/decide', async (req, res) => {
+    const { id } = req.params;
+    const { acao } = req.body; // 'aprovar' ou 'recusar'
+
+    try {
+        const [rows] = await db.execute('SELECT * FROM solicitacoes_exclusao WHERE id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Solicitação não encontrada' });
+        
+        const reqData = rows[0];
+
+        if (acao === 'aprovar') {
+            if (reqData.tipo === 'empresa') {
+                await db.execute('DELETE FROM empresas WHERE id = ?', [reqData.item_id]);
+            } else if (reqData.tipo === 'contrato') {
+                await db.execute('DELETE FROM contratos WHERE id = ?', [reqData.item_id]);
+            } else if (reqData.tipo === 'lote') {
+                await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [reqData.item_id]);
+            }
+            await db.execute('UPDATE solicitacoes_exclusao SET status = "aprovado" WHERE id = ?', [id]);
+        } else {
+            await db.execute('UPDATE solicitacoes_exclusao SET status = "recusado" WHERE id = ?', [id]);
+        }
+
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao processar exclusão: ' + error.message });
     }
 });
 
@@ -225,12 +262,13 @@ app.post('/api/acessos', async (req, res) => {
     }
 });
 
-// Listar Solicitações Pendentes e Admins
+// Listar Solicitações Pendentes (Acessos e Exclusões) e Admins
 app.get('/api/admin/acessos', async (req, res) => {
     try {
         const [reqs] = await db.execute('SELECT * FROM solicitacoes_acesso WHERE status = "pendente"');
         const [users] = await db.execute('SELECT usuario as user, role FROM usuarios WHERE role != "master"');
-        res.json({ solicitacoes: reqs, usuarios: users });
+        const [excl] = await db.execute('SELECT * FROM solicitacoes_exclusao WHERE status = "pendente"');
+        res.json({ solicitacoes: reqs, usuarios: users, exclusoes: excl });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -351,19 +389,33 @@ app.put('/api/empresas/:id', async (req, res) => {
 
 app.delete('/api/empresas/:id', async (req, res) => {
     const { id } = req.params;
-    const { userRole, username } = req.query; // Pega o role por query no delete
-    
-    // Proteção básica no backend
-    if (userRole === 'usuario') {
-        return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
-    }
+    const { userRole, username } = req.query;
     
     try {
+        if (userRole === 'admin') {
+            const [rows] = await db.execute('SELECT razao FROM empresas WHERE id = ?', [id]);
+            const nome = rows.length > 0 ? rows[0].razao : 'Empresa ID ' + id;
+            await db.execute(
+                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
+                ['empresa', id, nome, username]
+            );
+            notifyUpdate();
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+        }
+
+        if (userRole === 'usuario') {
+            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
+        }
+        
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        let msg = error.message;
+        if (msg.includes('foreign key constraint')) {
+            msg = 'Não é possível excluir esta empresa pois ela possui contratos vinculados. Remova os contratos primeiro.';
+        }
+        res.status(500).json({ error: msg });
     }
 });
 
@@ -438,13 +490,32 @@ app.put('/api/contratos/:id', async (req, res) => {
 
 app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
-    const { username } = req.query;
+    const { userRole, username } = req.query;
     try {
+        if (userRole === 'admin') {
+            const [rows] = await db.execute('SELECT numero FROM contratos WHERE id = ?', [id]);
+            const nome = rows.length > 0 ? rows[0].numero : 'Contrato ID ' + id;
+            await db.execute(
+                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
+                ['contrato', id, nome, username]
+            );
+            notifyUpdate();
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+        }
+
+        if (userRole === 'usuario') {
+            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir contratos.' });
+        }
+
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
         notifyUpdate();
         res.json({ success: true });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        let msg = error.message;
+        if (msg.includes('foreign key constraint')) {
+            msg = 'Não é possível excluir este contrato pois ele possui escolas ou faturamentos vinculados.';
+        }
+        res.status(500).json({ error: msg });
     }
 });
 
@@ -536,8 +607,23 @@ app.put('/api/indenizatorios/:id', async (req, res) => {
 
 app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { id } = req.params;
-    const { username } = req.query;
+    const { userRole, username } = req.query;
     try {
+        if (userRole === 'admin') {
+            const [rows] = await db.execute('SELECT lote FROM lotes_indenizatorios WHERE id = ?', [id]);
+            const nome = rows.length > 0 ? rows[0].lote : 'Lote ID ' + id;
+            await db.execute(
+                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
+                ['lote', id, nome, username]
+            );
+            notifyUpdate();
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+        }
+        
+        if (userRole === 'usuario') {
+            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir lotes.' });
+        }
+
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
         notifyUpdate();
         res.json({ success: true });
