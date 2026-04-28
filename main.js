@@ -1456,13 +1456,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 
                 if (!res.ok) {
-                    // Se o servidor retornou que foi solicitada (para admins), mostramos a mensagem
                     if (data.requested) {
                         return showToast(data.message, 'info');
                     }
                     throw new Error(data.error || 'Erro ao excluir empresa');
                 }
 
+                // Optimistic UI: Remove from cache immediately
+                cachedEmpresas = cachedEmpresas.filter(e => String(e.id) !== String(id));
+                loadEmpresasTable();
+                populateEmpresasSelect();
+
+                // Small delay to ensure DB consistency before final sync
+                await new Promise(r => setTimeout(r, 500));
                 await fetchAllData();
                 loadEmpresasTable();
                 populateEmpresasSelect();
@@ -1694,6 +1700,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.error || 'Erro ao excluir contrato');
                 }
 
+                // Optimistic UI: Remove from cache immediately
+                cachedContratos = cachedContratos.filter(c => String(c.id) !== String(id));
+                loadContratosTable();
+
+                // Small delay to ensure DB consistency before final sync
+                await new Promise(r => setTimeout(r, 500));
                 await fetchAllData();
                 loadContratosTable();
                 showToast('Contrato excluído com sucesso');
@@ -2598,8 +2610,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.error || 'Erro ao excluir lote');
                 }
 
-                showToast('Lote excluído com sucesso');
+                // Small delay and full sync
+                await new Promise(r => setTimeout(r, 500));
+                await fetchAllData();
                 loadIndenizatoriosTable();
+                showToast('Lote excluído com sucesso');
             } catch (error) {
                 console.error('Erro ao excluir lote:', error);
                 showToast(error.message, 'error');

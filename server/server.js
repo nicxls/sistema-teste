@@ -400,11 +400,11 @@ app.delete('/api/empresas/:id', async (req, res) => {
                 ['empresa', id, nome, username]
             );
             notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
         }
 
         if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir empresas.' });
+            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
         }
         
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
@@ -500,11 +500,11 @@ app.delete('/api/contratos/:id', async (req, res) => {
                 ['contrato', id, nome, username]
             );
             notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
         }
 
         if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir contratos.' });
+            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
         }
 
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
@@ -617,11 +617,11 @@ app.delete('/api/indenizatorios/:id', async (req, res) => {
                 ['lote', id, nome, username]
             );
             notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada ao Master.' });
+            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
         }
         
         if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Usuários não podem excluir lotes.' });
+            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
         }
 
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);
