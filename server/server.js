@@ -156,7 +156,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         await db.execute('INSERT INTO acessos (usuario, email, senha, perfil, status) VALUES (?, ?, ?, ?, ?)', 
             [usuario, email, 'SOLICITACA_RESET', users[0].perfil, 'reset_pendente']);
         
-        notifyUpdate();
+        res.json({ message: 'Solicitação de reset de senha enviada com sucesso!' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Decidir Solicitação de Exclusão
 app.post('/api/admin/exclusao/:id/decide', async (req, res) => {
     const { id } = req.params;
