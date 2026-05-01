@@ -10,6 +10,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let cachedContratos = [];
     let cachedPostos = [];
 
+    // ==========================================
+    // API FETCH WRAPPER (JWT Support)
+    // ==========================================
+    window.apiFetch = async function(endpoint, options = {}) {
+        const token = localStorage.getItem('jwt_token');
+        const headers = {
+            ...options.headers
+        };
+        
+        // Add auth token if exists
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Only set default Content-Type if we're not sending FormData (for file uploads later)
+        if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        const url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_URL}${endpoint}`);
+        
+        const response = await fetch(url, { ...options, headers });
+        
+        if (response.status === 401 || response.status === 403) {
+            // Se o token for inválido, mas não for rota de login/verify
+            if (!url.includes('/login') && !url.includes('/auth/verify')) {
+                console.warn("Sessão expirada ou inválida.");
+            }
+        }
+        return response;
+    };
+
     // 1. Inicializa Componentes Básicos
     initTheme();
     initNavigation();
@@ -140,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!username) return;
 
         try {
-            const res = await fetch(`${API_URL}/auth/verify?usuario=${username}`);
+            const res = await apiFetch(`${API_URL}/auth/verify?usuario=${username}`);
             if (!res.ok) {
                 // Sessão inválida ou usuário removido
                 localStorage.removeItem('currentUser');
@@ -241,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('forgot-email').value;
 
             try {
-                const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                const res = await apiFetch(`${API_URL}/auth/forgot-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario, email })
@@ -316,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const res = await fetch(`${API_URL}/auth/change-password`, {
+                const res = await apiFetch(`${API_URL}/auth/change-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -579,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!userIn || !passIn) return showBeautifulAlert('Campos Vazios', 'Preencha o usuário e a senha.', true);
 
             try {
-                const response = await fetch(`${API_URL}/login`, {
+                const response = await apiFetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario: userIn, senha: passIn })
@@ -596,7 +628,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.querySelectorAll('.master-only').forEach(el => el.style.display = 'block');
                     }
 
-                    applyLogin(data.user);
+                    if (data.token) localStorage.setItem('jwt_token', data.token);
+                applyLogin(data.user);
                     showToast('Login efetuado com sucesso!', 'success');
                 } else {
                     showBeautifulAlert('Acesso Negado', data.error || data.message || 'Usuário ou senha inválidos!', true);
@@ -617,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!u || !e || !p) return showBeautifulAlert('Campos Obrigatórios', 'Preencha todos os campos para solicitar acesso.', true);
             
             try {
-                const response = await fetch(`${API_URL}/acessos`, {
+                const response = await apiFetch(`${API_URL}/acessos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario: u, email: e, senha: p })
@@ -645,7 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function updateBadgeRequests() {
         try {
-            const response = await fetch(`${API_URL}/admin/acessos`);
+            const response = await apiFetch(`${API_URL}/admin/acessos`);
             const data = await response.json();
             const pendsAcesso = data.solicitacoes.length;
             const pendsExclusao = data.exclusoes ? data.exclusoes.length : 0;
@@ -666,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tbody) return;
         
         try {
-            const response = await fetch(`${API_URL}/admin/acessos`);
+            const response = await apiFetch(`${API_URL}/admin/acessos`);
             const data = await response.json();
             const reqs = data.solicitacoes;
             const users = data.usuarios;
@@ -719,13 +752,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // First, find the user ID by username (we'll do this in a single route)
-            const usersRes = await fetch(`${API_URL}/usuarios?t=${Date.now()}`);
+            const usersRes = await apiFetch(`${API_URL}/usuarios?t=${Date.now()}`);
             const allUsers = await usersRes.json();
             const targetUser = allUsers.find(u => u.usuario === username);
             
             if (!targetUser) throw new Error('Usuário original não encontrado no banco.');
 
-            const res = await fetch(`${API_URL}/admin/reset-password`, {
+            const res = await apiFetch(`${API_URL}/admin/reset-password`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -806,7 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.revokeAdmin = async function (username) {
         if (confirm(`Tem certeza que deseja EXCLUIR permanentemente o usuário '${username}'?`)) {
             try {
-                const res = await fetch(`${API_URL}/admin/usuarios/${username}`, { method: 'DELETE' });
+                const res = await apiFetch(`${API_URL}/admin/usuarios/${username}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Erro ao remover usuário');
                 
@@ -821,7 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.changeUserRole = async function (username, newRole) {
         try {
-            await fetch(`${API_URL}/admin/usuarios/${username}/role`, {
+            await apiFetch(`${API_URL}/admin/usuarios/${username}/role`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: newRole })
@@ -835,7 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.decideRequest = async function (id, acao, role = 'usuario') {
         try {
-            await fetch(`${API_URL}/admin/acessos/${id}/decide`, {
+            await apiFetch(`${API_URL}/admin/acessos/${id}/decide`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao, role })
@@ -851,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (acao === 'aprovar' && !confirm('Você tem certeza que deseja EXECUTAR esta exclusão solicitada?')) return;
         
         try {
-            const res = await fetch(`${API_URL}/admin/exclusao/${id}/decide`, {
+            const res = await apiFetch(`${API_URL}/admin/exclusao/${id}/decide`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ acao })
@@ -1055,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const method = isEdit ? 'PUT' : 'POST';
         const url = isEdit ? `${API_URL}/empresas/${empresa.id}` : `${API_URL}/empresas`;
         
-        await fetch(url, {
+        await apiFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(empresa)
@@ -1066,35 +1099,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveContratos(contrato, isEdit = false) {
         const method = isEdit ? 'PUT' : 'POST';
-        const url = isEdit ? `${API_URL}/contratos/${contrato.id}` : `${API_URL}/contratos`;
+        const url = isEdit ? `/contratos/${contrato.id}` : `/contratos`;
         
-        // Map frontend fields to DB fields if necessary (snake_case)
-        const dbData = {
-            numero: contrato.numero,
-            proa: contrato.proa,
-            lote: contrato.lote,
-            cre: contrato.cre,
-            tipo: contrato.tipo,
-            modalidade: contrato.modalidade,
-            empresa_id: contrato.empresaId,
-            periodo_inicial: contrato.periodoInicial,
-            periodo_final: contrato.periodoFinal,
-            situacao: contrato.situacao,
-            gestor: contrato.gestor,
-            alunos: contrato.alunos,
-            municipio: contrato.municipio,
-            valor_diario: contrato.valorDiario,
-            valor_km: contrato.valorKm,
-            km: contrato.km,
-            valor_mensal: contrato.valorMensal,
-            postos: contrato.postos,
-            anexos: contrato.anexos
-        };
+        const formData = new FormData();
+        formData.append('numero', contrato.numero || '');
+        formData.append('proa', contrato.proa || '');
+        formData.append('lote', contrato.lote || '');
+        formData.append('cre', contrato.cre || '');
+        formData.append('tipo', contrato.tipo || '');
+        formData.append('modalidade', contrato.modalidade || '');
+        formData.append('empresa_id', contrato.empresaId || '');
+        formData.append('periodo_inicial', contrato.periodoInicial || '');
+        formData.append('periodo_final', contrato.periodoFinal || '');
+        formData.append('situacao', contrato.situacao || '');
+        formData.append('gestor', contrato.gestor || '');
+        formData.append('alunos', contrato.alunos || '');
+        formData.append('municipio', contrato.municipio || '');
+        formData.append('valor_diario', contrato.valorDiario || '');
+        formData.append('valor_km', contrato.valorKm || '');
+        formData.append('km', contrato.km || '');
+        formData.append('valor_mensal', contrato.valorMensal || '');
+        formData.append('postos', contrato.postos || '');
+        
+        formData.append('anexos_existentes', JSON.stringify(contrato.anexosExistentes || []));
+        
+        if (contrato.novosAnexos && contrato.novosAnexos.length > 0) {
+            for (let i = 0; i < contrato.novosAnexos.length; i++) {
+                formData.append('novos_anexos', contrato.novosAnexos[i]);
+            }
+        }
 
-        await fetch(url, {
+        await apiFetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dbData)
+            body: formData
         });
         await fetchAllData();
         loadDashboardStats();
@@ -1108,8 +1145,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadDashboardStats() {
         const empresasCount = getEmpresas().length;
         const contratos = getContratos();
-        const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
-        const contratosGasto = contratos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
+        const ativos = contratos.filter(c => c.situacao === 'Ativo');
+        const contratosAtivos = ativos.length;
+        const contratosGasto = ativos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
         
         document.getElementById('count-empresas').textContent = empresasCount;
         document.getElementById('count-contratos').textContent = contratosAtivos;
@@ -1318,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const method = editingEmpresaId ? 'PUT' : 'POST';
             const url = editingEmpresaId ? `${API_URL}/empresas/${editingEmpresaId}` : `${API_URL}/empresas`;
             
-            const response = await fetch(url, {
+            const response = await apiFetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -1453,7 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userRole = userObj?.role;
                 const username = userObj?.usuario;
                 
-                const res = await fetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const res = await apiFetch(`${API_URL}/empresas/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 const data = await res.json();
                 
                 if (!res.ok) {
@@ -1556,24 +1594,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const tipo = document.getElementById('con-tipo').value;
 
         const filesInput = document.getElementById('con-anexos');
-        const anexosB64 = [];
-        if (filesInput && filesInput.files.length > 0) {
-            for (const file of filesInput.files) {
-                const b64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result, id: Date.now() + Math.random() });
-                    reader.readAsDataURL(file);
-                });
-                anexosB64.push(b64);
-            }
-        }
+        const novosAnexos = (filesInput && filesInput.files.length > 0) ? Array.from(filesInput.files) : [];
 
         const existingCon = editingContratoId ? getContratos().find(c => String(c.id) === String(editingContratoId)) : null;
-        let finalAnexos = existingCon && existingCon.anexos ? [...existingCon.anexos] : [];
+        let anexosExistentes = existingCon && existingCon.anexos ? [...existingCon.anexos] : [];
         if(window.anexosToDelete && window.anexosToDelete.length > 0) {
-            finalAnexos = finalAnexos.filter(a => !window.anexosToDelete.includes(a.id));
+            anexosExistentes = anexosExistentes.filter(a => !window.anexosToDelete.includes(a.id));
         }
-        finalAnexos = [...finalAnexos, ...anexosB64];
 
         const contratoData = {
             id: editingContratoId,
@@ -1588,7 +1615,8 @@ document.addEventListener('DOMContentLoaded', () => {
             periodoFinal: document.getElementById('con-periodofinal').value,
             situacao: document.getElementById('con-situacao').value,
             gestor: document.getElementById('con-gestor').value,
-            anexos: finalAnexos,
+            anexosExistentes: anexosExistentes,
+            novosAnexos: novosAnexos,
             username: JSON.parse(localStorage.getItem('currentUser'))?.usuario
         };
 
@@ -1696,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userRole = userObj?.role;
                 const username = userObj?.usuario;
                 
-                const res = await fetch(`${API_URL}/contratos/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const res = await apiFetch(`${API_URL}/contratos/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 const data = await res.json();
                 
                 if (!res.ok) {
@@ -1879,22 +1907,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderAnexosPreview = function(anexos) {
         const preview = document.getElementById('anexos-preview');
+        if (!preview) return;
         preview.innerHTML = '';
         if(anexos.length === 0) return;
         
-        anexos.forEach(a => {
+        anexos.forEach((a, index) => {
+            // Se estiver marcado para deletar (localmente na edição), não mostra
             if(window.anexosToDelete && window.anexosToDelete.includes(a.id)) return;
+
             const div = document.createElement('div');
-            div.style = "display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px;";
-            div.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class='bx bx-file' style="color: var(--primary-color);"></i>
-                    <span style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.name}">${a.name}</span>
-                </div>
-                <button type="button" class="btn-icon delete" style="padding: 2px;" onclick="window.anexosToDelete.push(${a.id}); renderAnexosPreview(${JSON.stringify(anexos).replace(/"/g, '&quot;')})">
-                    <i class='bx bx-trash' style="font-size: 14px;"></i>
-                </button>
-            `;
+            div.style = "display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; margin-bottom: 4px;";
+            
+            const info = document.createElement('div');
+            info.style = "display: flex; align-items: center; gap: 8px;";
+            info.innerHTML = `<i class='bx bx-file' style="color: var(--primary-color);"></i>
+                             <span style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.name}">${a.name}</span>`;
+            
+            const btnDelete = document.createElement('button');
+            btnDelete.type = "button";
+            btnDelete.className = "btn-icon delete";
+            btnDelete.style = "padding: 2px;";
+            btnDelete.innerHTML = `<i class='bx bx-trash' style="font-size: 14px;"></i>`;
+            btnDelete.onclick = () => {
+                if (a.id) {
+                    window.anexosToDelete.push(a.id);
+                } else {
+                    // Para novos anexos que ainda não tem ID de banco, removemos do array de novos
+                    // mas como estamos lidando com FileList no submit, é melhor simplificar:
+                    // na edição, só permitimos deletar o que já existe no banco via ID.
+                    // Se for um arquivo recém selecionado no input, o usuário limpa o input.
+                    showToast('Para remover arquivos recém-selecionados, limpe o campo de seleção.', 'info');
+                    return;
+                }
+                renderAnexosPreview(anexos);
+            };
+
+            div.appendChild(info);
+            div.appendChild(btnDelete);
             preview.appendChild(div);
         });
     };
@@ -1940,9 +1989,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-anexos-modal')?.addEventListener('click', clsAnexos);
     document.getElementById('btn-fechar-anexos')?.addEventListener('click', clsAnexos);
 
-    window.visualizarAnexo = function(base64, filename) {
+    window.visualizarAnexo = function(data, filename) {
+        if (!data) return;
+
+        // Se for uma URL (começa com /uploads ou http), abre diretamente
+        if (data.startsWith('/uploads/') || data.startsWith('http')) {
+            window.open(data, '_blank');
+            return;
+        }
+
+        // Se for Base64, mantém a lógica de conversão para Blob
         try {
-            const arr = base64.split(',');
+            const arr = data.split(',');
+            if (arr.length < 2) {
+                // Caso não tenha o prefixo data:mime;base64, tenta abrir como URL
+                window.open(data, '_blank');
+                return;
+            }
             const mime = arr[0].match(/:(.*?);/)[1];
             const bstr = atob(arr[1]);
             let n = bstr.length;
@@ -1959,7 +2022,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Erro ao gerar visualização do anexo", e);
             // Fallback para download se der erro
             const link = document.createElement('a');
-            link.href = base64;
+            link.href = data;
             link.download = filename || 'anexo';
             document.body.appendChild(link);
             link.click();
@@ -2042,7 +2105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function getDbFatFromServer(ano) {
         try {
-            const res = await fetch(`${API_URL}/faturamentos?ano=${ano}`);
+            const res = await apiFetch(`${API_URL}/faturamentos?ano=${ano}`);
             const data = await res.json();
             let dbFat = {};
             for (const item of data) {
@@ -2145,7 +2208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
             
             try {
-                const res = await fetch(`${API_URL}/faturamentos`, {
+                const res = await apiFetch(`${API_URL}/faturamentos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -2200,7 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const container = document.getElementById('container-postos-cards');
         const allEmpresas = getEmpresas();
-        let listContratos = getContratos().filter(c => c.tipo === currentPostoServico);
+        let listContratos = getContratos().filter(c => c.tipo === currentPostoServico && c.situacao === 'Ativo');
 
         // Atualizar options do Filtro de Empresa com as empresas deste serviço
         const uniqueEmpIds = [...new Set(listContratos.map(c => c.empresaId))];
@@ -2499,7 +2562,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             try {
-                await fetch(`${API_URL}/postos/save`, {
+                await apiFetch(`${API_URL}/postos/save`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contratoId: curEscolaContratoId, escolas: arr })
@@ -2557,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const method = editingLoteId ? 'PUT' : 'POST';
                 const url = editingLoteId ? `${API_URL}/indenizatorios/${editingLoteId}` : `${API_URL}/indenizatorios`;
                 
-                const res = await fetch(url, {
+                const res = await apiFetch(url, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -2579,9 +2642,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
 
         try {
-            const res = await fetch(`${API_URL}/indenizatorios`);
+            const res = await apiFetch(`${API_URL}/indenizatorios`);
             const lotes = await res.json();
-            const resEmp = await fetch(`${API_URL}/empresas?system=${selectedSystem}`);
+            const resEmp = await apiFetch(`${API_URL}/empresas?system=${selectedSystem}`);
             const empresas = await resEmp.json();
 
             container.innerHTML = '';
@@ -2611,7 +2674,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.editLoteIndenizatorio = async function(id) {
         try {
-            const res = await fetch(`${API_URL}/indenizatorios`);
+            const res = await apiFetch(`${API_URL}/indenizatorios`);
             const lotes = await res.json();
             const lote = lotes.find(l => String(l.id) === String(id));
             if (!lote) return;
@@ -2642,7 +2705,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const userRole = userObj?.role;
                 const username = userObj?.usuario;
 
-                const res = await fetch(`${API_URL}/indenizatorios/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
+                const res = await apiFetch(`${API_URL}/indenizatorios/${id}?userRole=${userRole}&username=${username}`, { method: 'DELETE' });
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -2738,9 +2801,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.exportIndenizatorios = async function(type) {
         try {
-            const resLotes = await fetch(`${API_URL}/indenizatorios`);
+            const resLotes = await apiFetch(`${API_URL}/indenizatorios`);
             const lotes = await resLotes.json();
-            const resEmp = await fetch(`${API_URL}/empresas?system=${selectedSystem}`);
+            const resEmp = await apiFetch(`${API_URL}/empresas?system=${selectedSystem}`);
             const empresas = await resEmp.json();
             
             const data = lotes.map(l => {

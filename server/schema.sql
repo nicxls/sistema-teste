@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS contratos (
     lote VARCHAR(50),
     cre VARCHAR(50),
     tipo VARCHAR(50),
+    modalidade VARCHAR(50), -- NOVO
     empresa_id INT,
     periodo_inicial DATE,
     periodo_final DATE,
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS contratos (
     -- Campos Mão de Obra
     valor_mensal DECIMAL(12, 2) DEFAULT 0,
     postos TEXT,
+    anexos LONGTEXT, -- NOVO
     FOREIGN KEY (empresa_id) REFERENCES empresas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -63,14 +65,34 @@ CREATE TABLE IF NOT EXISTS escolas_alocadas (
     contrato_id INT NOT NULL,
     municipio VARCHAR(150),
     nome VARCHAR(255),
-    valor VARCHAR(100), -- Mantendo como string pois pode ser formatado ou conter unidades
+    valor VARCHAR(100),
     carga_horaria VARCHAR(50),
     implantados INT DEFAULT 0,
     vagos INT DEFAULT 0,
     FOREIGN KEY (contrato_id) REFERENCES contratos(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Usuário Master Padrão
+-- Tabela de Faturamentos
+CREATE TABLE IF NOT EXISTS faturamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY, 
+    ano INT NOT NULL, 
+    contrato_id INT NOT NULL, 
+    dados LONGTEXT, 
+    UNIQUE KEY(ano, contrato_id),
+    FOREIGN KEY (contrato_id) REFERENCES contratos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabela de Solicitações de Exclusão (Admin -> Master)
+CREATE TABLE IF NOT EXISTS solicitacoes_exclusao (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tabela VARCHAR(50) NOT NULL,
+    registro_id INT NOT NULL,
+    motivo TEXT,
+    solicitante VARCHAR(100),
+    status VARCHAR(50) DEFAULT 'pendente',
+    data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Usuário Master Padrão (Nicolas)
 INSERT IGNORE INTO usuarios (usuario, senha, role) 
 VALUES ('nicolas-silva', 'inter2017', 'master');
-CREATE TABLE IF NOT EXISTS faturamentos (id INT AUTO_INCREMENT PRIMARY KEY, ano INT NOT NULL, contrato_id INT NOT NULL, dados LONGTEXT, UNIQUE KEY(ano, contrato_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
