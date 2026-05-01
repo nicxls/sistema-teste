@@ -1055,11 +1055,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const method = isEdit ? 'PUT' : 'POST';
         const url = isEdit ? `${API_URL}/empresas/${empresa.id}` : `${API_URL}/empresas`;
         
-        await fetch(url, {
+        const response = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(empresa)
         });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || data.message || 'Erro ao salvar empresa');
+        }
+
         await fetchAllData();
         loadDashboardStats();
     }
@@ -1091,11 +1097,17 @@ document.addEventListener('DOMContentLoaded', () => {
             anexos: contrato.anexos
         };
 
-        await fetch(url, {
+        const response = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dbData)
         });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || data.message || 'Erro ao salvar contrato');
+        }
+
         await fetchAllData();
         loadDashboardStats();
     }
@@ -1609,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formContratoContainer.classList.add('form-hidden');
             loadContratosTable();
         } catch (error) {
-            showToast('Erro ao salvar contrato.', 'error');
+            showToast(error.message, 'error');
         }
     });
 
