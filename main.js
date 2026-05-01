@@ -1476,7 +1476,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Empresa excluída.', 'success');
             } catch (error) {
                 console.error('Erro ao excluir empresa:', error);
-                showToast(error.message, 'error');
+                let msg = error.message;
+                if (msg.includes('perfil Master') || msg.includes('permissão') || msg.includes('Acesso negado')) {
+                    msg = 'Acesso negado';
+                }
+                showToast(msg, 'error');
             }
         }
     }
@@ -1713,7 +1717,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Contrato excluído com sucesso');
             } catch (error) {
                 console.error('Erro ao excluir contrato:', error);
-                showToast(error.message, 'error');
+                let msg = error.message;
+                if (msg.includes('perfil Master') || msg.includes('permissão') || msg.includes('Acesso negado')) {
+                    msg = 'Acesso negado';
+                }
+                showToast(msg, 'error');
             }
         }
     }
@@ -1918,8 +1926,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
                         </div>
                     </div>
-                    <button type="button" onclick="downloadAnexo('${a.data}', '${a.name}')" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 5px;">
-                        <i class='bx bx-download'></i> Baixar
+                    <button type="button" onclick="visualizarAnexo('${a.data}', '${a.name}')" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                        <i class='bx bx-show'></i> Visualizar
                     </button>
                 `;
                 container.appendChild(el);
@@ -1932,13 +1940,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-close-anexos-modal')?.addEventListener('click', clsAnexos);
     document.getElementById('btn-fechar-anexos')?.addEventListener('click', clsAnexos);
 
-    window.downloadAnexo = function(base64, filename) {
-        const link = document.createElement('a');
-        link.href = base64;
-        link.download = filename || 'anexo';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    window.visualizarAnexo = function(base64, filename) {
+        try {
+            const arr = base64.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while(n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            const blob = new Blob([u8arr], {type: mime});
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            // Remove the URL after 1 minute to free memory
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (e) {
+            console.error("Erro ao gerar visualização do anexo", e);
+            // Fallback para download se der erro
+            const link = document.createElement('a');
+            link.href = base64;
+            link.download = filename || 'anexo';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     };
 
 
