@@ -1918,9 +1918,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
                         </div>
                     </div>
-                    <a href="${a.data}" target="_blank" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                        <i class='bx bx-show'></i> Visualizar
-                    </a>
+                    <button type="button" onclick="downloadAnexo('${a.data}', '${a.name}')" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                        <i class='bx bx-download'></i> Baixar
+                    </button>
                 `;
                 container.appendChild(el);
             });
@@ -1931,6 +1931,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const clsAnexos = () => document.getElementById('modal-anexos').classList.add('form-hidden');
     document.getElementById('btn-close-anexos-modal')?.addEventListener('click', clsAnexos);
     document.getElementById('btn-fechar-anexos')?.addEventListener('click', clsAnexos);
+
+    window.downloadAnexo = function(base64, filename) {
+        const link = document.createElement('a');
+        link.href = base64;
+        link.download = filename || 'anexo';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
 
 
