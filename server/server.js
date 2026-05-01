@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
-const db = require('./server/db');
+const db = require('./db');
 const bcrypt = require('bcryptjs');
 
 const app = express();
@@ -21,7 +21,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, '/')));
 
 // Servir arquivos de upload
-app.use('/uploads', express.static(path.join(__dirname, 'server/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Socket.io Notificação
 const notifyUpdate = () => io.emit('data-updated');
@@ -29,11 +29,11 @@ const notifyUpdate = () => io.emit('data-updated');
 // ==========================================
 // ROTAS MODULARIZADAS
 // ==========================================
-const authRoutes = require('./server/routes/auth');
-const empresasRoutes = require('./server/routes/empresas');
-const contratosRoutes = require('./server/routes/contratos');
-const adminRoutes = require('./server/routes/admin');
-const authenticateToken = require('./server/middlewares/auth');
+const authRoutes = require('./routes/auth');
+const empresasRoutes = require('./routes/empresas');
+const contratosRoutes = require('./routes/contratos');
+const adminRoutes = require('./routes/admin');
+const authenticateToken = require('./middlewares/auth');
 
 // Rotas Públicas
 app.use('/api', authRoutes);
