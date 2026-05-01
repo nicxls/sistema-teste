@@ -103,7 +103,8 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Função helper para notificar todos os clientes via WebSocket
 const notifyUpdate = () => {
@@ -467,6 +468,7 @@ app.post('/api/contratos', async (req, res) => {
         notifyUpdate();
         res.json({ id: result.insertId });
     } catch (error) {
+        console.error('Erro ao inserir contrato:', error);
         res.status(500).json({ error: error.message });
     }
 });
