@@ -1121,7 +1121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const empresasCount = getEmpresas().length;
         const contratos = getContratos();
         const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
-        const contratosGasto = contratos.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || parseFloat(c.valorDiario)*22 || 0), 0);
+        const contratosAtivosArray = contratos.filter(c => c.situacao === 'Ativo');
+        const contratosGasto = contratosAtivosArray.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || (parseFloat(c.valorDiario) * 22) || 0), 0);
         
         document.getElementById('count-empresas').textContent = empresasCount;
         document.getElementById('count-contratos').textContent = contratosAtivos;
