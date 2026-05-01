@@ -24,6 +24,13 @@ const db = require('./db');
             await db.execute('UPDATE empresas SET modulo = "mao-de-obra" WHERE modulo IS NULL');
         }
 
+        // Migration: Tabela contratos - Adicionar coluna modalidade
+        const [modCols] = await db.execute('SHOW COLUMNS FROM contratos LIKE "modalidade"');
+        if (modCols.length === 0) {
+            await db.execute('ALTER TABLE contratos ADD COLUMN modalidade VARCHAR(50)');
+            console.log('Coluna "modalidade" adicionada à tabela "contratos".');
+        }
+
         // Migration: Tabela lotes_indenizatorios
         await db.execute(`
             CREATE TABLE IF NOT EXISTS lotes_indenizatorios (
@@ -392,19 +399,8 @@ app.delete('/api/empresas/:id', async (req, res) => {
     const { userRole, username } = req.query;
     
     try {
-        if (userRole === 'admin') {
-            const [rows] = await db.execute('SELECT razao FROM empresas WHERE id = ?', [id]);
-            const nome = rows.length > 0 ? rows[0].razao : 'Empresa ID ' + id;
-            await db.execute(
-                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
-                ['empresa', id, nome, username]
-            );
-            notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
-        }
-
-        if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
+        if (userRole === 'admin' || userRole === 'usuario') {
+            return res.status(403).json({ error: 'Sem permissão.' });
         }
         
         await db.execute('DELETE FROM empresas WHERE id = ?', [id]);
@@ -443,13 +439,20 @@ app.get('/api/contratos', async (req, res) => {
 app.post('/api/contratos', async (req, res) => {
     const data = req.body;
     try {
+        if (data.proa) {
+            const [existing] = await db.execute('SELECT id FROM contratos WHERE proa = ?', [data.proa]);
+            if (existing.length > 0) {
+                return res.status(400).json({ error: 'Já existe um contrato cadastrado com este PROA.' });
+            }
+        }
+        
         const [result] = await db.execute(
             `INSERT INTO contratos (
-                numero, proa, lote, cre, tipo, empresa_id, periodo_inicial, periodo_final, 
+                numero, proa, lote, cre, tipo, modalidade, empresa_id, periodo_inicial, periodo_final, 
                 situacao, gestor, alunos, municipio, valor_diario, valor_km, km, valor_mensal, postos, anexos
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
+                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, data.modalidade || null, 
                 parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
                 data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
                 parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
@@ -467,14 +470,21 @@ app.put('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     try {
+        if (data.proa) {
+            const [existing] = await db.execute('SELECT id FROM contratos WHERE proa = ? AND id != ?', [data.proa, id]);
+            if (existing.length > 0) {
+                return res.status(400).json({ error: 'Já existe um contrato cadastrado com este PROA.' });
+            }
+        }
+
         await db.execute(
             `UPDATE contratos SET 
-                numero=?, proa=?, lote=?, cre=?, tipo=?, empresa_id=?, periodo_inicial=?, 
+                numero=?, proa=?, lote=?, cre=?, tipo=?, modalidade=?, empresa_id=?, periodo_inicial=?, 
                 periodo_final=?, situacao=?, gestor=?, alunos=?, municipio=?, valor_diario=?, 
                 valor_km=?, km=?, valor_mensal=?, postos=?, anexos=? 
             WHERE id = ?`,
             [
-                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, 
+                data.numero || null, data.proa || null, data.lote || null, data.cre || null, data.tipo || null, data.modalidade || null, 
                 parseInt(data.empresa_id) || null, data.periodo_inicial || null, data.periodo_final || null, 
                 data.situacao || null, data.gestor || null, parseInt(data.alunos) || 0, data.municipio || null, 
                 parseFloat(data.valor_diario) || 0, parseFloat(data.valor_km) || 0, parseFloat(data.km) || 0, 
@@ -492,19 +502,8 @@ app.delete('/api/contratos/:id', async (req, res) => {
     const { id } = req.params;
     const { userRole, username } = req.query;
     try {
-        if (userRole === 'admin') {
-            const [rows] = await db.execute('SELECT numero FROM contratos WHERE id = ?', [id]);
-            const nome = rows.length > 0 ? rows[0].numero : 'Contrato ID ' + id;
-            await db.execute(
-                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
-                ['contrato', id, nome, username]
-            );
-            notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
-        }
-
-        if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
+        if (userRole === 'admin' || userRole === 'usuario') {
+            return res.status(403).json({ error: 'Sem permissão.' });
         }
 
         await db.execute('DELETE FROM contratos WHERE id = ?', [id]);
@@ -609,19 +608,8 @@ app.delete('/api/indenizatorios/:id', async (req, res) => {
     const { id } = req.params;
     const { userRole, username } = req.query;
     try {
-        if (userRole === 'admin') {
-            const [rows] = await db.execute('SELECT lote FROM lotes_indenizatorios WHERE id = ?', [id]);
-            const nome = rows.length > 0 ? rows[0].lote : 'Lote ID ' + id;
-            await db.execute(
-                'INSERT INTO solicitacoes_exclusao (tipo, item_id, item_nome, usuario) VALUES (?, ?, ?, ?)',
-                ['lote', id, nome, username]
-            );
-            notifyUpdate();
-            return res.status(202).json({ requested: true, message: 'Solicitação de exclusão enviada para aprovação.' });
-        }
-        
-        if (userRole === 'usuario') {
-            return res.status(403).json({ error: 'Acesso negado. Você não tem permissão para excluir.' });
+        if (userRole === 'admin' || userRole === 'usuario') {
+            return res.status(403).json({ error: 'Sem permissão.' });
         }
 
         await db.execute('DELETE FROM lotes_indenizatorios WHERE id = ?', [id]);

@@ -1075,6 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: contrato.lote,
             cre: contrato.cre,
             tipo: contrato.tipo,
+            modalidade: contrato.modalidade,
             empresa_id: contrato.empresaId,
             periodo_inicial: contrato.periodoInicial,
             periodo_final: contrato.periodoFinal,
@@ -1577,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lote: document.getElementById('con-lote').value,
             cre: document.getElementById('con-cre').value,
             tipo: tipo,
+            modalidade: document.getElementById('con-modalidade').value,
             empresaId: document.getElementById('con-empresa').value,
             periodoInicial: document.getElementById('con-periodoinicial').value,
             periodoFinal: document.getElementById('con-periodofinal').value,
@@ -1730,6 +1732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('con-lote').value = con.lote || '';
         document.getElementById('con-cre').value = con.cre || '';
         document.getElementById('con-tipo').value = con.tipo || '';
+        document.getElementById('con-modalidade').value = con.modalidade || '';
         document.getElementById('con-empresa').value = con.empresaId || '';
 
         document.getElementById('con-periodoinicial').value = con.periodoInicial || '';
@@ -1801,6 +1804,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="detail-item">
                         <span class="detail-label">Tipo de Serviço</span>
                         <span class="detail-value">${con.tipo || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Tipo de Contrato</span>
+                        <span class="detail-value">${con.modalidade || '-'}</span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">PROA</span>
