@@ -2212,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const container = document.getElementById('container-postos-cards');
         const allEmpresas = getEmpresas();
-        let listContratos = getContratos().filter(c => c.tipo === currentPostoServico);
+        let listContratos = getContratos().filter(c => c.tipo === currentPostoServico && c.situacao === 'Ativo');
 
         // Atualizar options do Filtro de Empresa com as empresas deste serviço
         const uniqueEmpIds = [...new Set(listContratos.map(c => c.empresaId))];
