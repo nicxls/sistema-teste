@@ -206,9 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
             const [empRes, conRes, posRes] = await Promise.all([
-                fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
-                fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
-                fetch(`${API_URL}/postos?t=${time}`)
+                apiFetch(`/empresas?system=${selectedSystem}&t=${time}`),
+                apiFetch(`/contratos?system=${selectedSystem}&t=${time}`),
+                apiFetch(`/postos?t=${time}`)
             ]);
             cachedEmpresas = await empRes.json();
             
@@ -1395,6 +1395,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchTerm = (document.getElementById('filtro-empresa-lista')?.value || '').toLowerCase();
         let empresas = getEmpresas();
 
+        // Filtro por sistema selecionado
+        empresas = empresas.filter(emp => {
+            if (selectedSystem === 'transporte') return emp.modulo === 'transporte';
+            return emp.modulo !== 'transporte';
+        });
+
         if (searchTerm) {
             empresas = empresas.filter(emp => 
                 (emp.razao && emp.razao.toLowerCase().includes(searchTerm)) ||
@@ -1684,6 +1690,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const vSit = document.getElementById('filtro-situacao').value;
             if (vSit && con.situacao !== vSit) return false;
+
+            // Filtro por sistema selecionado
+            if (selectedSystem === 'transporte') {
+                if (con.tipo !== 'Transporte Escolar') return false;
+            } else {
+                if (con.tipo === 'Transporte Escolar') return false;
+            }
 
             return true;
         });
