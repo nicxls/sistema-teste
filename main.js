@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     applyLogin(data.user);
                     showToast('Login efetuado com sucesso!', 'success');
                 } else {
-                    showBeautifulAlert('Acesso Negado', data.message || 'Usuário ou senha inválidos!', true);
+                    showBeautifulAlert('Acesso Negado', data.error || data.message || 'Usuário ou senha inválidos!', true);
                 }
             } catch (error) {
                 showBeautifulAlert('Erro', 'Não foi possível conectar ao servidor.', true);
