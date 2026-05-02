@@ -934,10 +934,16 @@ document.addEventListener('DOMContentLoaded', () => {
             menuFaturamentos.onclick = (e) => {
                 e.preventDefault();
                 const sub = document.getElementById('submenu-faturamentos');
+                const subPostos = document.getElementById('submenu-postos');
                 if (sub) {
                     const isOpen = sub.style.display === 'block';
                     sub.style.display = isOpen ? 'none' : 'block';
                     menuFaturamentos.querySelector('.arrow')?.classList.toggle('rotate', !isOpen);
+                    
+                    if (!isOpen && subPostos) {
+                        subPostos.style.display = 'none';
+                        menuPostos.querySelector('.arrow')?.classList.remove('rotate');
+                    }
                 }
             };
         }
@@ -945,10 +951,16 @@ document.addEventListener('DOMContentLoaded', () => {
             menuPostos.onclick = (e) => {
                 e.preventDefault();
                 const sub = document.getElementById('submenu-postos');
+                const subFat = document.getElementById('submenu-faturamentos');
                 if (sub) {
                     const isOpen = sub.style.display === 'block';
                     sub.style.display = isOpen ? 'none' : 'block';
                     menuPostos.querySelector('.arrow')?.classList.toggle('rotate', !isOpen);
+
+                    if (!isOpen && subFat) {
+                        subFat.style.display = 'none';
+                        menuFaturamentos.querySelector('.arrow')?.classList.remove('rotate');
+                    }
                 }
             };
         }
