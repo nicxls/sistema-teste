@@ -2255,6 +2255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fCre = postosCreFilter.value;
         const fEmp = postosEmpresaFilter.value;
         const fMun = postosMunicipioFilter.value.toLowerCase();
+        const fEsc = postosEscolaFilter.value.toLowerCase();
 
         listContratos.forEach(con => {
             gTotalPostos += parseInt(con.postos || 0);
