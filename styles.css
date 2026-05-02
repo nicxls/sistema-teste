@@ -300,7 +300,7 @@ body {
 
 .status-pendente { background: rgba(241, 196, 15, 0.1); color: #f39c12; }
 .status-pago { background: rgba(43, 147, 72, 0.1); color: #2b9348; }
-.status-atrasado { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
+.status-retido { background: rgba(231, 76, 60, 0.1); color: #e74c3c; }
 
 .topbar {
     position: relative;

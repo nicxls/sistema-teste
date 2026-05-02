@@ -1629,7 +1629,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filtros
     const inputsFiltro = [
         'filtro-processo', 'filtro-tipo', 'filtro-cre',
-        'filtro-contrato', 'filtro-empresa', 'filtro-situacao'
+        'filtro-contrato', 'filtro-empresa', 'filtro-situacao', 'filtro-modalidade'
     ].map(id => document.getElementById(id));
 
     inputsFiltro.forEach(input => {
@@ -1669,6 +1669,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const vSit = document.getElementById('filtro-situacao').value;
             if (vSit && con.situacao !== vSit) return false;
+
+            const vMod = document.getElementById('filtro-modalidade').value;
+            if (vMod && con.modalidade !== vMod) return false;
 
             return true;
         });
@@ -2115,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
                         <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                         <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
-                        <option value="Atrasado" ${data.situacao === 'Atrasado' ? 'selected' : ''}>Atrasado</option>
+                        <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
                     </select>
                 </td>
                 <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
