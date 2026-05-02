@@ -680,15 +680,21 @@
                         style="background: var(--card-bg); padding: 24px; border: 1px solid var(--border-color); border-radius: var(--radius) var(--radius) 0 0; box-shadow: var(--shadow); margin-bottom: 0; align-items: center; display: flex; justify-content: space-between;">
                         <h1 id="fat-group-title" style="font-size: 20px; color: var(--text-color); margin: 0;">
                             Faturamentos - Setor</h1>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label for="select-ano-fat"
-                                style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
-                            <select id="select-ano-fat"
-                                style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-family: inherit;">
-                                <option value="2024">2024</option>
-                                <option value="2025" selected>2025</option>
-                                <option value="2026">2026</option>
-                            </select>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="filtro-fat-empresa" style="font-size: 14px; font-weight: 500; color: var(--text-light);">Filtrar Empresa:</label>
+                                <input type="text" id="filtro-fat-empresa" placeholder="Buscar empresa..." style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-size: 13px; width: 250px;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label for="select-ano-fat"
+                                    style="font-size: 14px; font-weight: 500; color: var(--text-light);">Ano:</label>
+                                <select id="select-ano-fat"
+                                    style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-family: inherit;">
+                                    <option value="2024">2024</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="data-table"

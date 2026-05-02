@@ -2003,6 +2003,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (targetId === 'faturamentos-lista') {
                 document.getElementById('fat-group-title').textContent = `Faturamentos - ${label}`;
+                document.getElementById('filtro-fat-empresa').value = ''; // Limpar filtro ao trocar setor
                 loadContratosFaturamentosTable(servico);
             } else if (targetId === 'postos-lista') {
                 document.getElementById('postos-group-title').textContent = `Gerenciamento de Postos - ${label}`;
@@ -2017,14 +2018,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    let currentFatServico = null;
+    const fatEmpresaFilter = document.getElementById('filtro-fat-empresa');
+    if (fatEmpresaFilter) {
+        fatEmpresaFilter.addEventListener('input', () => {
+            if (currentFatServico) loadContratosFaturamentosTable(currentFatServico);
+        });
+    }
+
     function loadContratosFaturamentosTable(servico) {
+        currentFatServico = servico;
         const tbody = document.getElementById('lista-contratos-faturamentos');
-        const contratos = getContratos().filter(c => c.tipo === servico);
+        const searchEmp = (document.getElementById('filtro-fat-empresa').value || '').toLowerCase();
+        
         const empresas = getEmpresas();
+        let contratos = getContratos().filter(c => c.tipo === servico);
+
+        // Filtrar por empresa
+        if (searchEmp) {
+            contratos = contratos.filter(con => {
+                const emp = empresas.find(e => String(e.id) === String(con.empresaId));
+                return emp ? emp.razao.toLowerCase().includes(searchEmp) : false;
+            });
+        }
 
         tbody.innerHTML = '';
         if (contratos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum contrato encontrado para este setor.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-light)">Nenhum contrato encontrado.</td></tr>`;
             return;
         }
 
