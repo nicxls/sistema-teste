@@ -551,7 +551,7 @@ body {
 
 .filters-row {
     display: grid;
-    grid-template-columns: repeat(6, 1fr) auto;
+    grid-template-columns: repeat(7, 1fr) auto;
     gap: 16px;
     align-items: end;
 }
