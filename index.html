@@ -777,7 +777,7 @@
                     <div
                         style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 20px; margin-bottom: 20px;">
                         <h4 style="font-size: 14px; margin-bottom: 15px; color: var(--text-color);">Filtrar Postos</h4>
-                        <div class="filters-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <div class="filters-row" style="grid-template-columns: repeat(4, 1fr);">
                             <div class="form-group">
                                 <label>CRE</label>
                                 <select id="filter-postos-cre">
@@ -795,6 +795,10 @@
                             <div class="form-group">
                                 <label>Município</label>
                                 <input type="text" id="filter-postos-municipio" placeholder="Digite o município...">
+                            </div>
+                            <div class="form-group">
+                                <label>Escola</label>
+                                <input type="text" id="filter-postos-escola" placeholder="Digite o nome da escola...">
                             </div>
                         </div>
                         <div style="margin-top: 15px;">

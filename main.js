@@ -2195,9 +2195,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const postosCreFilter = document.getElementById('filter-postos-cre');
     const postosEmpresaFilter = document.getElementById('filter-postos-empresa');
     const postosMunicipioFilter = document.getElementById('filter-postos-municipio');
+    const postosEscolaFilter = document.getElementById('filter-postos-escola');
     const btnLimparFiltrosPostos = document.getElementById('btn-limpar-filtros-postos');
     
-    [postosCreFilter, postosEmpresaFilter, postosMunicipioFilter].forEach(el => {
+    [postosCreFilter, postosEmpresaFilter, postosMunicipioFilter, postosEscolaFilter].forEach(el => {
         if(el) el.addEventListener('input', () => loadPostosDashboard());
     });
     
@@ -2206,6 +2207,7 @@ document.addEventListener('DOMContentLoaded', () => {
             postosCreFilter.value = "";
             postosEmpresaFilter.value = "";
             postosMunicipioFilter.value = "";
+            postosEscolaFilter.value = "";
             loadPostosDashboard();
         });
     }
@@ -2276,11 +2278,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (fCre && c.cre !== fCre) return false;
             if (fEmp && c.empresaId !== fEmp) return false;
             
+            const escolasArr = cachedPostos.filter(p => p.contrato_id == c.id);
+
             if (fMun) {
-                const escolasArr = cachedPostos.filter(p => p.contrato_id == c.id);
                 const checkMun = escolasArr.some(esc => (esc.municipio || '').toLowerCase().includes(fMun));
                 if (!checkMun) return false;
             }
+
+            if (fEsc) {
+                const checkEsc = escolasArr.some(esc => (esc.nome || '').toLowerCase().includes(fEsc));
+                if (!checkEsc) return false;
+            }
+
             return true;
         });
 
