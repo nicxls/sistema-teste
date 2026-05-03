@@ -2121,7 +2121,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = fatList[idx] || {};
             
             let inRange = true;
-            const con = getContratos().find(c => String(c.id) === String(contratoId));
+        const con = getContratos().find(c => String(c.id) === String(contratoId));
+        const isTransporte = con && con.tipo === 'Transporte Escolar';
+
+        // Update Table Header
+        const thead = document.getElementById('fat-thead');
+        if (thead) {
+            if (isTransporte) {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 80px;">KM</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR KM</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR DIÁRIO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 70px;">DIAS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">SITUAÇÃO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">DATA PAGAMENTO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">VALOR PAGO (R$)</th>
+                    </tr>`;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
+                    </tr>`;
+            }
+        }
+
+        months.forEach((m, idx) => {
+            const data = fatList[idx] || {};
+            
+            let inRange = true;
             if (con && con.periodoInicial && con.periodoFinal) {
                 const inicio = new Date(con.periodoInicial + 'T00:00:00');
                 const fim = new Date(con.periodoFinal + 'T00:00:00');
@@ -2138,31 +2173,72 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             if(!inRange) tr.title = "Fora do período de vigência do contrato";
             tr.style = rowStyle;
-            tr.innerHTML = `
-                <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
-                </td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
-                </td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
-                        <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                        <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
-                        <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
-                    </select>
-                </td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
-                </td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
-                </td>
-            `;
+
+            if (isTransporte) {
+                tr.innerHTML = `
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-km-${idx}" value="${data.km || ''}" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-valkm-${idx}" value="${formatCurrency(data.valorKm)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-valdia-${idx}" value="${formatCurrency(data.valorDiario)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="number" id="fat-dias-${idx}" value="${data.dias || ''}" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                            <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                            <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
+                            <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
+                        </select>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                `;
+            } else {
+                tr.innerHTML = `
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                            <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                            <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
+                            <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
+                        </select>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent;" ${fieldDisabled}>
+                    </td>
+                `;
+            }
             tbody.appendChild(tr);
 
-            // Add mask to dynamic faturamento value input
+            // Add masks to dynamic currency inputs
+            if (isTransporte) {
+                const vkInput = tr.querySelector(`#fat-valkm-${idx}`);
+                const vdInput = tr.querySelector(`#fat-valdia-${idx}`);
+                if(vkInput) vkInput.addEventListener('input', maskCurrency);
+                if(vdInput) vdInput.addEventListener('input', maskCurrency);
+            }
             const fatInput = tr.querySelector(`#fat-val-${idx}`);
             if(fatInput) fatInput.addEventListener('input', maskCurrency);
         });
@@ -2179,15 +2255,28 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveFat.addEventListener('click', async () => {
             if (!currentFatContratoId) return;
 
+            const con = getContratos().find(c => String(c.id) === String(currentFatContratoId));
+            const isTransporte = con && con.tipo === 'Transporte Escolar';
+
             let fatArray = [];
             for (let i = 0; i < 12; i++) {
-                fatArray.push({
+                const item = {
                     processo: document.getElementById(`fat-proc-${i}`).value,
-                    abertura: document.getElementById(`fat-abert-${i}`).value,
                     situacao: document.getElementById(`fat-sit-${i}`).value,
                     pagamento: document.getElementById(`fat-pag-${i}`).value,
                     valor: parseCurrency(document.getElementById(`fat-val-${i}`).value)
-                });
+                };
+
+                if (isTransporte) {
+                    item.km = document.getElementById(`fat-km-${i}`).value;
+                    item.valorKm = parseCurrency(document.getElementById(`fat-valkm-${i}`).value);
+                    item.valorDiario = parseCurrency(document.getElementById(`fat-valdia-${i}`).value);
+                    item.dias = document.getElementById(`fat-dias-${i}`).value;
+                } else {
+                    item.abertura = document.getElementById(`fat-abert-${i}`).value;
+                }
+                
+                fatArray.push(item);
             }
 
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
