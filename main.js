@@ -2127,7 +2127,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 thead.innerHTML = `
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">Nº PROCESSO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 80px;">KM</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR KM</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR DIÁRIO</th>
@@ -2140,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 thead.innerHTML = `
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">Nº PROCESSO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
@@ -2925,18 +2925,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         for (let i = 0; i < 12; i++) {
             const data = fatList[i] || {};
-            // Exporta a linha se houver valor faturado, número de processo ou se tiver sido modificado da situação pendente inicial com dinheiro 0.
-            if(data.valor > 0 || data.processo || data.abertura || data.situacao === 'Pago') {
-                exportData.push({
+            // Exporta a linha se houver dados relevantes
+            if(data.valor > 0 || data.processo || data.abertura || data.situacao === 'Pago' || data.km > 0 || data.dias > 0) {
+                let row = {
                     'Ano': ano,
                     'Mês': months[i],
                     'Empresa': empName,
                     'Nº Contrato': con.numero || '-',
-                    'Processo FAT': data.processo || '-',
-                    'Situação': data.situacao || 'Pendente',
-                    'Data Pag.': data.pagamento ? data.pagamento.split('-').reverse().join('/') : '-',
-                    'Total Faturado (R$)': data.valor ? formatCurrency(parseFloat(data.valor) || 0) : 'R$ 0,00'
-                });
+                    'Processo FAT': data.processo || '-'
+                };
+
+                if (con.tipo === 'Transporte Escolar') {
+                    row['KM'] = data.km || '0';
+                    row['Valor Km'] = data.valorKm ? formatCurrency(data.valorKm) : 'R$ 0,00';
+                    row['Valor Diário'] = data.valorDiario ? formatCurrency(data.valorDiario) : 'R$ 0,00';
+                    row['Dias'] = data.dias || '0';
+                }
+
+                row['Situação'] = data.situacao || 'Pendente';
+                row['Data Pag.'] = data.pagamento ? data.pagamento.split('-').reverse().join('/') : '-';
+                row['Total Faturado (R$)'] = data.valor ? formatCurrency(parseFloat(data.valor) || 0) : 'R$ 0,00';
+
+                exportData.push(row);
             }
         }
  
