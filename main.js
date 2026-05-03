@@ -2669,8 +2669,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalLote = document.getElementById('modal-lote');
     const formLote = document.getElementById('form-lote');
 
+    function setLoteModalReadonly(readonly) {
+        const inputs = document.querySelectorAll('#form-lote input, #form-lote select');
+        inputs.forEach(i => i.disabled = readonly);
+        
+        const btnSave = document.querySelector('#form-lote button[type="submit"]');
+        if (btnSave) btnSave.style.display = readonly ? 'none' : 'inline-block';
+    }
+
     window.openModalLote = function() {
         editingLoteId = null;
+        setLoteModalReadonly(false);
         document.getElementById('modal-lote-title').innerText = 'Novo Lote Indenizatório';
         formLote.reset();
         populateEmpresasSelect('lote-empresa');
@@ -2728,11 +2737,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const empresas = await resEmp.json();
 
             container.innerHTML = '';
+            
+            const userObj = JSON.parse(localStorage.getItem('currentUser'));
+            const userRole = userObj?.role;
+            const isAdmin = userRole === 'admin' || userRole === 'master';
+
             lotes.forEach(l => {
                 const emp = empresas.find(e => e.id == l.empresa_id);
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid var(--border-color)';
                 
+                let actions = '';
+                if (isAdmin) {
+                    actions = `
+                        <button class="btn-icon" onclick="editLoteIndenizatorio(${l.id})" style="color: #4361ee; margin-right: 8px;" title="Editar"><i class='bx bx-edit-alt'></i></button>
+                        <button class="btn-icon" onclick="deleteLoteIndenizatorio(${l.id})" style="color: var(--danger-color);" title="Excluir"><i class='bx bx-trash'></i></button>
+                    `;
+                } else {
+                    actions = `
+                        <button class="btn-icon" onclick="viewLoteIndenizatorio(${l.id})" style="color: #4361ee;" title="Visualizar"><i class='bx bx-show'></i></button>
+                    `;
+                }
+
                 tr.innerHTML = `
                     <td style="padding: 15px 20px; font-size: 14px; font-weight: 500; color: var(--text-color);">${l.lote}</td>
                     <td style="padding: 15px 20px; font-size: 13px; color: var(--text-light);">${l.cre}</td>
@@ -2741,8 +2767,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 15px 20px; font-size: 13px; color: var(--text-color);">${l.km}</td>
                     <td style="padding: 15px 20px; font-size: 13px; font-weight: 600; color: #4361ee;">${formatCurrency(l.valor_diario)}</td>
                     <td style="padding: 15px 20px; text-align: center;">
-                        <button class="btn-icon" onclick="editLoteIndenizatorio(${l.id})" style="color: #4361ee; margin-right: 8px;"><i class='bx bx-edit-alt'></i></button>
-                        <button class="btn-icon" onclick="deleteLoteIndenizatorio(${l.id})" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>
+                        ${actions}
                     </td>
                 `;
                 container.appendChild(tr);
@@ -2760,6 +2785,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!lote) return;
 
             editingLoteId = id;
+            setLoteModalReadonly(false);
             document.getElementById('modal-lote-title').innerText = 'Editar Lote Indenizatório';
             
             document.getElementById('lote-numero').value = lote.lote || '';
@@ -2776,6 +2802,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showToast('Erro ao carregar dados do lote', 'error');
         }
+    };
+
+    window.viewLoteIndenizatorio = async function(id) {
+        await editLoteIndenizatorio(id);
+        document.getElementById('modal-lote-title').innerText = 'Visualizar Lote Indenizatório';
+        setLoteModalReadonly(true);
     };
 
     window.deleteLoteIndenizatorio = async function(id) {
