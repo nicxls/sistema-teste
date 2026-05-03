@@ -2117,10 +2117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
         const roleDisabled = user.role === 'usuario';
 
-        months.forEach((m, idx) => {
-            const data = fatList[idx] || {};
-            
-            let inRange = true;
         const con = getContratos().find(c => String(c.id) === String(contratoId));
         const isTransporte = con && con.tipo === 'Transporte Escolar';
 
