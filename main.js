@@ -2105,6 +2105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openModalFaturamentos = async function(contratoId, contratoNumero) {
         currentFatContratoId = contratoId;
+        window.currentFatAnexos = {}; // Inicializa o estado dos anexos na memória
         const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
         document.getElementById('modal-fat-title').textContent = `Gerenciar Faturamentos ${ano} - Contrato ${contratoNumero}`;
         
@@ -2128,6 +2129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">GEO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 80px;">KM</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR KM</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 110px;">VALOR DIÁRIO</th>
@@ -2135,6 +2137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">SITUAÇÃO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">DATA PAGAMENTO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">VALOR PAGO (R$)</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 2px solid var(--border-color); width: 80px;">ANEXOS</th>
                     </tr>`;
             } else {
                 thead.innerHTML = `
@@ -2151,6 +2154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         months.forEach((m, idx) => {
             const data = fatList[idx] || {};
+            window.currentFatAnexos[idx] = data.anexos ? [...data.anexos] : [];
             
             let inRange = true;
             if (con && con.periodoInicial && con.periodoFinal) {
@@ -2177,6 +2181,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <input type="text" id="fat-geo-${idx}" value="${data.geo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
                         <input type="text" id="fat-km-${idx}" value="${data.km || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
@@ -2200,6 +2207,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
                         <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color); text-align: center; position: relative;">
+                        <button type="button" class="btn-icon" title="Anexos" onclick="openFatAnexosModal(${idx}, '${m}')" style="color: var(--primary-color); padding: 5px;" ${fieldDisabled}>
+                            <i class='bx bx-paperclip' style="font-size: 20px;"></i>
+                            <span id="fat-anexo-badge-${idx}" style="font-size: 10px; background: #e63946; color: #fff; border-radius: 50%; padding: 2px 5px; position: absolute; top: 0px; right: 2px; font-weight: bold; ${window.currentFatAnexos[idx].length > 0 ? '' : 'display: none;'}">${window.currentFatAnexos[idx].length}</span>
+                        </button>
                     </td>
                 `;
             } else {
@@ -2264,10 +2277,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 if (isTransporte) {
+                    item.geo = document.getElementById(`fat-geo-${i}`).value;
                     item.km = document.getElementById(`fat-km-${i}`).value;
                     item.valorKm = parseCurrency(document.getElementById(`fat-valkm-${i}`).value);
                     item.valorDiario = parseCurrency(document.getElementById(`fat-valdia-${i}`).value);
                     item.dias = document.getElementById(`fat-dias-${i}`).value;
+                    item.anexos = window.currentFatAnexos[i] || [];
                 } else {
                     item.abertura = document.getElementById(`fat-abert-${i}`).value;
                 }
@@ -2303,6 +2318,96 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ==========================================
+    // LÓGICA DE ANEXOS DO FATURAMENTO
+    // ==========================================
+    let currentFatAnexoMonthIdx = null;
+    const modalFatAnexos = document.getElementById('modal-fat-anexos');
+    const btnCloseFatAnexos = document.getElementById('btn-close-fat-anexos-modal');
+    const btnFecharFatAnexos = document.getElementById('btn-fechar-fat-anexos');
+    const fatAnexosInput = document.getElementById('fat-anexos-input');
+
+    window.openFatAnexosModal = function(idx, monthName) {
+        currentFatAnexoMonthIdx = idx;
+        document.getElementById('modal-fat-anexos-title').textContent = `Anexos - ${monthName}`;
+        fatAnexosInput.value = ''; // Reseta o input
+        renderFatAnexosList();
+        modalFatAnexos.classList.remove('form-hidden');
+    };
+
+    function renderFatAnexosList() {
+        const container = document.getElementById('fat-anexos-list-container');
+        container.innerHTML = '';
+        const anexos = window.currentFatAnexos[currentFatAnexoMonthIdx] || [];
+
+        if (anexos.length === 0) {
+            container.innerHTML = '<div id="empty-fat-anexos" style="text-align: center; color: var(--text-light); padding: 40px 0;">Nenhum anexo lançado neste mês.</div>';
+        } else {
+            anexos.forEach(a => {
+                const el = document.createElement('div');
+                el.style = "display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px;";
+                el.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(67, 97, 238, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                            <i class='bx bx-file'></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 500; color: var(--text-color); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.name}">${a.name}</div>
+                            <div style="font-size: 11px; color: var(--text-light);">Arquivo anexado</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" onclick="visualizarAnexo('${a.data}', '${a.name}')" class="btn btn-primary" style="padding: 6px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                            <i class='bx bx-show'></i>
+                        </button>
+                        <button type="button" onclick="removeFatAnexo(${a.id})" class="btn-icon delete" style="padding: 6px 10px; font-size: 12px; background: #fee2e2; color: #e63946; border-radius: 4px; display: flex; align-items: center;">
+                            <i class='bx bx-trash'></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+        
+        // Update badge na tabela
+        const badge = document.getElementById(`fat-anexo-badge-${currentFatAnexoMonthIdx}`);
+        if(badge) {
+            badge.textContent = anexos.length;
+            badge.style.display = anexos.length > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    window.removeFatAnexo = function(id) {
+        if(currentFatAnexoMonthIdx === null) return;
+        window.currentFatAnexos[currentFatAnexoMonthIdx] = window.currentFatAnexos[currentFatAnexoMonthIdx].filter(a => a.id !== id);
+        renderFatAnexosList();
+    };
+
+    if (fatAnexosInput) {
+        fatAnexosInput.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0 || currentFatAnexoMonthIdx === null) return;
+            
+            for (const file of files) {
+                const b64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result, id: Date.now() + Math.random() });
+                    reader.readAsDataURL(file);
+                });
+                if(!window.currentFatAnexos[currentFatAnexoMonthIdx]) {
+                    window.currentFatAnexos[currentFatAnexoMonthIdx] = [];
+                }
+                window.currentFatAnexos[currentFatAnexoMonthIdx].push(b64);
+            }
+            renderFatAnexosList();
+            fatAnexosInput.value = ''; // limpa input para permitir o mesmo arquivo se deletado
+        });
+    }
+
+    const clsFatAnexos = () => modalFatAnexos.classList.add('form-hidden');
+    if (btnCloseFatAnexos) btnCloseFatAnexos.addEventListener('click', clsFatAnexos);
+    if (btnFecharFatAnexos) btnFecharFatAnexos.addEventListener('click', clsFatAnexos);
 
     // ==========================================
     // POSTOS LOGIC

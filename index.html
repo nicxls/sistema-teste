@@ -848,7 +848,7 @@
         <!-- Modal Detalhe Faturamento Mensal -->
         <div id="modal-faturamentos" class="modal-overlay form-hidden" style="z-index: 9999;">
             <div class="modal-content"
-                style="max-width: 1000px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+                style="max-width: 1300px; width: 95vw; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
                 <div
                     style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
                     <h3 id="modal-fat-title"
@@ -1065,6 +1065,38 @@
             <div
                 style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
                 <button id="btn-fechar-anexos" class="btn btn-secondary"
+                    style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Anexos Específico do Faturamento (Mês) -->
+    <div id="modal-fat-anexos" class="modal-overlay form-hidden" style="z-index: 10002;">
+        <div class="modal-content"
+            style="max-width: 600px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
+            <div
+                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="modal-fat-anexos-title"
+                    style="font-size: 16px; margin: 0; font-weight: 600; color: var(--text-color);">Anexos - Mês
+                </h3>
+                <button id="btn-close-fat-anexos-modal" class="btn-icon"><i class='bx bx-x'
+                        style="font-size: 24px;"></i></button>
+            </div>
+            <div style="padding: 15px 24px; background: var(--bg-color); border-bottom: 1px solid var(--border-color);">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="fat-anexos-input" style="font-size: 12px;">Adicionar Novo Anexo</label>
+                    <input type="file" id="fat-anexos-input" multiple accept=".pdf,.png,.jpg,.jpeg"
+                        style="width: 100%; padding: 8px; border: 1px dashed var(--primary-color); border-radius: 4px; background: rgba(0,0,0,0.02); cursor: pointer;">
+                </div>
+            </div>
+            <div id="fat-anexos-list-container"
+                style="padding: 20px 24px; overflow-y: auto; max-height: 40vh; background: var(--bg-color); display: flex; flex-direction: column; gap: 10px;">
+                <div id="empty-fat-anexos" style="text-align: center; color: var(--text-light); padding: 40px 0;">Nenhum
+                    anexo lançado neste mês.</div>
+            </div>
+            <div
+                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
+                <button id="btn-fechar-fat-anexos" class="btn btn-secondary"
                     style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
             </div>
         </div>
