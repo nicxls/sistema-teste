@@ -252,6 +252,7 @@ body {
     padding: 12px 15px;
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
+    color: var(--text-color);
 }
 
 .fat-planilha tr:hover {
@@ -288,6 +289,25 @@ body {
     background-repeat: no-repeat;
     background-position: right 10px center;
     padding-right: 30px;
+}
+
+/* Garante cor do texto nos inputs/selects da tabela de faturamentos (dark mode) */
+#fat-grid-body td {
+    color: var(--text-color);
+}
+
+#fat-grid-body input,
+#fat-grid-body select {
+    color: var(--text-color) !important;
+    background: transparent;
+}
+
+#fat-grid-body select {
+    background: var(--card-bg) !important;
+}
+
+#fat-thead th {
+    color: var(--text-light) !important;
 }
 
 .status-badge-inline {
