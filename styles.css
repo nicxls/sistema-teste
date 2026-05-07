@@ -292,25 +292,26 @@ body {
 }
 
 /* Garante cor do texto nos inputs/selects da tabela de faturamentos (dark mode) */
-#fat-grid-body td {
-    color: var(--text-color);
+[data-theme="dark"] #fat-grid-body td {
+    color: #ffffff !important;
 }
 
-#fat-grid-body input,
-#fat-grid-body select {
-    color: var(--text-color) !important;
+[data-theme="dark"] #fat-grid-body input,
+[data-theme="dark"] #fat-grid-body select {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     background: transparent;
 }
 
-#fat-grid-body select {
+[data-theme="dark"] #fat-grid-body select {
     background: var(--card-bg) !important;
 }
 
-#fat-grid-body input:disabled,
-#fat-grid-body select:disabled {
-    color: var(--text-color) !important;
-    -webkit-text-fill-color: var(--text-color) !important;
-    opacity: 0.8;
+[data-theme="dark"] #fat-grid-body input:disabled,
+[data-theme="dark"] #fat-grid-body select:disabled {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
 }
 
 #fat-thead th {
