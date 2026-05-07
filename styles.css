@@ -306,6 +306,13 @@ body {
     background: var(--card-bg) !important;
 }
 
+#fat-grid-body input:disabled,
+#fat-grid-body select:disabled {
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color) !important;
+    opacity: 0.8;
+}
+
 #fat-thead th {
     color: var(--text-light) !important;
 }
