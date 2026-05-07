@@ -2172,57 +2172,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isTransporte) {
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color); color: var(--text-color);">${m}</td>
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-km-${idx}" value="${data.km || ''}" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-km-${idx}" value="${data.km || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-valkm-${idx}" value="${formatCurrency(data.valorKm)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-valkm-${idx}" value="${formatCurrency(data.valorKm)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-valdia-${idx}" value="${formatCurrency(data.valorDiario)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-valdia-${idx}" value="${formatCurrency(data.valorDiario)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="number" id="fat-dias-${idx}" value="${data.dias || ''}" placeholder="0" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="number" id="fat-dias-${idx}" value="${data.dias || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: var(--card-bg); color: var(--text-color);" ${fieldDisabled}>
+                        <select id="fat-sit-${idx}" class="fat-input fat-select" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                 `;
             } else {
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color); color: var(--text-color);">${m}</td>
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: var(--card-bg); color: var(--text-color);" ${fieldDisabled}>
+                        <select id="fat-sit-${idx}" class="fat-input fat-select" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; background: transparent; color: var(--text-color);" ${fieldDisabled}>
+                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                 `;
             }
