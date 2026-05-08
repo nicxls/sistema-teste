@@ -1283,6 +1283,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const spanTotalGeral = document.getElementById('count-total-geral');
         if(spanTotalGeral) spanTotalGeral.textContent = formatCurrency(totalPago2026 + valorRetroativosPagas);
 
+        // --- CUSTOMIZAÇÃO POR MÓDULO (Transporte Escolar) ---
+        const cardGastoContainer = document.getElementById('card-gasto-container');
+        const cardRetroQtdContainer = document.getElementById('card-retro-qtd-container');
+        const cardRetroValContainer = document.getElementById('card-retro-valor-container');
+
+        if (selectedSystem === 'transporte') {
+            // No módulo transporte, remove indicadores de retroativo e altera nome do principal
+            if (cardRetroQtdContainer) cardRetroQtdContainer.style.display = 'none';
+            if (cardRetroValContainer) cardRetroValContainer.style.display = 'none';
+            if (cardGastoContainer) {
+                cardGastoContainer.querySelector('h3').textContent = 'TOTAL GASTO 2026';
+            }
+        } else {
+            // No módulo mão de obra (ou outros), mantém os indicadores originais
+            if (cardRetroQtdContainer) cardRetroQtdContainer.style.display = 'flex';
+            if (cardRetroValContainer) cardRetroValContainer.style.display = 'flex';
+            if (cardGastoContainer) {
+                cardGastoContainer.querySelector('h3').textContent = 'GASTO TOTAL PAGO (2026)';
+            }
+        }
+
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
         if(statusVig) statusVig.textContent = contratosAtivos;

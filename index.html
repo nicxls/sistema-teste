@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="styles.css?v=2.5">
     <!-- Socket.IO Client -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    
+
     <!-- Chart.js para Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- SheetJS (Excel) e jsPDF -->
@@ -225,19 +225,27 @@
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <!-- Notificações -->
                     <div style="position: relative;">
-                        <button id="btn-notifications" class="btn-icon" title="Notificações e Vencimentos" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.3s ease;">
+                        <button id="btn-notifications" class="btn-icon" title="Notificações e Vencimentos"
+                            style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.3s ease;">
                             <i class='bx bx-bell' style="font-size: 24px;"></i>
-                            <span id="notif-badge" style="display: none; position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: var(--danger-color); border-radius: 50%; border: 2px solid var(--bg-color);"></span>
+                            <span id="notif-badge"
+                                style="display: none; position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: var(--danger-color); border-radius: 50%; border: 2px solid var(--bg-color);"></span>
                         </button>
-                        <div id="notif-dropdown" class="form-hidden" style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 9999;">
-                            <div style="padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">Avisos de Vencimento</div>
+                        <div id="notif-dropdown" class="form-hidden"
+                            style="position: absolute; right: 0; top: 50px; background: var(--card-bg); width: 320px; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow-lg); z-index: 9999;">
+                            <div
+                                style="padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">
+                                Avisos de Vencimento</div>
                             <div id="notif-list" style="max-height: 250px; overflow-y: auto; padding: 10px;">
-                                <div style="padding: 10px; text-align: center; color: var(--text-light); font-size: 12px;">Nenhuma notificação nova</div>
+                                <div
+                                    style="padding: 10px; text-align: center; color: var(--text-light); font-size: 12px;">
+                                    Nenhuma notificação nova</div>
                             </div>
                         </div>
                     </div>
 
-                    <button id="user-profile-trigger" class="btn-icon" title="Configurações do Sistema" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.3s ease;">
+                    <button id="user-profile-trigger" class="btn-icon" title="Configurações do Sistema"
+                        style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: all 0.3s ease;">
                         <i class='bx bx-cog' style="font-size: 24px;"></i>
                     </button>
                     <div class="user-profile">
@@ -256,66 +264,91 @@
                     </div>
 
                     <!-- Dashboard Filters -->
-                    <div class="dashboard-filters" style="display: flex; gap: 15px; margin-bottom: 25px; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; align-items: flex-end;">
+                    <div class="dashboard-filters"
+                        style="display: flex; gap: 15px; margin-bottom: 25px; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; align-items: flex-end;">
                         <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Empresa</label>
-                            <select id="filter-dash-empresa" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                            <label
+                                style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Empresa</label>
+                            <select id="filter-dash-empresa" class="fat-input fat-select"
+                                style="font-size: 13px; height: 38px;">
                                 <option value="">Todas as Empresas</option>
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 150px;">
-                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Tipo de Serviço</label>
-                            <select id="filter-dash-servico" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                            <label
+                                style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Tipo
+                                de Serviço</label>
+                            <select id="filter-dash-servico" class="fat-input fat-select"
+                                style="font-size: 13px; height: 38px;">
                                 <option value="">Todos os Serviços</option>
                             </select>
                         </div>
                         <div style="flex: 1; min-width: 150px;">
-                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">CRE</label>
-                            <select id="filter-dash-cre" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                            <label
+                                style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">CRE</label>
+                            <select id="filter-dash-cre" class="fat-input fat-select"
+                                style="font-size: 13px; height: 38px;">
                                 <option value="">Todas as CREs</option>
                             </select>
                         </div>
                         <div style="display: flex; align-items: flex-end;">
-                            <button id="btn-clear-dash-filters" class="btn btn-secondary" style="height: 38px; padding: 0 15px; font-size: 12px; display: flex; align-items: center; gap: 5px; background: var(--bg-color); border: 1px solid var(--border-color);">
+                            <button id="btn-clear-dash-filters" class="btn btn-secondary"
+                                style="height: 38px; padding: 0 15px; font-size: 12px; display: flex; align-items: center; gap: 5px; background: var(--bg-color); border: 1px solid var(--border-color);">
                                 <i class='bx bx-reset' style="font-size: 18px;"></i> Limpar
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL DE EMPRESAS</h3>
+
+                    <div class="cards-grid"
+                        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+                        <div class="stat-card"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
+                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL DE
+                                EMPRESAS</h3>
                             <h2 id="count-empresas" style="font-size: 28px; color: var(--text-color); margin: 0;">0</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">CONTRATOS ATIVOS</h3>
-                            <h2 id="count-contratos" style="font-size: 28px; color: var(--success-color); margin: 0;">0</h2>
+                        <div class="stat-card"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
+                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">CONTRATOS ATIVOS
+                            </h3>
+                            <h2 id="count-contratos" style="font-size: 28px; color: var(--success-color); margin: 0;">0
+                            </h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border-left: 4px solid var(--warning-color);">
-                            <h3 style="font-size: 12px; color: var(--warning-color); font-weight: 600; margin-bottom: 10px;">VENCEM EM 90 DIAS</h3>
+                        <div class="stat-card"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border-left: 4px solid var(--warning-color);">
+                            <h3
+                                style="font-size: 12px; color: var(--warning-color); font-weight: 600; margin-bottom: 10px;">
+                                VENCEM EM 90 DIAS</h3>
                             <h2 id="count-vencendo" style="font-size: 28px; color: var(--text-color); margin: 0;">0</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL GASTO FATURAMENTO</h3>
-                            <h2 id="count-gasto" style="font-size: 20px; color: var(--primary-color); margin: 0;">R$ 0,00</h2>
+                        <div class="stat-card" id="card-gasto-container"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
+                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">GASTO TOTAL PAGO
+                                (2026)</h3>
+                            <h2 id="count-gasto" style="font-size: 20px; color: var(--primary-color); margin: 0;">R$
+                                0,00</h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border-left: 4px solid var(--primary-color);">
-                            <h3 style="font-size: 12px; color: var(--primary-color); font-weight: 600; margin-bottom: 10px;">RETROATIVOS PAGOS (2026)</h3>
-                            <h2 id="count-retro-qtd" style="font-size: 28px; color: var(--text-color); margin: 0;">0</h2>
+                        <div class="stat-card" id="card-retro-qtd-container"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border-left: 4px solid var(--primary-color);">
+                            <h3
+                                style="font-size: 12px; color: var(--primary-color); font-weight: 600; margin-bottom: 10px;">
+                                RETROATIVOS PAGOS (2026)</h3>
+                            <h2 id="count-retro-qtd" style="font-size: 28px; color: var(--text-color); margin: 0;">0
+                            </h2>
                         </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
-                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL GASTO RETROATIVOS</h3>
-                            <h2 id="count-retro-valor" style="font-size: 20px; color: var(--danger-color); margin: 0;">R$ 0,00</h2>
-                        </div>
-                        <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px; background: rgba(67, 97, 238, 0.05); border: 2px solid var(--primary-color);">
-                            <h3 style="font-size: 12px; color: var(--primary-color); font-weight: 700; margin-bottom: 10px;">TOTAL GASTO (GERAL)</h3>
-                            <h2 id="count-total-geral" style="font-size: 24px; color: var(--primary-color); font-weight: 800; margin: 0;">R$ 0,00</h2>
+                        <div class="stat-card" id="card-retro-valor-container"
+                            style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
+                            <h3 style="font-size: 12px; color: var(--text-light); margin-bottom: 10px;">TOTAL GASTO
+                                RETROATIVOS</h3>
+                            <h2 id="count-retro-valor" style="font-size: 20px; color: var(--danger-color); margin: 0;">
+                                R$ 0,00</h2>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
                         <!-- Gráfico Dinâmico -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
+                        <div
+                            style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
                             <h3 style="font-size: 14px; margin-bottom: 15px;">Divisão de Serviços Ativos</h3>
                             <div style="position: relative; height: 250px; width: 100%;">
                                 <canvas id="chart-servicos"></canvas>
@@ -323,16 +356,25 @@
                         </div>
 
                         <!-- Resumo de Status Rápido -->
-                        <div style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+                        <div
+                            style="background: var(--card-bg); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color);">
                             <h3 style="font-size: 14px; margin-bottom: 15px;">Status Contratual</h3>
                             <ul style="list-style: none; padding: 0; margin: 0;">
-                                <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
-                                    <span style="font-size: 13px; color: var(--text-light);"><i class='bx bx-check-circle' style="color: var(--success-color);"></i> Vigentes</span>
-                                    <strong id="status-vigente" style="font-size: 14px; color: var(--text-color);">0</strong>
+                                <li
+                                    style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                                    <span style="font-size: 13px; color: var(--text-light);"><i
+                                            class='bx bx-check-circle' style="color: var(--success-color);"></i>
+                                        Vigentes</span>
+                                    <strong id="status-vigente"
+                                        style="font-size: 14px; color: var(--text-color);">0</strong>
                                 </li>
-                                <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
-                                    <span style="font-size: 13px; color: var(--text-light);"><i class='bx bx-error-circle' style="color: var(--danger-color);"></i> Finalizados/Rescindidos</span>
-                                    <strong id="status-finalizado" style="font-size: 14px; color: var(--text-color);">0</strong>
+                                <li
+                                    style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                                    <span style="font-size: 13px; color: var(--text-light);"><i
+                                            class='bx bx-error-circle' style="color: var(--danger-color);"></i>
+                                        Finalizados/Rescindidos</span>
+                                    <strong id="status-finalizado"
+                                        style="font-size: 14px; color: var(--text-color);">0</strong>
                                 </li>
                             </ul>
                         </div>
@@ -347,25 +389,42 @@
                             <p>Gestão de CCTs e histórico de pagamentos retroativos por contrato.</p>
                         </div>
                     </div>
-                    <div style="background: var(--card-bg); padding: 0; border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden;">
+                    <div
+                        style="background: var(--card-bg); padding: 0; border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead style="background: var(--bg-color); border-bottom: 2px solid var(--border-color);">
                                 <tr>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 100px;">Nº Processo</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">Empresa</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">Tipo de Serviço</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">CCT Contratação</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">CCT Atual</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 220px;">Situação da Repactuação</th>
-                                    <th style="padding: 15px 20px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">Ação</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 100px;">
+                                        Nº Processo</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">
+                                        Empresa</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">
+                                        Tipo de Serviço</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">
+                                        CCT Contratação</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">
+                                        CCT Atual</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 220px;">
+                                        Situação da Repactuação</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">
+                                        Ação</th>
                                 </tr>
                             </thead>
                             <tbody id="repactuacoes-table-body">
                                 <!-- Preenchido dinamicamente -->
                             </tbody>
                         </table>
-                        <div id="empty-repactuacoes" class="form-hidden" style="padding: 40px; text-align: center; color: var(--text-light);">
-                            <i class='bx bx-folder-open' style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                        <div id="empty-repactuacoes" class="form-hidden"
+                            style="padding: 40px; text-align: center; color: var(--text-light);">
+                            <i class='bx bx-folder-open'
+                                style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
                             <p>Nenhum contrato encontrado neste módulo.</p>
                         </div>
                     </div>
@@ -375,29 +434,51 @@
                 <section id="indenizatorios" class="view" style="display: none;">
                     <div class="header-section" style="margin-bottom: 30px;">
                         <div>
-                            <h1 style="font-size: 28px; font-weight: 700; color: var(--text-color); margin-bottom: 5px;">Lotes Indenizatórios</h1>
-                            <p style="color: var(--text-light); font-size: 14px;">Gestão estratégica de lotes de transporte escolar</p>
+                            <h1
+                                style="font-size: 28px; font-weight: 700; color: var(--text-color); margin-bottom: 5px;">
+                                Lotes Indenizatórios</h1>
+                            <p style="color: var(--text-light); font-size: 14px;">Gestão estratégica de lotes de
+                                transporte escolar</p>
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportIndenizatorios('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportIndenizatorios('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportIndenizatorios('Excel')"
+                                title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i
+                                    class='bx bx-file-blank'></i> Excel</button>
+                            <button class="btn btn-secondary" onclick="exportIndenizatorios('PDF')" title="Exportar PDF"
+                                style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i>
+                                PDF</button>
                             <button class="btn-primary-elite" onclick="openModalLote()">
                                 <i class='bx bx-plus-circle'></i> Novo Lote
                             </button>
                         </div>
                     </div>
 
-                    <div class="data-table card shadow-sm" style="border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div class="data-table card shadow-sm"
+                        style="border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color);">
                         <table id="tabela-indenizatoria" style="width: 100%; border-collapse: collapse;">
                             <thead style="background: rgba(67, 97, 238, 0.05);">
                                 <tr>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Lote</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">CRE</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Empresa</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Alunos</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">KM</th>
-                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Valor Diário</th>
-                                    <th style="padding: 15px 20px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">Ações</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        Lote</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        CRE</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        Empresa</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        Alunos</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        KM</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        Valor Diário</th>
+                                    <th
+                                        style="padding: 15px 20px; text-align: center; font-size: 11px; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px;">
+                                        Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista-indenizatorios">
@@ -409,15 +490,20 @@
 
                 <!-- Empresas View -->
                 <section id="empresas" class="view">
-                    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <div
+                        style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
                         <button class="btn btn-primary admin-only" id="btn-novo-empresa"
                             style="background: #2563eb; color: #fff; font-weight: 500;">
                             <i class='bx bx-plus'></i> Adicionar Nova Empresa
                         </button>
-                        
+
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportEmpresas('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportEmpresas('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportEmpresas('Excel')" title="Exportar Excel"
+                                style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i>
+                                Excel</button>
+                            <button class="btn btn-secondary" onclick="exportEmpresas('PDF')" title="Exportar PDF"
+                                style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i>
+                                PDF</button>
                         </div>
                     </div>
 
@@ -478,8 +564,12 @@
                     <div class="header-section">
                         <h1>Gestão de Contratos</h1>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-secondary" onclick="exportContratos('Excel')" title="Exportar Excel" style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i> Excel</button>
-                            <button class="btn btn-secondary" onclick="exportContratos('PDF')" title="Exportar PDF" style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i> PDF</button>
+                            <button class="btn btn-secondary" onclick="exportContratos('Excel')" title="Exportar Excel"
+                                style="background: #217346; color: #fff; border: none;"><i class='bx bx-file-blank'></i>
+                                Excel</button>
+                            <button class="btn btn-secondary" onclick="exportContratos('PDF')" title="Exportar PDF"
+                                style="background: #e63946; color: #fff; border: none;"><i class='bx bxs-file-pdf'></i>
+                                PDF</button>
                             <button class="btn btn-primary admin-only" id="btn-novo-contrato">
                                 <i class='bx bx-plus'></i> Novo Contrato
                             </button>
@@ -517,7 +607,7 @@
                                     <option value="">Todas</option>
                                     <option value="Ativo">Ativo</option>
                                     <option value="Finalizado">Finalizado</option>
-                                 <option value="Rescindido">Rescindido</option>
+                                    <option value="Rescindido">Rescindido</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -628,7 +718,8 @@
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label for="con-km">Quilometragem (KM)</label>
-                                            <input type="number" id="con-km" placeholder="0" step="0.01">                                        </div>
+                                            <input type="number" id="con-km" placeholder="0" step="0.01">
+                                        </div>
                                         <div></div> <!-- spacer -->
                                     </div>
                                 </div>
@@ -758,8 +849,11 @@
                             Faturamentos - Setor</h1>
                         <div style="display: flex; align-items: center; gap: 20px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <label for="filtro-fat-empresa" style="font-size: 14px; font-weight: 500; color: var(--text-light);">Filtrar Empresa:</label>
-                                <input type="text" id="filtro-fat-empresa" placeholder="Buscar empresa..." style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-size: 13px; width: 250px;">
+                                <label for="filtro-fat-empresa"
+                                    style="font-size: 14px; font-weight: 500; color: var(--text-light);">Filtrar
+                                    Empresa:</label>
+                                <input type="text" id="filtro-fat-empresa" placeholder="Buscar empresa..."
+                                    style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; outline: none; background: var(--bg-color); color: var(--text-color); font-size: 13px; width: 250px;">
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label for="select-ano-fat"
@@ -909,7 +1003,8 @@
                             style="width: 40px; height: 40px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-size: 24px;">
                             <i class='bx bx-search-alt'></i>
                         </div>
-                        <h2 id="modal-generic-title" style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Detalhes do
+                        <h2 id="modal-generic-title"
+                            style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-color);">Detalhes do
                             Registro</h2>
                     </div>
                     <button class="btn-icon" id="btn-close-modal"
@@ -936,7 +1031,8 @@
                 </div>
 
                 <div style="padding: 0; overflow: auto; max-height: 70vh; background: var(--card-bg);">
-                    <table class="fat-planilha" id="fat-planilha-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                    <table class="fat-planilha" id="fat-planilha-table"
+                        style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                         <thead id="fat-thead"
                             style="position: sticky; top: 0; background: var(--bg-color); z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <tr>
@@ -969,8 +1065,14 @@
                 <div
                     style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="exportFaturamentos('Excel')" title="Exportar Excel deste contrato" style="background: #217346; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i class='bx bx-file-blank'></i> Exportar Excel</button>
-                        <button class="btn btn-secondary" onclick="exportFaturamentos('PDF')" title="Exportar PDF deste contrato" style="background: #e63946; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i class='bx bxs-file-pdf'></i> Exportar PDF</button>
+                        <button class="btn btn-secondary" onclick="exportFaturamentos('Excel')"
+                            title="Exportar Excel deste contrato"
+                            style="background: #217346; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i
+                                class='bx bx-file-blank'></i> Exportar Excel</button>
+                        <button class="btn btn-secondary" onclick="exportFaturamentos('PDF')"
+                            title="Exportar PDF deste contrato"
+                            style="background: #e63946; color: #fff; border: none; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px;"><i
+                                class='bx bxs-file-pdf'></i> Exportar PDF</button>
                     </div>
                     <div style="display: flex; gap: 12px;">
                         <button id="btn-cancel-fat" class="btn"
@@ -1052,7 +1154,7 @@
                             <h3>Aparência do Sistema</h3>
                             <p>Escolha o tema que melhor combina com seu ambiente de trabalho.</p>
                         </div>
-                        
+
                         <div class="themes-grid">
                             <div class="theme-card active" data-theme="blue">
                                 <div class="theme-preview" style="background: #2563eb; border-color: #1d4ed8;"></div>
@@ -1094,13 +1196,16 @@
                         style="font-size: 24px;"></i></button>
             </div>
 
-            <div style="padding: 20px 24px; text-align: right; background: var(--bg-color); display: flex; justify-content: flex-end; gap: 10px;">
-                <button id="btn-import-escolas-excel" class="btn btn-secondary master-only" style="background: #217346; color: #fff; border: none; display: flex; align-items: center; gap: 8px;">
+            <div
+                style="padding: 20px 24px; text-align: right; background: var(--bg-color); display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-import-escolas-excel" class="btn btn-secondary master-only"
+                    style="background: #217346; color: #fff; border: none; display: flex; align-items: center; gap: 8px;">
                     <i class='bx bx-upload'></i> Importar Excel
                 </button>
                 <input type="file" id="input-import-escolas-excel" style="display: none;" accept=".xlsx, .xls">
-                
-                <button id="btn-add-escola" class="btn btn-primary admin-only" style="background: #2b9348; display: flex; align-items: center; gap: 8px;">
+
+                <button id="btn-add-escola" class="btn btn-primary admin-only"
+                    style="background: #2b9348; display: flex; align-items: center; gap: 8px;">
                     <i class='bx bx-plus'></i> Adicionar Nova Escola
                 </button>
             </div>
@@ -1159,7 +1264,8 @@
                 <button id="btn-close-fat-anexos-modal" class="btn-icon"><i class='bx bx-x'
                         style="font-size: 24px;"></i></button>
             </div>
-            <div id="fat-anexos-upload-area" style="padding: 15px 24px; background: var(--bg-color); border-bottom: 1px solid var(--border-color);">
+            <div id="fat-anexos-upload-area"
+                style="padding: 15px 24px; background: var(--bg-color); border-bottom: 1px solid var(--border-color);">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label for="fat-anexos-input" style="font-size: 12px;">Adicionar Novo Anexo</label>
                     <input type="file" id="fat-anexos-input" multiple accept=".pdf,.png,.jpg,.jpeg"
@@ -1182,35 +1288,49 @@
     <!-- Modal Repactuação -->
     <div id="modal-gerenciar-repactuacao" class="modal-overlay form-hidden" style="z-index: 10001;">
         <div class="modal-content" style="max-width: 600px; padding: 30px; background: #fff; border-radius: 12px;">
-            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="modal-header"
+                style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-size: 20px; font-weight: 700; color: var(--text-color);">Gerenciar Repactuações</h3>
-                <button id="btn-close-repactuacao" class="btn-icon"><i class='bx bx-x' style="font-size: 24px;"></i></button>
+                <button id="btn-close-repactuacao" class="btn-icon"><i class='bx bx-x'
+                        style="font-size: 24px;"></i></button>
             </div>
-            
+
             <form id="form-repactuacao">
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT Contratação</label>
-                    <input type="text" id="rep-cct-contratacao" placeholder="Ex: CCT 2024" style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
-                </div>
-                
-                <div class="form-group" style="margin-bottom: 30px;">
-                    <label style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT Atual</label>
-                    <input type="text" id="rep-cct-atual" placeholder="Ex: CCT 2025" style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <label
+                        style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT
+                        Contratação</label>
+                    <input type="text" id="rep-cct-contratacao" placeholder="Ex: CCT 2024"
+                        style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
                 </div>
 
-                <div style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label
+                        style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT
+                        Atual</label>
+                    <input type="text" id="rep-cct-atual" placeholder="Ex: CCT 2025"
+                        style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+
+                <div
+                    style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                     <div>
-                        <strong style="display: block; font-size: 14px; margin-bottom: 4px;">Histórico de Retroativos</strong>
-                        <span style="font-size: 12px; color: var(--text-light);">Gerencie os processos de pagamentos retroativos</span>
+                        <strong style="display: block; font-size: 14px; margin-bottom: 4px;">Histórico de
+                            Retroativos</strong>
+                        <span style="font-size: 12px; color: var(--text-light);">Gerencie os processos de pagamentos
+                            retroativos</span>
                     </div>
-                    <button type="button" id="btn-open-retroativos" class="btn btn-secondary" style="background: #fff; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 5px;">
+                    <button type="button" id="btn-open-retroativos" class="btn btn-secondary"
+                        style="background: #fff; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 5px;">
                         <i class='bx bx-history'></i> Acessar
                     </button>
                 </div>
-                
+
                 <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 15px;">
-                    <button type="button" class="btn btn-secondary" id="btn-cancel-repactuacao" style="background: var(--bg-color); color: var(--text-color);">Cancelar</button>
-                    <button type="button" class="btn btn-primary admin-only" id="btn-save-repactuacao" style="background: #4361ee; color: #fff;">Salvar</button>
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-repactuacao"
+                        style="background: var(--bg-color); color: var(--text-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary admin-only" id="btn-save-repactuacao"
+                        style="background: #4361ee; color: #fff;">Salvar</button>
                 </div>
             </form>
         </div>
@@ -1218,14 +1338,20 @@
 
     <!-- Modal Retroativos -->
     <div id="modal-retroativos" class="modal-overlay form-hidden" style="z-index: 10002;">
-        <div class="modal-content" style="max-width: 900px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
-                <h3 style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Histórico de Retroativos</h3>
-                <button id="btn-close-retroativos" class="btn-icon" style="color: var(--text-light);"><i class='bx bx-x' style="font-size: 28px;"></i></button>
+        <div class="modal-content"
+            style="max-width: 900px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
+            <div
+                style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
+                <h3 style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Histórico de
+                    Retroativos</h3>
+                <button id="btn-close-retroativos" class="btn-icon" style="color: var(--text-light);"><i class='bx bx-x'
+                        style="font-size: 28px;"></i></button>
             </div>
 
-            <div style="padding: 15px 24px; background: #fff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
-                <button id="btn-add-retroativo" class="btn btn-primary admin-only" style="background: #2b9348; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+            <div
+                style="padding: 15px 24px; background: #fff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                <button id="btn-add-retroativo" class="btn btn-primary admin-only"
+                    style="background: #2b9348; display: flex; align-items: center; gap: 8px; font-size: 13px;">
                     <i class='bx bx-plus'></i> Adicionar Linha de Retroativo
                 </button>
             </div>
@@ -1234,25 +1360,40 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead style="background: var(--bg-color); position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Título (Ex: CCT 2024)</th>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Processo Pagamento</th>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">Valor Pago</th>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">Data Pagamento</th>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Observação</th>
-                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 1px solid var(--border-color); width: 60px;">Ação</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
+                                Título (Ex: CCT 2024)</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
+                                Processo Pagamento</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">
+                                Valor Pago</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">
+                                Data Pagamento</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">
+                                Observação</th>
+                            <th
+                                style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 1px solid var(--border-color); width: 60px;">
+                                Ação</th>
                         </tr>
                     </thead>
                     <tbody id="retroativos-table-body">
                         <!-- Preenchido via JS -->
                     </tbody>
                 </table>
-                <div id="empty-retroativos" class="form-hidden" style="padding: 40px; text-align: center; color: var(--text-light);">
+                <div id="empty-retroativos" class="form-hidden"
+                    style="padding: 40px; text-align: center; color: var(--text-light);">
                     Nenhum retroativo cadastrado. Adicione uma linha para começar.
                 </div>
             </div>
 
-            <div style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
-                <button type="button" class="btn btn-primary admin-only" id="btn-save-retroativos" style="background: #4361ee; color: #fff;">Confirmar e Voltar</button>
+            <div
+                style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
+                <button type="button" class="btn btn-primary admin-only" id="btn-save-retroativos"
+                    style="background: #4361ee; color: #fff;">Confirmar e Voltar</button>
             </div>
         </div>
     </div>
@@ -1260,59 +1401,90 @@
     <!-- Modal Lote Indenizatório (Design Espelhado do Contrato) -->
     <div id="modal-lote" class="modal-overlay form-hidden" style="z-index: 9999;">
         <div class="modal-content" style="max-width: 900px; padding: 30px; background: #fff; border-radius: 12px;">
-            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
-                <h3 id="modal-lote-title" style="font-size: 20px; font-weight: 700; color: var(--text-color);">Cadastrar Lote Indenizatório</h3>
+            <div class="modal-header"
+                style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
+                <h3 id="modal-lote-title" style="font-size: 20px; font-weight: 700; color: var(--text-color);">Cadastrar
+                    Lote Indenizatório</h3>
             </div>
-            
+
             <form id="form-lote">
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Lote</label>
-                        <input type="text" id="lote-numero" required placeholder="Ex: Lote 01" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Lote</label>
+                        <input type="text" id="lote-numero" required placeholder="Ex: Lote 01"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
                     </div>
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">CRE</label>
-                        <input type="text" id="lote-cre" required placeholder="CRE" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">CRE</label>
+                        <input type="text" id="lote-cre" required placeholder="CRE"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
                     </div>
                 </div>
 
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Empresa</label>
-                        <select id="lote-empresa" required style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa; cursor: pointer;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Empresa</label>
+                        <select id="lote-empresa" required
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa; cursor: pointer;">
                             <option value="">Selecione uma Empresa</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Alunos</label>
-                        <input type="number" id="lote-alunos" required value="0" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Alunos</label>
+                        <input type="number" id="lote-alunos" required value="0"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
                     </div>
                 </div>
 
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">GEO (Número)</label>
-                        <input type="text" id="lote-geo" placeholder="Ex: 12345" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">GEO
+                            (Número)</label>
+                        <input type="text" id="lote-geo" placeholder="Ex: 12345"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
                     </div>
                     <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Quilometragem (KM)</label>
-                        <input type="number" step="0.01" id="lote-km" required value="0" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">                    </div>
-                </div>
-
-                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-                    <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Valor KM (R$)</label>
-                        <input type="text" id="lote-valorkm" required placeholder="R$ 0,00" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
-                    </div>
-                    <div class="form-group">
-                        <label style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Valor Diário (R$)</label>
-                        <input type="text" id="lote-valordiario" required placeholder="R$ 0,00" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Quilometragem
+                            (KM)</label>
+                        <input type="number" step="0.01" id="lote-km" required value="0"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
                     </div>
                 </div>
 
-                <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-                    <button type="button" class="btn" onclick="closeModalLote()" style="background: #e9ecef; color: #495057; border: none; padding: 10px 25px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancelar</button>
-                    <button type="submit" class="btn" style="background: var(--success-color); color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(43, 147, 72, 0.2);">Salvar Lote</button>
+                <div class="form-row"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Valor
+                            KM (R$)</label>
+                        <input type="text" id="lote-valorkm" required placeholder="R$ 0,00"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                    </div>
+                    <div class="form-group">
+                        <label
+                            style="font-size: 13px; color: var(--text-light); margin-bottom: 8px; display: block;">Valor
+                            Diário (R$)</label>
+                        <input type="text" id="lote-valordiario" required placeholder="R$ 0,00"
+                            style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f8f9fa;">
+                    </div>
+                </div>
+
+                <div class="modal-footer"
+                    style="display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <button type="button" class="btn" onclick="closeModalLote()"
+                        style="background: #e9ecef; color: #495057; border: none; padding: 10px 25px; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                    <button type="submit" class="btn"
+                        style="background: var(--success-color); color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px rgba(43, 147, 72, 0.2);">Salvar
+                        Lote</button>
                 </div>
             </form>
         </div>
