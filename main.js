@@ -976,6 +976,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
         }
+
+        // Dashboard Filters Listeners
+        const dashFilters = ['filter-dash-empresa', 'filter-dash-servico', 'filter-dash-cre'];
+        dashFilters.forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => {
+                loadDashboardStats();
+            });
+        });
+
+        document.getElementById('btn-clear-dash-filters')?.addEventListener('click', () => {
+            dashFilters.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            loadDashboardStats();
+        });
     }
 
     function showView(targetId, servico = null) {
@@ -1144,29 +1160,87 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     let dashboardChart = null;
 
-    function loadDashboardStats() {
-        const systemMao = selectedSystem === 'mao-de-obra';
-        
-        // Filtrar empresas do módulo
-        const empresas = getEmpresas().filter(e => e.modulo === (systemMao ? 'mao-de-obra' : 'transporte'));
-        const empresasCount = empresas.length;
-
-        // Filtrar contratos do módulo
-        const contratos = getContratos().filter(c => {
+    function populateDashboardFilters() {
+        const contracts = getContratos().filter(c => {
+            const systemMao = selectedSystem === 'mao-de-obra';
             if (systemMao) return c.tipo !== 'Transporte Escolar';
             return c.tipo === 'Transporte Escolar';
         });
+
+        const selEmpresa = document.getElementById('filter-dash-empresa');
+        const selServico = document.getElementById('filter-dash-servico');
+        const selCre = document.getElementById('filter-dash-cre');
+
+        if (!selEmpresa || !selServico || !selCre) return;
+
+        // Backup current values
+        const currentEmp = selEmpresa.value;
+        const currentServ = selServico.value;
+        const currentCre = selCre.value;
+
+        // Empresas
+        const empresaIds = [...new Set(contracts.map(c => c.empresa_id))];
+        const empresas = getEmpresas().filter(e => empresaIds.includes(e.id));
+        selEmpresa.innerHTML = '<option value="">Todas as Empresas</option>';
+        empresas.sort((a,b) => a.razao.localeCompare(b.razao)).forEach(e => {
+            selEmpresa.innerHTML += `<option value="${e.id}">${e.razao}</option>`;
+        });
+
+        // Serviços
+        const servicos = [...new Set(contracts.map(c => c.tipo))];
+        selServico.innerHTML = '<option value="">Todos os Serviços</option>';
+        servicos.sort().forEach(s => {
+            selServico.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+
+        // CREs
+        const cres = [...new Set(contracts.map(c => c.cre).filter(Boolean))];
+        selCre.innerHTML = '<option value="">Todas as CREs</option>';
+        cres.sort().forEach(c => {
+            selCre.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+
+        // Restore values if still available
+        selEmpresa.value = currentEmp;
+        selServico.value = currentServ;
+        selCre.value = currentCre;
+    }
+
+    function loadDashboardStats() {
+        const systemMao = selectedSystem === 'mao-de-obra';
+        
+        // Popular filtros se estiverem vazios ou mudar o sistema
+        populateDashboardFilters();
+
+        // Pegar valores dos filtros
+        const filterEmp = document.getElementById('filter-dash-empresa')?.value;
+        const filterServ = document.getElementById('filter-dash-servico')?.value;
+        const filterCre = document.getElementById('filter-dash-cre')?.value;
+
+        // Filtrar contratos
+        let contratos = getContratos().filter(c => {
+            if (systemMao) return c.tipo !== 'Transporte Escolar';
+            return c.tipo === 'Transporte Escolar';
+        });
+
+        if (filterEmp) contratos = contratos.filter(c => String(c.empresa_id) === String(filterEmp));
+        if (filterServ) contratos = contratos.filter(c => c.tipo === filterServ);
+        if (filterCre) contratos = contratos.filter(c => c.cre === filterCre);
+
+        // Contagem de empresas únicas nos contratos filtrados
+        const empresasIds = [...new Set(contratos.map(c => c.empresa_id))];
+        const empresasCount = empresasIds.length;
         
         const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
         
         // Cálculo de Gastos Pagos em 2026
         let totalPago2026 = 0;
         
-        // Filtra faturamentos que pertencem aos contratos do módulo atual
-        const contratoIdsModulo = contratos.map(c => c.id);
+        // Filtra faturamentos que pertencem aos contratos filtrados
+        const contratoIdsFiltrados = contratos.map(c => c.id);
         
         cachedFaturamentos2026.forEach(fat => {
-            if (contratoIdsModulo.includes(fat.contrato_id)) {
+            if (contratoIdsFiltrados.includes(fat.contrato_id)) {
                 const dados = JSON.parse(fat.dados || '[]');
                 dados.forEach(mes => {
                     if (mes.situacao === 'Pago') {

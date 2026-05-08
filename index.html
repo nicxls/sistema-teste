@@ -254,6 +254,33 @@
                         <h1>Dashboard Geral</h1>
                         <p>Visão de inteligência e resumo analítico do sistema.</p>
                     </div>
+
+                    <!-- Dashboard Filters -->
+                    <div class="dashboard-filters" style="display: flex; gap: 15px; margin-bottom: 25px; background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Empresa</label>
+                            <select id="filter-dash-empresa" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                                <option value="">Todas as Empresas</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">Tipo de Serviço</label>
+                            <select id="filter-dash-servico" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                                <option value="">Todos os Serviços</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 11px; color: var(--text-light); text-transform: uppercase; display: block; margin-bottom: 5px; font-weight: 600;">CRE</label>
+                            <select id="filter-dash-cre" class="fat-input fat-select" style="font-size: 13px; height: 38px;">
+                                <option value="">Todas as CREs</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button id="btn-clear-dash-filters" class="btn btn-secondary" style="height: 38px; padding: 0 15px; font-size: 12px; display: flex; align-items: center; gap: 5px; background: var(--bg-color); border: 1px solid var(--border-color);">
+                                <i class='bx bx-reset' style="font-size: 18px;"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
                     
                     <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
                         <div class="stat-card" style="display: flex; flex-direction: column; align-items: flex-start; padding: 20px;">
