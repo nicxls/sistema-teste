@@ -2183,9 +2183,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const fieldDisabled = (roleDisabled || !inRange) ? 'disabled' : '';
-            const rowStyle = !inRange ? 'background: rgba(0,0,0,0.02); opacity: 0.6;' : '';
+            let rowStyle = '';
+            if (!inRange) {
+                rowStyle = 'background: rgba(0,0,0,0.02); opacity: 0.6;';
+            } else if (data.situacao === 'Sem serviço') {
+                rowStyle = 'opacity: 0.5; transition: opacity 0.3s ease;';
+            } else {
+                rowStyle = 'transition: opacity 0.3s ease;';
+            }
             
             const tr = document.createElement('tr');
+            tr.id = `fat-row-${idx}`;
             if(!inRange) tr.title = "Fora do período de vigência do contrato";
             tr.style = rowStyle;
 
@@ -2211,10 +2219,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="number" id="fat-dias-${idx}" value="${data.dias || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" class="fat-input fat-select" ${fieldDisabled}>
+                        <select id="fat-sit-${idx}" class="fat-input fat-select" onchange="document.getElementById('fat-row-${idx}').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
+                            <option value="Sem serviço" ${data.situacao === 'Sem serviço' ? 'selected' : ''}>Sem serviço</option>
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
@@ -2240,10 +2249,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" class="fat-input fat-select" ${fieldDisabled}>
+                        <select id="fat-sit-${idx}" class="fat-input fat-select" onchange="document.getElementById('fat-row-${idx}').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
+                            <option value="Sem serviço" ${data.situacao === 'Sem serviço' ? 'selected' : ''}>Sem serviço</option>
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
