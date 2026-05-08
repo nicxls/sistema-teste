@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadContratosTable();
             populateEmpresasSelect();
             updateSidebarVisibility();
+            if (typeof loadRepactuacoesTable === 'function') loadRepactuacoesTable();
 
             // Ativa o carregamento das tabelas de faturamento e postos
             if (typeof loadContratosFaturamentosTable === 'function') loadContratosFaturamentosTable();
@@ -3263,7 +3264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusText = `<span style="color: var(--danger-color); font-weight: 600;">Faltam repactuações ${yearsStr}</span>`;
                 }
             } else if (!rep.cct_atual) {
-                statusText = `<span style="color: var(--warning-color); font-weight: 600;">Aguardando preenchimento</span>`;
+                statusText = `-`;
             }
 
             const tr = document.createElement('tr');
@@ -3330,7 +3331,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.success) {
                 showToast('Repactuação salva com sucesso!', 'success');
                 document.getElementById('modal-gerenciar-repactuacao').classList.add('form-hidden');
-                fetchAllData(); // Atualiza cache
+                await fetchAllData(); // Atualiza cache
+                loadRepactuacoesTable(); // Atualiza tabela em tempo real
             } else {
                 throw new Error(result.error || 'Erro ao salvar');
             }
