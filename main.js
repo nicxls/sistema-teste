@@ -2098,6 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveFat = document.getElementById('btn-save-fat');
     
     let currentFatContratoId = null;
+    let currentFatList = []; // Estado temporário para as linhas do modal de faturamento
     const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
     async function getDbFatFromServer(ano) {
@@ -2122,65 +2123,58 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modal-fat-title').textContent = `Gerenciar Faturamentos ${ano} - Contrato ${contratoNumero}`;
         
         let dbFat = await getDbFatFromServer(ano);
-        let fatList = dbFat[contratoId] || Array(12).fill({});
+        let rawFat = dbFat[contratoId] || [];
+        
+        // Normalização: Garante que temos pelo menos as 12 linhas básicas
+        currentFatList = [];
+        for (let i = 0; i < 12; i++) {
+            // Busca todos os lançamentos desse mês no banco
+            const entries = rawFat.filter(f => f.mesIdx === i);
+            if (entries.length > 0) {
+                currentFatList.push(...entries);
+            } else {
+                // Se não tem nada no banco, tenta ver se o dado antigo (array de 12) tinha algo
+                const oldEntry = rawFat.length === 12 && !rawFat[i].hasOwnProperty('mesIdx') ? rawFat[i] : {};
+                currentFatList.push({ ...oldEntry, mesIdx: i });
+            }
+        }
 
+        renderFatGrid();
+    };
+
+    window.duplicateFatRow = function(index) {
+        const row = currentFatList[index];
+        const newEntry = { mesIdx: row.mesIdx }; // Nova linha vazia para o mesmo mês
+        currentFatList.splice(index + 1, 0, newEntry);
+        renderFatGrid();
+    };
+
+    window.removeFatRow = function(index) {
+        const mesIdx = currentFatList[index].mesIdx;
+        const sameMonthCount = currentFatList.filter(f => f.mesIdx === mesIdx).length;
+        
+        if (sameMonthCount <= 1) {
+            return showToast('Não é possível remover a única linha deste mês.', 'info');
+        }
+        
+        currentFatList.splice(index, 1);
+        renderFatGrid();
+    };
+
+    function renderFatGrid() {
         const tbody = document.getElementById('fat-grid-body');
+        if (!tbody) return;
         tbody.innerHTML = '';
 
+        const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
         const roleDisabled = user.role === 'usuario';
-
-        const con = getContratos().find(c => String(c.id) === String(contratoId));
+        const con = getContratos().find(c => String(c.id) === String(currentFatContratoId));
         const isTransporte = con && con.tipo === 'Transporte Escolar';
 
-        const fatModalContent = document.getElementById('modal-content-fat');
-        const fatTable = document.getElementById('fat-planilha-table');
-
-        if (fatModalContent && fatTable) {
-            if (isTransporte) {
-                fatModalContent.style.width = '95vw';
-                fatModalContent.style.maxWidth = '1500px';
-                fatTable.style.minWidth = '1450px';
-            } else {
-                fatModalContent.style.width = '90vw';
-                fatModalContent.style.maxWidth = '950px';
-                fatTable.style.minWidth = '860px';
-            }
-        }
-
-        // Update Table Header
-        const thead = document.getElementById('fat-thead');
-        if (thead) {
-            if (isTransporte) {
-                thead.innerHTML = `
-                    <tr>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">Nº PROCESSO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">GEO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">KM</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">VALOR KM</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">VALOR DIÁRIO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 80px;">DIAS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">SITUAÇÃO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 2px solid var(--border-color); width: 80px;">ANEXOS</th>
-                    </tr>`;
-            } else {
-                thead.innerHTML = `
-                    <tr>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">Nº PROCESSO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
-                    </tr>`;
-            }
-        }
-
-        months.forEach((m, idx) => {
-            const data = fatList[idx] || {};
+        currentFatList.forEach((data, idx) => {
+            const mIdx = data.mesIdx;
+            const m = months[mIdx];
             window.currentFatAnexos[idx] = data.anexos ? [...data.anexos] : [];
             
             let inRange = true;
@@ -2189,8 +2183,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fim = new Date(con.periodoFinal + 'T00:00:00');
                 const startYearMonth = inicio.getFullYear() * 12 + inicio.getMonth();
                 const endYearMonth = fim.getFullYear() * 12 + fim.getMonth();
-                const currentYearMonth = parseInt(ano) * 12 + idx;
-                
+                const currentYearMonth = parseInt(ano) * 12 + mIdx;
                 inRange = (currentYearMonth >= startYearMonth && currentYearMonth <= endYearMonth);
             }
             
@@ -2205,33 +2198,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const tr = document.createElement('tr');
-            tr.id = `fat-row-${idx}`;
+            tr.className = 'fat-row-data';
+            tr.dataset.index = idx;
+            tr.dataset.mesIdx = mIdx;
             if(!inRange) tr.title = "Fora do período de vigência do contrato";
             tr.style = rowStyle;
 
+            // Verifica se é a primeira linha desse mês para exibir o nome do mês
+            const isFirstOfMonth = currentFatList.findIndex(f => f.mesIdx === mIdx) === idx;
+
             if (isTransporte) {
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">
+                        ${isFirstOfMonth ? m : ''}
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-geo-${idx}" value="${data.geo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-proc" value="${data.processo || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-km-${idx}" value="${data.km || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-geo" value="${data.geo || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-valkm-${idx}" value="${formatCurrency(data.valorKm)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-km" value="${data.km || ''}" placeholder="0" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-valdia-${idx}" value="${formatCurrency(data.valorDiario)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-valkm" value="${formatCurrency(data.valorKm)}" placeholder="R$ 0,00" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="number" id="fat-dias-${idx}" value="${data.dias || ''}" placeholder="0" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-valdia" value="${formatCurrency(data.valorDiario)}" placeholder="R$ 0,00" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" class="fat-input fat-select" onchange="document.getElementById('fat-row-${idx}').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
+                        <input type="number" class="fat-input f-dias" value="${data.dias || ''}" placeholder="0" style="background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <select class="fat-input fat-select f-sit" onchange="this.closest('tr').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
@@ -2239,10 +2239,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="date" class="fat-input f-pag" value="${data.pagamento || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-val" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color); text-align: center; position: relative;">
                         <button type="button" class="btn-icon" title="Anexos" onclick="openFatAnexosModal(${idx}, '${m}')" style="color: var(--primary-color); padding: 5px;">
@@ -2253,15 +2253,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else {
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color);">${m}</td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-proc-${idx}" value="${data.processo || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                        <span>${isFirstOfMonth ? m : ''}</span>
+                        ${!roleDisabled ? `
+                        <div style="display: flex; gap: 4px;">
+                            <button type="button" onclick="duplicateFatRow(${idx})" title="Adicionar complementar" style="background: var(--success-color); color: #fff; border: none; border-radius: 4px; width: 18px; height: 18px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class='bx bx-plus'></i></button>
+                            ${!isFirstOfMonth ? `<button type="button" onclick="removeFatRow(${idx})" title="Remover" style="background: var(--danger-color); color: #fff; border: none; border-radius: 4px; width: 18px; height: 18px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class='bx bx-minus'></i></button>` : ''}
+                        </div>` : ''}
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-abert-${idx}" value="${data.abertura || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-proc" value="${data.processo || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <select id="fat-sit-${idx}" class="fat-input fat-select" onchange="document.getElementById('fat-row-${idx}').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
+                        <input type="date" class="fat-input f-abert" value="${data.abertura || ''}" style="background: transparent;" ${fieldDisabled}>
+                    </td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
+                        <select class="fat-input fat-select f-sit" onchange="this.closest('tr').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
                             <option value="Retido" ${data.situacao === 'Retido' ? 'selected' : ''}>Retido</option>
@@ -2269,27 +2276,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" id="fat-pag-${idx}" value="${data.pagamento || ''}" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="date" class="fat-input f-pag" value="${data.pagamento || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
+                        <input type="text" class="fat-input f-val" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" style="background: transparent;" ${fieldDisabled}>
                     </td>
                 `;
             }
             tbody.appendChild(tr);
 
-            // Add masks to dynamic currency inputs
-            if (isTransporte) {
-                const vkInput = tr.querySelector(`#fat-valkm-${idx}`);
-                const vdInput = tr.querySelector(`#fat-valdia-${idx}`);
+            // Add masks
+            const valInput = tr.querySelector('.f-val');
+            if(valInput) valInput.addEventListener('input', maskCurrency);
+            if(isTransporte) {
+                const vkInput = tr.querySelector('.f-valkm');
+                const vdInput = tr.querySelector('.f-valdia');
                 if(vkInput) vkInput.addEventListener('input', maskCurrency);
                 if(vdInput) vdInput.addEventListener('input', maskCurrency);
             }
-            const fatInput = tr.querySelector(`#fat-val-${idx}`);
-            if(fatInput) fatInput.addEventListener('input', maskCurrency);
         });
-
-        modalFat.classList.remove('form-hidden');
     }
 
     const closeModalFat = () => modalFat.classList.add('form-hidden');
@@ -2305,27 +2310,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const isTransporte = con && con.tipo === 'Transporte Escolar';
 
             let fatArray = [];
-            for (let i = 0; i < 12; i++) {
+            const rows = document.querySelectorAll('.fat-row-data');
+            
+            rows.forEach(row => {
+                const idx = parseInt(row.dataset.index);
+                const mIdx = parseInt(row.dataset.mesIdx);
+                
                 const item = {
-                    processo: document.getElementById(`fat-proc-${i}`).value,
-                    situacao: document.getElementById(`fat-sit-${i}`).value,
-                    pagamento: document.getElementById(`fat-pag-${i}`).value,
-                    valor: parseCurrency(document.getElementById(`fat-val-${i}`).value)
+                    mesIdx: mIdx,
+                    processo: row.querySelector('.f-proc').value,
+                    situacao: row.querySelector('.f-sit').value,
+                    pagamento: row.querySelector('.f-pag').value,
+                    valor: parseCurrency(row.querySelector('.f-val').value)
                 };
 
                 if (isTransporte) {
-                    item.geo = document.getElementById(`fat-geo-${i}`).value;
-                    item.km = document.getElementById(`fat-km-${i}`).value;
-                    item.valorKm = parseCurrency(document.getElementById(`fat-valkm-${i}`).value);
-                    item.valorDiario = parseCurrency(document.getElementById(`fat-valdia-${i}`).value);
-                    item.dias = document.getElementById(`fat-dias-${i}`).value;
-                    item.anexos = window.currentFatAnexos[i] || [];
+                    item.geo = row.querySelector('.f-geo').value;
+                    item.km = row.querySelector('.f-km').value;
+                    item.valorKm = parseCurrency(row.querySelector('.f-valkm').value);
+                    item.valorDiario = parseCurrency(row.querySelector('.f-valdia').value);
+                    item.dias = row.querySelector('.f-dias').value;
+                    item.anexos = window.currentFatAnexos[idx] || [];
                 } else {
-                    item.abertura = document.getElementById(`fat-abert-${i}`).value;
+                    item.abertura = row.querySelector('.f-abert').value;
                 }
                 
                 fatArray.push(item);
-            }
+            });
 
             const ano = document.getElementById('select-ano-fat') ? document.getElementById('select-ano-fat').value : '2025';
             
