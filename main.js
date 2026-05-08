@@ -2121,6 +2121,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const con = getContratos().find(c => String(c.id) === String(contratoId));
         const isTransporte = con && con.tipo === 'Transporte Escolar';
 
+        const fatModalContent = document.getElementById('modal-content-fat');
+        const fatTable = document.getElementById('fat-planilha-table');
+
+        if (fatModalContent && fatTable) {
+            if (isTransporte) {
+                fatModalContent.style.width = '95vw';
+                fatModalContent.style.maxWidth = '1500px';
+                fatTable.style.minWidth = '1450px';
+            } else {
+                fatModalContent.style.width = '90vw';
+                fatModalContent.style.maxWidth = '950px';
+                fatTable.style.minWidth = '860px';
+            }
+        }
+
         // Update Table Header
         const thead = document.getElementById('fat-thead');
         if (thead) {
