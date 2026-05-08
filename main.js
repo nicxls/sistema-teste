@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let cachedContratos = [];
     let cachedPostos = [];
     let cachedRepactuacoes = [];
+    let cachedFaturamentos2026 = []; // Cache para o dashboard
 
     // 1. Inicializa Componentes Básicos
     initTheme();
@@ -175,11 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
-            const [empRes, conRes, posRes, repRes] = await Promise.all([
+            const [empRes, conRes, posRes, repRes, fatRes] = await Promise.all([
                 fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/postos?t=${time}`),
-                fetch(`${API_URL}/repactuacoes?t=${time}`)
+                fetch(`${API_URL}/repactuacoes?t=${time}`),
+                fetch(`${API_URL}/faturamentos?ano=2026&t=${time}`)
             ]);
             cachedEmpresas = await empRes.json();
             
@@ -198,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cachedPostos = await posRes.json();
             cachedRepactuacoes = await repRes.json();
+            cachedFaturamentos2026 = await fatRes.json();
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
             showToast('Erro ao conectar com o servidor.', 'error');
@@ -1142,17 +1145,46 @@ document.addEventListener('DOMContentLoaded', () => {
     let dashboardChart = null;
 
     function loadDashboardStats() {
-        const empresasCount = getEmpresas().length;
-        const contratos = getContratos();
+        const systemMao = selectedSystem === 'mao-de-obra';
+        
+        // Filtrar empresas do módulo
+        const empresas = getEmpresas().filter(e => e.modulo === (systemMao ? 'mao-de-obra' : 'transporte'));
+        const empresasCount = empresas.length;
+
+        // Filtrar contratos do módulo
+        const contratos = getContratos().filter(c => {
+            if (systemMao) return c.tipo !== 'Transporte Escolar';
+            return c.tipo === 'Transporte Escolar';
+        });
+        
         const contratosAtivos = contratos.filter(c => c.situacao === 'Ativo').length;
-        const contratosAtivosArray = contratos.filter(c => c.situacao === 'Ativo');
-        const contratosGasto = contratosAtivosArray.reduce((sum, c) => sum + (parseFloat(c.valorMensal) || (parseFloat(c.valorDiario) * 22) || 0), 0);
+        
+        // Cálculo de Gastos Pagos em 2026
+        let totalPago2026 = 0;
+        
+        // Filtra faturamentos que pertencem aos contratos do módulo atual
+        const contratoIdsModulo = contratos.map(c => c.id);
+        
+        cachedFaturamentos2026.forEach(fat => {
+            if (contratoIdsModulo.includes(fat.contrato_id)) {
+                const dados = JSON.parse(fat.dados || '[]');
+                dados.forEach(mes => {
+                    if (mes.situacao === 'Pago') {
+                        totalPago2026 += (parseFloat(mes.valor) || 0);
+                    }
+                });
+            }
+        });
         
         document.getElementById('count-empresas').textContent = empresasCount;
         document.getElementById('count-contratos').textContent = contratosAtivos;
         
         const spanGasto = document.getElementById('count-gasto');
-        if(spanGasto) spanGasto.textContent = formatCurrency(contratosGasto);
+        if(spanGasto) spanGasto.textContent = formatCurrency(totalPago2026);
+
+        // Atualizar título do card de gasto
+        const cardGastoTitle = spanGasto?.previousElementSibling;
+        if (cardGastoTitle) cardGastoTitle.textContent = 'GASTO TOTAL PAGO (2026)';
 
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
