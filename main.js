@@ -3389,6 +3389,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         const isUsuario = currentUser && currentUser.role === 'usuario';
 
+        // Esconde botão de adicionar para perfil usuário
+        const btnAdd = document.getElementById('btn-add-retroativo');
+        if (btnAdd) {
+            if (isUsuario) btnAdd.style.setProperty('display', 'none', 'important');
+            else btnAdd.style.display = 'flex';
+        }
+
         tempRetroativos.forEach((ret, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
