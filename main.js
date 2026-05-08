@@ -2179,7 +2179,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">MÊS</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 250px;">Nº PROCESSO</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
@@ -2314,9 +2313,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="text" class="fat-input f-proc" value="${data.processo || ''}" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
-                        <input type="date" class="fat-input f-abert" value="${data.abertura || ''}" style="background: transparent;" ${fieldDisabled}>
-                    </td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">
                         <select class="fat-input fat-select f-sit" onchange="this.closest('tr').style.opacity = this.value === 'Sem serviço' ? '0.5' : '1'" ${fieldDisabled}>
                             <option value="Pendente" ${data.situacao === 'Pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="Pago" ${data.situacao === 'Pago' ? 'selected' : ''}>Pago</option>
@@ -2380,8 +2376,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.valorDiario = parseCurrency(row.querySelector('.f-valdia').value);
                     item.dias = row.querySelector('.f-dias').value;
                     item.anexos = window.currentFatAnexos[idx] || [];
-                } else {
-                    item.abertura = row.querySelector('.f-abert').value;
                 }
                 
                 fatArray.push(item);
