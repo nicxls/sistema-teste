@@ -1279,6 +1279,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(spanRetroQtd) spanRetroQtd.textContent = totalRetroativosPagas;
         if(spanRetroVal) spanRetroVal.textContent = formatCurrency(valorRetroativosPagas);
 
+        // Total Geral
+        const spanTotalGeral = document.getElementById('count-total-geral');
+        if(spanTotalGeral) spanTotalGeral.textContent = formatCurrency(totalPago2026 + valorRetroativosPagas);
+
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
         if(statusVig) statusVig.textContent = contratosAtivos;
