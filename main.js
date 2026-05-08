@@ -3289,9 +3289,19 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRepactuacaoContratoId = contratoId;
         const rep = cachedRepactuacoes.find(r => String(r.contrato_id) === String(contratoId)) || {};
         
-        document.getElementById('rep-cct-contratacao').value = rep.cct_contratacao || '';
-        document.getElementById('rep-cct-atual').value = rep.cct_atual || '';
+        const inputContratacao = document.getElementById('rep-cct-contratacao');
+        const inputAtual = document.getElementById('rep-cct-atual');
+
+        inputContratacao.value = rep.cct_contratacao || '';
+        inputAtual.value = rep.cct_atual || '';
         
+        // Permissões
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const isUsuario = currentUser && currentUser.role === 'usuario';
+        
+        if (inputContratacao) inputContratacao.disabled = isUsuario;
+        if (inputAtual) inputAtual.disabled = isUsuario;
+
         // Carrega retroativos para variável temporária
         tempRetroativos = typeof rep.retroativos === 'string' ? JSON.parse(rep.retroativos || '[]') : (rep.retroativos || []);
         
@@ -3376,26 +3386,29 @@ document.addEventListener('DOMContentLoaded', () => {
             emptyState.classList.add('form-hidden');
         }
 
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        const isUsuario = currentUser && currentUser.role === 'usuario';
+
         tempRetroativos.forEach((ret, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" class="fat-input ret-titulo" data-index="${index}" value="${ret.titulo || ''}" placeholder="Ex: Retroativo 2024" style="font-size: 12px;">
+                    <input type="text" class="fat-input ret-titulo" data-index="${index}" value="${ret.titulo || ''}" placeholder="Ex: Retroativo 2024" style="font-size: 12px;" ${isUsuario ? 'disabled' : ''}>
                 </td>
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" class="fat-input ret-processo" data-index="${index}" value="${ret.processo || ''}" placeholder="00000/2024" style="font-size: 12px;">
+                    <input type="text" class="fat-input ret-processo" data-index="${index}" value="${ret.processo || ''}" placeholder="00000/2024" style="font-size: 12px;" ${isUsuario ? 'disabled' : ''}>
                 </td>
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" class="fat-input ret-valor" data-index="${index}" value="${formatCurrency(ret.valor)}" placeholder="R$ 0,00" style="font-size: 12px;">
+                    <input type="text" class="fat-input ret-valor" data-index="${index}" value="${formatCurrency(ret.valor)}" placeholder="R$ 0,00" style="font-size: 12px;" ${isUsuario ? 'disabled' : ''}>
                 </td>
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
-                    <input type="date" class="fat-input ret-data" data-index="${index}" value="${ret.data || ''}" style="font-size: 12px;">
+                    <input type="date" class="fat-input ret-data" data-index="${index}" value="${ret.data || ''}" style="font-size: 12px;" ${isUsuario ? 'disabled' : ''}>
                 </td>
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
-                    <input type="text" class="fat-input ret-obs" data-index="${index}" value="${ret.obs || ''}" placeholder="..." style="font-size: 12px;">
+                    <input type="text" class="fat-input ret-obs" data-index="${index}" value="${ret.obs || ''}" placeholder="..." style="font-size: 12px;" ${isUsuario ? 'disabled' : ''}>
                 </td>
                 <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color); text-align: center;">
-                    <button type="button" class="btn-icon" onclick="removeRetroativoRow(${index})" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>
+                    ${isUsuario ? '-' : `<button type="button" class="btn-icon" onclick="removeRetroativoRow(${index})" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>`}
                 </td>
             `;
             tbody.appendChild(tr);
