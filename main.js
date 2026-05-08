@@ -2209,7 +2209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="text" id="fat-val-${idx}" value="${formatCurrency(data.valor)}" placeholder="R$ 0,00" class="fat-input" style="background: transparent;" ${fieldDisabled}>
                     </td>
                     <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color); text-align: center; position: relative;">
-                        <button type="button" class="btn-icon" title="Anexos" onclick="openFatAnexosModal(${idx}, '${m}')" style="color: var(--primary-color); padding: 5px;" ${fieldDisabled}>
+                        <button type="button" class="btn-icon" title="Anexos" onclick="openFatAnexosModal(${idx}, '${m}')" style="color: var(--primary-color); padding: 5px;">
                             <i class='bx bx-paperclip' style="font-size: 20px;"></i>
                             <span id="fat-anexo-badge-${idx}" style="font-size: 10px; background: #e63946; color: #fff; border-radius: 50%; padding: 2px 5px; position: absolute; top: 0px; right: 2px; font-weight: bold; ${window.currentFatAnexos[idx].length > 0 ? '' : 'display: none;'}">${window.currentFatAnexos[idx].length}</span>
                         </button>
@@ -2332,6 +2332,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentFatAnexoMonthIdx = idx;
         document.getElementById('modal-fat-anexos-title').textContent = `Anexos - ${monthName}`;
         fatAnexosInput.value = ''; // Reseta o input
+
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const roleDisabled = user.role === 'usuario';
+        
+        const uploadArea = document.getElementById('fat-anexos-upload-area');
+        if (uploadArea) {
+            uploadArea.style.display = roleDisabled ? 'none' : 'block';
+        }
+
         renderFatAnexosList();
         modalFatAnexos.classList.remove('form-hidden');
     };
@@ -2340,6 +2349,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('fat-anexos-list-container');
         container.innerHTML = '';
         const anexos = window.currentFatAnexos[currentFatAnexoMonthIdx] || [];
+        
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const roleDisabled = user.role === 'usuario';
 
         if (anexos.length === 0) {
             container.innerHTML = '<div id="empty-fat-anexos" style="text-align: center; color: var(--text-light); padding: 40px 0;">Nenhum anexo lançado neste mês.</div>';
@@ -2361,9 +2373,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button type="button" onclick="visualizarAnexo('${a.data}', '${a.name}')" class="btn btn-primary" style="padding: 6px 10px; font-size: 12px; display: flex; align-items: center; gap: 5px;">
                             <i class='bx bx-show'></i>
                         </button>
-                        <button type="button" onclick="removeFatAnexo(${a.id})" class="btn-icon delete" style="padding: 6px 10px; font-size: 12px; background: #fee2e2; color: #e63946; border-radius: 4px; display: flex; align-items: center;">
+                        ${roleDisabled ? '' : `<button type="button" onclick="removeFatAnexo(${a.id})" class="btn-icon delete" style="padding: 6px 10px; font-size: 12px; background: #fee2e2; color: #e63946; border-radius: 4px; display: flex; align-items: center;">
                             <i class='bx bx-trash'></i>
-                        </button>
+                        </button>`}
                     </div>
                 `;
                 container.appendChild(el);
@@ -3073,6 +3085,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 if (con.tipo === 'Transporte Escolar') {
+                    row['GEO'] = data.geo || '-';
                     row['KM'] = data.km || '0';
                     row['Valor Km'] = data.valorKm ? formatCurrency(data.valorKm) : 'R$ 0,00';
                     row['Valor Diário'] = data.valorDiario ? formatCurrency(data.valorDiario) : 'R$ 0,00';
