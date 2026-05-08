@@ -2156,6 +2156,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Update Table Header
+        const thead = document.getElementById('fat-thead');
+        if (thead) {
+            if (isTransporte) {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">MÊS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 220px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">GEO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">KM</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">VALOR KM</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">VALOR DIÁRIO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 80px;">DIAS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">SITUAÇÃO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 2px solid var(--border-color); width: 80px;">ANEXOS</th>
+                    </tr>`;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">MÊS</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 250px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA ABERTURA</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
+                    </tr>`;
+            }
+        }
+
         renderFatGrid();
         modalFat.classList.remove('form-hidden');
     };
@@ -2271,8 +2302,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else {
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                        <span>${isFirstOfMonth ? m : ''}</span>
+                    <td style="padding: 8px 12px; font-weight: 500; font-size: 13px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; min-height: 45px;">
+                        <span>${m}</span>
                         ${!roleDisabled ? `
                         <div style="display: flex; gap: 4px;">
                             <button type="button" onclick="duplicateFatRow(${idx})" title="Adicionar complementar" style="background: var(--success-color); color: #fff; border: none; border-radius: 4px; width: 18px; height: 18px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class='bx bx-plus'></i></button>
