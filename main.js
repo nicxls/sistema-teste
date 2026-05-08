@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let cachedEmpresas = [];
     let cachedContratos = [];
     let cachedPostos = [];
+    let cachedRepactuacoes = [];
 
     // 1. Inicializa Componentes Básicos
     initTheme();
@@ -173,10 +174,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Adicionamos ?t=TIMESTAMP para forçar o navegador a buscar dado NOVO do servidor
             const time = Date.now();
-            const [empRes, conRes, posRes] = await Promise.all([
+            const [empRes, conRes, posRes, repRes] = await Promise.all([
                 fetch(`${API_URL}/empresas?system=${selectedSystem}&t=${time}`),
                 fetch(`${API_URL}/contratos?system=${selectedSystem}&t=${time}`),
-                fetch(`${API_URL}/postos?t=${time}`)
+                fetch(`${API_URL}/postos?t=${time}`),
+                fetch(`${API_URL}/repactuacoes?t=${time}`)
             ]);
             cachedEmpresas = await empRes.json();
             
@@ -194,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
 
             cachedPostos = await posRes.json();
+            cachedRepactuacoes = await repRes.json();
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
             showToast('Erro ao conectar com o servidor.', 'error');
@@ -493,6 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const li = document.getElementById('menu-indenizatorios-li');
                 if (li) li.style.display = 'block';
             }
+            const menuRepLi = document.getElementById('menu-repactuacoes-li');
+            if (menuRepLi) menuRepLi.style.display = 'none';
+
             filterSubmenuItems(fatSubmenu, ['Transporte Escolar']);
         } else {
             // No Mão de Obra, mostramos TUDO
@@ -503,6 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const li = document.getElementById('menu-indenizatorios-li');
                 if (li) li.style.display = 'none';
             }
+            const menuRepLi = document.getElementById('menu-repactuacoes-li');
+            if (menuRepLi) menuRepLi.style.display = 'block';
 
             filterSubmenuItems(fatSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
             filterSubmenuItems(postSubmenu, ['Merendeiras', 'Vigilância', 'Limpeza', 'Porteiros']);
@@ -997,6 +1005,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Passa o serviço selecionado para as funções de faturamento e postos
         if (targetId === 'faturamentos-lista' && typeof loadContratosFaturamentosTable === 'function') {
             loadContratosFaturamentosTable(servico);
+        }
+        if (targetId === 'repactuacoes' && typeof loadRepactuacoesTable === 'function') {
+            loadRepactuacoesTable();
         }
         if (targetId === 'postos-lista' && typeof loadPostosDashboard === 'function') {
             document.getElementById('postos-group-title').textContent = servico ? `Gerenciamento de Postos - ${servico}` : 'Gerenciamento de Postos - Geral';
@@ -3194,4 +3205,198 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
  
+    };
+
+    // ==========================================
+    // REPACTUAÇÕES & RETROATIVOS
+    // ==========================================
+    let currentRepactuacaoContratoId = null;
+    let tempRetroativos = [];
+
+    window.loadRepactuacoesTable = function() {
+        const tbody = document.getElementById('repactuacoes-table-body');
+        const emptyState = document.getElementById('empty-repactuacoes');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        
+        // Listamos APENAS contratos do Mão de Obra
+        const maoDeObraTypes = ["Merendeiras", "Limpeza", "Vigilância", "Porteiros"];
+        const contratosMao = cachedContratos.filter(c => maoDeObraTypes.includes(c.tipo));
+
+        if (contratosMao.length === 0) {
+            emptyState.classList.remove('form-hidden');
+            return;
+        } else {
+            emptyState.classList.add('form-hidden');
+        }
+
+        contratosMao.forEach(con => {
+            const emp = cachedEmpresas.find(e => String(e.id) === String(con.empresaId));
+            const empName = emp ? emp.razao : 'Empresa não encontrada';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-weight: 500;">${con.numero || '-'}</td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color);">${empName}</td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${con.tipo}</td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color);">
+                    <span class="status-badge status-${(con.situacao || 'ativo').toLowerCase()}" style="font-size: 11px;">${con.situacao || 'Ativo'}</span>
+                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); text-align: right;">
+                    <button class="btn btn-secondary" onclick="openGerenciarRepactuacao('${con.id}')" style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 6px 12px; font-size: 12px; font-weight: 600;">
+                        <i class='bx bx-edit-alt'></i> Gerenciar
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.openGerenciarRepactuacao = function(contratoId) {
+        currentRepactuacaoContratoId = contratoId;
+        const rep = cachedRepactuacoes.find(r => String(r.contrato_id) === String(contratoId)) || {};
+        
+        document.getElementById('rep-cct-contratacao').value = rep.cct_contratacao || '';
+        document.getElementById('rep-cct-atual').value = rep.cct_atual || '';
+        
+        // Carrega retroativos para variável temporária
+        tempRetroativos = typeof rep.retroativos === 'string' ? JSON.parse(rep.retroativos || '[]') : (rep.retroativos || []);
+        
+        const modal = document.getElementById('modal-gerenciar-repactuacao');
+        modal.classList.remove('form-hidden');
+        modal.style.display = 'flex';
+    };
+
+    document.getElementById('btn-close-repactuacao')?.addEventListener('click', () => {
+        document.getElementById('modal-gerenciar-repactuacao').classList.add('form-hidden');
+    });
+
+    document.getElementById('btn-cancel-repactuacao')?.addEventListener('click', () => {
+        document.getElementById('modal-gerenciar-repactuacao').classList.add('form-hidden');
+    });
+
+    document.getElementById('btn-save-repactuacao')?.addEventListener('click', async () => {
+        if (!currentRepactuacaoContratoId) return;
+
+        const cctContratacao = document.getElementById('rep-cct-contratacao').value;
+        const cctAtual = document.getElementById('rep-cct-atual').value;
+
+        const data = {
+            contratoId: currentRepactuacaoContratoId,
+            cctContratacao,
+            cctAtual,
+            retroativos: tempRetroativos
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/repactuacoes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.success) {
+                showToast('Repactuação salva com sucesso!', 'success');
+                document.getElementById('modal-gerenciar-repactuacao').classList.add('form-hidden');
+                fetchAllData(); // Atualiza cache
+            } else {
+                throw new Error(result.error || 'Erro ao salvar');
+            }
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    });
+
+    // Retroativos Logic
+    document.getElementById('btn-open-retroativos')?.addEventListener('click', () => {
+        renderRetroativosTable();
+        const modal = document.getElementById('modal-retroativos');
+        modal.classList.remove('form-hidden');
+        modal.style.display = 'flex';
+    });
+
+    document.getElementById('btn-close-retroativos')?.addEventListener('click', () => {
+        document.getElementById('modal-retroativos').classList.add('form-hidden');
+    });
+
+    document.getElementById('btn-add-retroativo')?.addEventListener('click', () => {
+        tempRetroativos.push({
+            titulo: '',
+            processo: '',
+            valor: 0,
+            data: '',
+            obs: ''
+        });
+        renderRetroativosTable();
+    });
+
+    function renderRetroativosTable() {
+        const tbody = document.getElementById('retroativos-table-body');
+        const emptyState = document.getElementById('empty-retroativos');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        if (tempRetroativos.length === 0) {
+            emptyState.classList.remove('form-hidden');
+        } else {
+            emptyState.classList.add('form-hidden');
+        }
+
+        tempRetroativos.forEach((ret, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+                    <input type="text" class="fat-input ret-titulo" data-index="${index}" value="${ret.titulo || ''}" placeholder="Ex: Retroativo 2024" style="font-size: 12px;">
+                </td>
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+                    <input type="text" class="fat-input ret-processo" data-index="${index}" value="${ret.processo || ''}" placeholder="00000/2024" style="font-size: 12px;">
+                </td>
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+                    <input type="text" class="fat-input ret-valor" data-index="${index}" value="${formatCurrency(ret.valor)}" placeholder="R$ 0,00" style="font-size: 12px;">
+                </td>
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+                    <input type="date" class="fat-input ret-data" data-index="${index}" value="${ret.data || ''}" style="font-size: 12px;">
+                </td>
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color);">
+                    <input type="text" class="fat-input ret-obs" data-index="${index}" value="${ret.obs || ''}" placeholder="..." style="font-size: 12px;">
+                </td>
+                <td style="padding: 10px 15px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                    <button type="button" class="btn-icon" onclick="removeRetroativoRow(${index})" style="color: var(--danger-color);"><i class='bx bx-trash'></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Add currency masks to new inputs
+        tbody.querySelectorAll('.ret-valor').forEach(input => {
+            input.addEventListener('input', maskCurrency);
+        });
+    }
+
+    window.removeRetroativoRow = function(index) {
+        saveRetroativosToTemp(); // Salva o que já foi digitado antes de remover
+        tempRetroativos.splice(index, 1);
+        renderRetroativosTable();
+    };
+
+    function saveRetroativosToTemp() {
+        const rows = document.querySelectorAll('#retroativos-table-body tr');
+        rows.forEach((row, index) => {
+            if (tempRetroativos[index]) {
+                tempRetroativos[index].titulo = row.querySelector('.ret-titulo').value;
+                tempRetroativos[index].processo = row.querySelector('.ret-processo').value;
+                tempRetroativos[index].valor = parseCurrency(row.querySelector('.ret-valor').value);
+                tempRetroativos[index].data = row.querySelector('.ret-data').value;
+                tempRetroativos[index].obs = row.querySelector('.ret-obs').value;
+            }
+        });
+    }
+
+    document.getElementById('btn-save-retroativos')?.addEventListener('click', () => {
+        saveRetroativosToTemp();
+        document.getElementById('modal-retroativos').classList.add('form-hidden');
+        showToast('Retroativos confirmados temporariamente. Não esqueça de Salvar a Repactuação principal!', 'info');
+    });
+
 });

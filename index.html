@@ -177,6 +177,12 @@
                         <span>Indenizatórios</span>
                     </a>
                 </li>
+                <li id="menu-repactuacoes-li" style="display: none;">
+                    <a href="#" data-target="repactuacoes" id="menu-repactuacoes">
+                        <i class='bx bx-refresh'></i>
+                        <span>Repactuações</span>
+                    </a>
+                </li>
                 <li>
                     <a href="#" id="menu-faturamentos">
                         <i class='bx bx-dollar'></i>
@@ -290,6 +296,36 @@
                                     <strong id="status-finalizado" style="font-size: 14px; color: var(--text-color);">0</strong>
                                 </li>
                             </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Repactuações -->
+                <section id="repactuacoes" class="view" style="display: none;">
+                    <div class="header-section" style="margin-bottom: 30px;">
+                        <div>
+                            <h1>Repactuações e Retroativos</h1>
+                            <p>Gestão de CCTs e histórico de pagamentos retroativos por contrato.</p>
+                        </div>
+                    </div>
+                    <div style="background: var(--card-bg); padding: 0; border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: var(--bg-color); border-bottom: 2px solid var(--border-color);">
+                                <tr>
+                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 100px;">Nº Processo</th>
+                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">Empresa</th>
+                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light);">Tipo de Serviço</th>
+                                    <th style="padding: 15px 20px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 150px;">Situação</th>
+                                    <th style="padding: 15px 20px; text-align: right; font-size: 11px; text-transform: uppercase; color: var(--text-light); width: 120px;">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="repactuacoes-table-body">
+                                <!-- Preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                        <div id="empty-repactuacoes" class="form-hidden" style="padding: 40px; text-align: center; color: var(--text-light);">
+                            <i class='bx bx-folder-open' style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;"></i>
+                            <p>Nenhum contrato encontrado neste módulo.</p>
                         </div>
                     </div>
                 </section>
@@ -1098,6 +1134,84 @@
                 style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; background: var(--card-bg); border-radius: 0 0 var(--radius) var(--radius);">
                 <button id="btn-fechar-fat-anexos" class="btn btn-secondary"
                     style="background: transparent; border: 1px solid var(--border-color);">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Repactuação -->
+    <div id="modal-gerenciar-repactuacao" class="modal-overlay form-hidden" style="z-index: 10001;">
+        <div class="modal-content" style="max-width: 600px; padding: 30px; background: #fff; border-radius: 12px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 20px; font-weight: 700; color: var(--text-color);">Gerenciar Repactuações</h3>
+                <button id="btn-close-repactuacao" class="btn-icon"><i class='bx bx-x' style="font-size: 24px;"></i></button>
+            </div>
+            
+            <form id="form-repactuacao">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT Contratação</label>
+                    <input type="text" id="rep-cct-contratacao" placeholder="Ex: CCT 2024" style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label style="font-size: 13px; font-weight: 600; color: var(--text-color); margin-bottom: 8px; display: block;">CCT Atual</label>
+                    <input type="text" id="rep-cct-atual" placeholder="Ex: CCT 2025" style="width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px;">
+                </div>
+
+                <div style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div>
+                        <strong style="display: block; font-size: 14px; margin-bottom: 4px;">Histórico de Retroativos</strong>
+                        <span style="font-size: 12px; color: var(--text-light);">Gerencie os processos de pagamentos retroativos</span>
+                    </div>
+                    <button type="button" id="btn-open-retroativos" class="btn btn-secondary" style="background: #fff; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 5px;">
+                        <i class='bx bx-history'></i> Acessar
+                    </button>
+                </div>
+                
+                <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 15px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-repactuacao" style="background: var(--bg-color); color: var(--text-color);">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-repactuacao" style="background: #4361ee; color: #fff;">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Retroativos -->
+    <div id="modal-retroativos" class="modal-overlay form-hidden" style="z-index: 10002;">
+        <div class="modal-content" style="max-width: 900px; padding: 0; background: var(--card-bg); border-radius: var(--radius); flex-direction: column; display: flex;">
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: var(--radius) var(--radius) 0 0;">
+                <h3 style="font-size: 18px; margin: 0; font-weight: 700; color: var(--text-color);">Histórico de Retroativos</h3>
+                <button id="btn-close-retroativos" class="btn-icon" style="color: var(--text-light);"><i class='bx bx-x' style="font-size: 28px;"></i></button>
+            </div>
+
+            <div style="padding: 15px 24px; background: #fff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                <button id="btn-add-retroativo" class="btn btn-primary" style="background: #2b9348; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <i class='bx bx-plus'></i> Adicionar Linha de Retroativo
+                </button>
+            </div>
+
+            <div style="padding: 0; overflow: auto; max-height: 60vh; background: #fff;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: var(--bg-color); position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Título (Ex: CCT 2024)</th>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Processo Pagamento</th>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">Valor Pago</th>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color); width: 140px;">Data Pagamento</th>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 1px solid var(--border-color);">Observação</th>
+                            <th style="padding: 12px 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: center; border-bottom: 1px solid var(--border-color); width: 60px;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="retroativos-table-body">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+                <div id="empty-retroativos" class="form-hidden" style="padding: 40px; text-align: center; color: var(--text-light);">
+                    Nenhum retroativo cadastrado. Adicione uma linha para começar.
+                </div>
+            </div>
+
+            <div style="padding: 20px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px; background: var(--bg-color); border-radius: 0 0 var(--radius) var(--radius);">
+                <button type="button" class="btn btn-primary" id="btn-save-retroativos" style="background: #4361ee; color: #fff;">Confirmar e Voltar</button>
             </div>
         </div>
     </div>

@@ -86,6 +86,18 @@ const db = require('./db');
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migration: Tabela repactuacoes
+        await db.execute(`
+            CREATE TABLE IF NOT EXISTS repactuacoes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                contrato_id INT NOT NULL UNIQUE,
+                cct_contratacao VARCHAR(255),
+                cct_atual VARCHAR(255),
+                retroativos LONGTEXT,
+                FOREIGN KEY (contrato_id) REFERENCES contratos(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
     } catch (err) {
         console.error('Erro na migração:', err);
     }
@@ -663,6 +675,42 @@ app.post('/api/faturamentos', async (req, res) => {
         res.json({ success: true, id: result.insertId || null });
     } catch (error) {
         console.error('Erro ao salvar faturamento:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ==========================================
+// REPACTUAÇÕES
+// ==========================================
+
+app.get('/api/repactuacoes', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM repactuacoes');
+        res.json(rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/repactuacoes', async (req, res) => {
+    const { contratoId, cctContratacao, cctAtual, retroativos } = req.body;
+    try {
+        if (!contratoId) return res.status(400).json({ error: 'contratoId é obrigatório' });
+        
+        await db.execute(
+            `INSERT INTO repactuacoes (contrato_id, cct_contratacao, cct_atual, retroativos) 
+             VALUES (?, ?, ?, ?) 
+             ON DUPLICATE KEY UPDATE 
+             cct_contratacao = ?, cct_atual = ?, retroativos = ?`,
+            [
+                parseInt(contratoId), cctContratacao || '', cctAtual || '', JSON.stringify(retroativos || []),
+                cctContratacao || '', cctAtual || '', JSON.stringify(retroativos || [])
+            ]
+        );
+        notifyUpdate();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao salvar repactuação:', error);
         res.status(500).json({ error: error.message });
     }
 });
