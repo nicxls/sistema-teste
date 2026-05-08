@@ -3275,7 +3275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${rep.cct_contratacao || '-'}</td>
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${rep.cct_atual || '-'}</td>
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 12px;">${statusText}</td>
-                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); text-align: right;">
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); text-align: center;">
                     <button class="btn btn-secondary" onclick="openGerenciarRepactuacao('${con.id}')" style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 6px 12px; font-size: 12px; font-weight: 600;">
                         <i class='bx bx-edit-alt'></i> Gerenciar
                     </button>
