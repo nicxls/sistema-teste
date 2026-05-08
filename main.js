@@ -1250,15 +1250,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Cálculo de Retroativos Pagos em 2026
+        let totalRetroativosPagas = 0;
+        let valorRetroativosPagas = 0;
+
+        cachedRepactuacoes.forEach(rep => {
+            if (contratoIdsFiltrados.includes(rep.contrato_id)) {
+                const rets = typeof rep.retroativos === 'string' ? JSON.parse(rep.retroativos || '[]') : (rep.retroativos || []);
+                rets.forEach(ret => {
+                    // Considera se a data de pagamento é em 2026
+                    if (ret.data && ret.data.startsWith('2026')) {
+                        totalRetroativosPagas++;
+                        valorRetroativosPagas += (parseFloat(ret.valor) || 0);
+                    }
+                });
+            }
+        });
+        
         document.getElementById('count-empresas').textContent = empresasCount;
         document.getElementById('count-contratos').textContent = contratosAtivos;
         
         const spanGasto = document.getElementById('count-gasto');
         if(spanGasto) spanGasto.textContent = formatCurrency(totalPago2026);
 
-        // Atualizar título do card de gasto
-        const cardGastoTitle = spanGasto?.previousElementSibling;
-        if (cardGastoTitle) cardGastoTitle.textContent = 'GASTO TOTAL PAGO (2026)';
+        // Retroativos
+        const spanRetroQtd = document.getElementById('count-retro-qtd');
+        const spanRetroVal = document.getElementById('count-retro-valor');
+        if(spanRetroQtd) spanRetroQtd.textContent = totalRetroativosPagas;
+        if(spanRetroVal) spanRetroVal.textContent = formatCurrency(valorRetroativosPagas);
 
         const statusVig = document.getElementById('status-vigente');
         const statusFin = document.getElementById('status-finalizado');
