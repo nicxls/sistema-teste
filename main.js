@@ -2163,7 +2163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 thead.innerHTML = `
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 220px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 180px;">Nº PROCESSO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">GEO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 100px;">KM</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 120px;">VALOR KM</th>
@@ -2178,7 +2178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 thead.innerHTML = `
                     <tr>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 140px;">MÊS</th>
-                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 250px;">Nº PROCESSO</th>
+                        <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 180px;">Nº PROCESSO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 130px;">SITUAÇÃO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 160px;">DATA PAGAMENTO</th>
                         <th style="padding: 15px; font-size: 11px; color: var(--text-light); text-transform: uppercase; text-align: left; border-bottom: 2px solid var(--border-color); width: 150px;">VALOR PAGO (R$)</th>
