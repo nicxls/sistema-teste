@@ -3236,14 +3236,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const emp = cachedEmpresas.find(e => String(e.id) === String(con.empresaId));
             const empName = emp ? emp.razao : 'Empresa não encontrada';
             
+            // Busca dados de repactuação vinculados
+            const rep = cachedRepactuacoes.find(r => String(r.contrato_id) === String(con.id)) || {};
+            
+            // Lógica de Situação da Repactuação
+            const currentYear = new Date().getFullYear();
+            let statusText = '<span style="color: var(--success-color); font-weight: 600;">Atualizado</span>';
+            let cctAtualYear = null;
+
+            if (rep.cct_atual) {
+                const yearMatch = rep.cct_atual.match(/\d{4}/);
+                if (yearMatch) {
+                    cctAtualYear = parseInt(yearMatch[0]);
+                }
+            }
+
+            if (cctAtualYear && cctAtualYear < currentYear) {
+                const missingYears = [];
+                for (let y = cctAtualYear + 1; y <= currentYear; y++) {
+                    missingYears.push(y);
+                }
+                if (missingYears.length > 0) {
+                    const yearsStr = missingYears.length > 1 
+                        ? `${missingYears.slice(0, -1).join(', ')} e ${missingYears.slice(-1)}` 
+                        : missingYears[0];
+                    statusText = `<span style="color: var(--danger-color); font-weight: 600;">Faltam repactuações ${yearsStr}</span>`;
+                }
+            } else if (!rep.cct_atual) {
+                statusText = `<span style="color: var(--warning-color); font-weight: 600;">Aguardando preenchimento</span>`;
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-weight: 500;">${con.numero || '-'}</td>
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color);">${empName}</td>
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${con.tipo}</td>
-                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color);">
-                    <span class="status-badge status-${(con.situacao || 'ativo').toLowerCase()}" style="font-size: 11px;">${con.situacao || 'Ativo'}</span>
-                </td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${rep.cct_contratacao || '-'}</td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 13px;">${rep.cct_atual || '-'}</td>
+                <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); font-size: 12px;">${statusText}</td>
                 <td style="padding: 15px 20px; border-bottom: 1px solid var(--border-color); text-align: right;">
                     <button class="btn btn-secondary" onclick="openGerenciarRepactuacao('${con.id}')" style="background: var(--bg-color); border: 1px solid var(--border-color); padding: 6px 12px; font-size: 12px; font-weight: 600;">
                         <i class='bx bx-edit-alt'></i> Gerenciar
