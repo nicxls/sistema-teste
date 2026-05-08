@@ -3205,7 +3205,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
  
-    };
+ 
+
 
     // ==========================================
     // REPACTUAÇÕES & RETROATIVOS
